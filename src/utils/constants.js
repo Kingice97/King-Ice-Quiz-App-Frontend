@@ -36,9 +36,9 @@ export const STORAGE_KEYS = {
 
 export const API_ENDPOINTS = {
   AUTH: {
-    LOGIN: '/auth/login',
-    REGISTER: '/auth/register',
-    ME: '/auth/me'
+    LOGIN: '/api/auth/login',
+    REGISTER: '/api/auth/register',
+    ME: '/api/auth/me'
   },
   QUIZZES: {
     BASE: '/quizzes',
