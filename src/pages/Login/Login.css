@@ -1,0 +1,118 @@
+.login-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
+  padding: var(--spacing-xl);
+}
+
+.login-container {
+  width: 100%;
+  max-width: 500px;
+}
+
+.login-content {
+  background: var(--white);
+  border-radius: var(--border-radius-2xl);
+  box-shadow: var(--shadow-xl);
+  overflow: hidden;
+}
+
+.dark .login-content {
+  background: var(--gray-800);
+}
+
+.login-header {
+  padding: var(--spacing-2xl);
+  text-align: center;
+  background: linear-gradient(135deg, var(--primary-color), var(--primary-light));
+  color: var(--white);
+}
+
+.login-header h1 {
+  margin-bottom: var(--spacing-sm);
+  color: var(--white);
+}
+
+.login-header p {
+  margin: 0;
+  opacity: 0.9;
+}
+
+.login-features {
+  padding: var(--spacing-2xl);
+  background: var(--gray-50);
+  border-top: 1px solid var(--gray-200);
+}
+
+.dark .login-features {
+  background: var(--gray-700);
+  border-top-color: var(--gray-600);
+}
+
+.login-features h3 {
+  margin-bottom: var(--spacing-lg);
+  color: var(--gray-700);
+  text-align: center;
+}
+
+.dark .login-features h3 {
+  color: var(--gray-300);
+}
+
+.login-features ul {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.login-features li {
+  padding: var(--spacing-sm);
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--gray-200);
+  transition: all var(--transition-fast);
+}
+
+.dark .login-features li {
+  background: var(--gray-800);
+  border-color: var(--gray-600);
+  color: var(--gray-300);
+}
+
+.login-features li:hover {
+  border-color: var(--primary-color);
+  transform: translateX(4px);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .login-page {
+    padding: var(--spacing-md);
+    align-items: flex-start;
+    padding-top: var(--spacing-2xl);
+  }
+  
+  .login-header {
+    padding: var(--spacing-xl);
+  }
+  
+  .login-features {
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .login-page {
+    padding: var(--spacing-sm);
+    padding-top: var(--spacing-xl);
+  }
+  
+  .login-header h1 {
+    font-size: var(--font-size-2xl);
+  }
+}

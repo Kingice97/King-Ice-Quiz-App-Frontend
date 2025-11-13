@@ -1,0 +1,221 @@
+.quiz-page {
+  min-height: 100vh;
+  padding: var(--spacing-xl) 0;
+  background: var(--gray-50);
+}
+
+.dark .quiz-page {
+  background: var(--gray-900);
+}
+
+.quiz-container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-xl);
+}
+
+.quiz-header {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--spacing-xl);
+  align-items: start;
+}
+
+.quiz-info h1 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-sm);
+  line-height: 1.2;
+}
+
+.dark .quiz-info h1 {
+  color: var(--gray-100);
+}
+
+.quiz-info p {
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-lg);
+  line-height: 1.5;
+}
+
+.dark .quiz-info p {
+  color: var(--gray-400);
+}
+
+.quiz-meta {
+  display: flex;
+  gap: var(--spacing-md);
+  flex-wrap: wrap;
+}
+
+.quiz-meta span {
+  padding: var(--spacing-xs) var(--spacing-md);
+  border-radius: var(--border-radius-lg);
+  font-size: var(--font-size-sm);
+  font-weight: 500;
+}
+
+.category {
+  background: rgba(52, 152, 219, 0.1);
+  color: var(--primary-color);
+  border: 1px solid rgba(52, 152, 219, 0.2);
+}
+
+.difficulty.easy {
+  background: rgba(39, 174, 96, 0.1);
+  color: var(--success-color);
+  border: 1px solid rgba(39, 174, 96, 0.2);
+}
+
+.difficulty.medium {
+  background: rgba(243, 156, 18, 0.1);
+  color: var(--warning-color);
+  border: 1px solid rgba(243, 156, 18, 0.2);
+}
+
+.difficulty.hard {
+  background: rgba(231, 76, 60, 0.1);
+  color: var(--danger-color);
+  border: 1px solid rgba(231, 76, 60, 0.2);
+}
+
+.quiz-navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: var(--spacing-lg);
+  background: var(--white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-md);
+  gap: var(--spacing-md);
+}
+
+.dark .quiz-navigation {
+  background: var(--gray-800);
+}
+
+.navigation-info {
+  color: var(--gray-600);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+}
+
+.dark .navigation-info {
+  color: var(--gray-400);
+}
+
+.confirmation-content,
+.time-up-content {
+  text-align: center;
+  padding: var(--spacing-lg) 0;
+}
+
+.confirmation-content p,
+.time-up-content p {
+  margin-bottom: var(--spacing-md);
+  color: var(--gray-700);
+}
+
+.dark .confirmation-content p,
+.dark .time-up-content p {
+  color: var(--gray-300);
+}
+
+.confirmation-actions {
+  display: flex;
+  gap: var(--spacing-md);
+  justify-content: center;
+  margin-top: var(--spacing-xl);
+}
+
+.quiz-error {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--gray-50);
+}
+
+.dark .quiz-error {
+  background: var(--gray-900);
+}
+
+.error-content {
+  text-align: center;
+  max-width: 500px;
+  padding: var(--spacing-2xl);
+  background: var(--white);
+  border-radius: var(--border-radius-xl);
+  box-shadow: var(--shadow-lg);
+}
+
+.dark .error-content {
+  background: var(--gray-800);
+}
+
+.error-content h2 {
+  color: var(--gray-900);
+  margin-bottom: var(--spacing-md);
+}
+
+.dark .error-content h2 {
+  color: var(--gray-100);
+}
+
+.error-content p {
+  color: var(--gray-600);
+  margin-bottom: var(--spacing-xl);
+  line-height: 1.5;
+}
+
+.dark .error-content p {
+  color: var(--gray-400);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .quiz-page {
+    padding: var(--spacing-lg) 0;
+  }
+  
+  .quiz-container {
+    padding: 0 var(--spacing-sm);
+    gap: var(--spacing-lg);
+  }
+  
+  .quiz-header {
+    grid-template-columns: 1fr;
+    gap: var(--spacing-lg);
+  }
+  
+  .quiz-navigation {
+    flex-direction: column;
+    gap: var(--spacing-md);
+  }
+  
+  .confirmation-actions {
+    flex-direction: column;
+  }
+  
+  .error-content {
+    margin: var(--spacing-md);
+    padding: var(--spacing-xl);
+  }
+}
+
+@media (max-width: 480px) {
+  .quiz-page {
+    padding: var(--spacing-md) 0;
+  }
+  
+  .quiz-info h1 {
+    font-size: var(--font-size-2xl);
+  }
+  
+  .quiz-meta {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+}

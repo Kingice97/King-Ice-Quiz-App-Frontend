@@ -1,0 +1,187 @@
+.progress-container {
+  background: var(--white);
+  border-radius: var(--border-radius-lg);
+  padding: var(--spacing-md);
+  box-shadow: var(--shadow-md);
+  max-width: 100%;
+  overflow: hidden; /* Prevents content from going outside */
+}
+
+.dark .progress-container {
+  background: var(--gray-800);
+}
+
+.progress-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-sm);
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.progress-text {
+  color: var(--gray-600);
+  font-weight: 500;
+  font-size: var(--font-size-sm);
+  white-space: nowrap;
+}
+
+.dark .progress-text {
+  color: var(--gray-400);
+}
+
+.progress-percentage {
+  color: var(--primary-color);
+  font-weight: 700;
+  font-size: var(--font-size-md);
+  white-space: nowrap;
+}
+
+.dark .progress-percentage {
+  color: var(--primary-light);
+}
+
+.progress-bar {
+  height: 6px;
+  background: var(--gray-200);
+  border-radius: 3px;
+  overflow: hidden;
+  margin-bottom: var(--spacing-md);
+  width: 100%; /* Ensures bar doesn't overflow */
+}
+
+.dark .progress-bar {
+  background: var(--gray-700);
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary-color), var(--primary-light));
+  border-radius: 3px;
+  transition: width 0.3s ease;
+  max-width: 100%; /* Prevents fill from overflowing */
+}
+
+/* FIXED: Progress Dots - No more overflow */
+.progress-dots-container {
+  width: 100%;
+  overflow-x: auto;
+  padding-bottom: 5px;
+}
+
+.progress-dots {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: var(--spacing-xs);
+  min-width: min-content; /* Allows natural sizing but prevents overflow */
+  padding: 2px 0;
+}
+
+.progress-dot {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: var(--font-size-xs);
+  font-weight: 600;
+  transition: all var(--transition-fast);
+  flex-shrink: 0;
+  min-width: 28px;
+}
+
+.progress-dot.upcoming {
+  background: var(--gray-200);
+  color: var(--gray-500);
+  border: 2px solid var(--gray-300);
+}
+
+.dark .progress-dot.upcoming {
+  background: var(--gray-700);
+  color: var(--gray-400);
+  border-color: var(--gray-600);
+}
+
+.progress-dot.current {
+  background: var(--primary-color);
+  color: var(--white);
+  border: 2px solid var(--primary-color);
+  transform: scale(1.1);
+}
+
+.progress-dot.answered {
+  background: var(--success-color);
+  color: var(--white);
+  border: 2px solid var(--success-color);
+}
+
+/* Hide scrollbar but keep functionality */
+.progress-dots-container::-webkit-scrollbar {
+  display: none;
+  height: 4px;
+}
+
+.progress-dots-container::-webkit-scrollbar-thumb {
+  background: var(--gray-400);
+  border-radius: 2px;
+}
+
+.progress-dots-container::-webkit-scrollbar-track {
+  background: var(--gray-200);
+}
+
+.progress-dots-container {
+  -ms-overflow-style: none;
+  scrollbar-width: thin;
+  scrollbar-color: var(--gray-400) var(--gray-200);
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .progress-container {
+    padding: var(--spacing-sm);
+  }
+  
+  .progress-dot {
+    width: 24px;
+    height: 24px;
+    font-size: 10px;
+    min-width: 24px;
+  }
+  
+  .progress-dots {
+    gap: 2px;
+  }
+}
+
+@media (max-width: 480px) {
+  .progress-dot {
+    width: 22px;
+    height: 22px;
+    font-size: 9px;
+    min-width: 22px;
+  }
+  
+  .progress-dots {
+    gap: 1px;
+  }
+  
+  .progress-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+}
+
+/* For very long progress (many questions) */
+.progress-dots.many-dots {
+  justify-content: flex-start;
+  padding: 0 10px;
+}
+
+.progress-dots.many-dots .progress-dot {
+  margin: 0 1px;
+}

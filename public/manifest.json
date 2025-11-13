@@ -1,0 +1,33 @@
+{
+  "short_name": "King Ice Quiz",
+  "name": "King Ice Quiz App - Interactive Quiz Platform",
+  "icons": [
+    {
+      "src": "brain-icon-16x16.png",
+      "sizes": "16x16",
+      "type": "image/png"
+    },
+    {
+      "src": "brain-icon-32x32.png",
+      "sizes": "32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "brain-icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "brain-icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": ".",
+  "display": "standalone",
+  "theme_color": "#000000",
+  "background_color": "#ffffff",
+  "description": "🧠 King Ice Quiz App - Create or take quizzes, chat globally, upload profiles, and compete in live quiz challenges!"
+}

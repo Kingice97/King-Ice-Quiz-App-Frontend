@@ -1,0 +1,357 @@
+.results-management-page {
+  padding: 15px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+.container {
+  width: 100%;
+}
+
+/* Page Header */
+.page-header {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding-bottom: 20px;
+  border-bottom: 2px solid #e1e5e9;
+}
+
+@media (min-width: 768px) {
+  .page-header {
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+}
+
+.header-content h1 {
+  color: #2c3e50;
+  margin: 0 0 8px 0;
+  font-size: 1.5rem;
+}
+
+.header-content p {
+  color: #7f8c8d;
+  margin: 0;
+  font-size: 0.9rem;
+}
+
+.header-stats {
+  display: flex;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.header-stats span {
+  background: #f8f9fa;
+  padding: 8px 15px;
+  border-radius: 20px;
+  font-size: 0.9rem;
+  color: #2c3e50;
+  font-weight: 600;
+  border: 1px solid #e1e5e9;
+}
+
+/* Filters Section */
+.filters-section {
+  display: flex;
+  flex-direction: column;
+  gap: 15px;
+  margin-bottom: 25px;
+  padding: 20px;
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+@media (min-width: 768px) {
+  .filters-section {
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+  }
+}
+
+.search-box {
+  flex: 1;
+}
+
+.search-box input {
+  width: 100%;
+  max-width: 400px;
+  padding: 10px 15px;
+  border: 1px solid #bdc3c7;
+  border-radius: 25px;
+  font-size: 14px;
+}
+
+.filter-group {
+  display: flex;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.form-control {
+  padding: 10px 12px;
+  border: 1px solid #bdc3c7;
+  border-radius: 5px;
+  font-size: 14px;
+  background: white;
+}
+
+/* Results Section */
+.results-section {
+  background: white;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+  overflow: hidden;
+}
+
+.results-stats {
+  display: flex;
+  gap: 20px;
+  padding: 15px 20px;
+  background: #f8f9fa;
+  border-bottom: 1px solid #e1e5e9;
+  flex-wrap: wrap;
+  font-size: 0.9rem;
+  color: #5a6c7d;
+}
+
+.results-stats span {
+  font-weight: 600;
+}
+
+/* FIXED: Add this container around your existing results-table */
+.results-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Your existing results-table - now with fixed width */
+.results-table {
+  width: 100%;
+  min-width: 900px; /* This forces horizontal scrolling */
+}
+
+/* Table Header */
+.table-header {
+  display: grid;
+  grid-template-columns: 200px 200px 100px 100px 150px 100px;
+  gap: 1px;
+  background: #34495e;
+  color: white;
+  font-weight: 600;
+  font-size: 0.9rem;
+}
+
+.header-cell {
+  padding: 15px 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Table Body */
+.table-body {
+  /* No changes needed here */
+}
+
+.table-row {
+  display: grid;
+  grid-template-columns: 200px 200px 100px 100px 150px 100px;
+  gap: 1px;
+  border-bottom: 1px solid #ecf0f1;
+  transition: background-color 0.2s ease;
+}
+
+.table-row:hover {
+  background: #f8f9fa;
+}
+
+.cell {
+  padding: 15px 12px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-height: 60px;
+  overflow: hidden;
+}
+
+/* Cell-specific styles */
+.user-cell strong {
+  color: #2c3e50;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-cell small {
+  color: #7f8c8d;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quiz-cell strong {
+  color: #2c3e50;
+  font-size: 0.9rem;
+  margin-bottom: 4px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.quiz-cell small {
+  color: #7f8c8d;
+  font-size: 0.8rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.score-badge {
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-align: center;
+  margin-bottom: 4px;
+  white-space: nowrap;
+}
+
+.score-badge.passed {
+  background: #d4edda;
+  color: #155724;
+}
+
+.score-badge.failed {
+  background: #f8d7da;
+  color: #721c24;
+}
+
+.score-cell small {
+  color: #7f8c8d;
+  font-size: 0.8rem;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.time-cell {
+  color: #2c3e50;
+  font-weight: 600;
+  font-size: 0.9rem;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.date-cell {
+  color: #5a6c7d;
+  font-size: 0.85rem;
+  text-align: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.status {
+  padding: 6px 12px;
+  border-radius: 15px;
+  font-size: 0.8rem;
+  font-weight: bold;
+  text-transform: uppercase;
+  text-align: center;
+  display: inline-block;
+  white-space: nowrap;
+}
+
+.status.passed {
+  background: #d4edda;
+  color: #155724;
+  border: 1px solid #c3e6cb;
+}
+
+.status.failed {
+  background: #f8d7da;
+  color: #721c24;
+  border: 1px solid #f5c6cb;
+}
+
+/* Empty State */
+.empty-state {
+  padding: 60px 20px;
+  text-align: center;
+  background: #f8f9fa;
+}
+
+.empty-icon {
+  font-size: 48px;
+  margin-bottom: 20px;
+}
+
+.empty-state h3 {
+  color: #2c3e50;
+  margin-bottom: 10px;
+}
+
+.empty-state p {
+  color: #6c757d;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* Loading State */
+.loading-state {
+  padding: 60px 20px;
+  text-align: center;
+}
+
+/* Mobile Styles */
+@media (max-width: 768px) {
+  .results-management-page {
+    padding: 10px;
+  }
+  
+  .results-table {
+    min-width: 800px; /* Slightly smaller for mobile */
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 160px 160px 80px 80px 130px 80px;
+  }
+  
+  /* Scroll indicator */
+  .results-table-wrapper::after {
+    content: "← Scroll horizontally →";
+    display: block;
+    text-align: center;
+    padding: 10px;
+    color: #7f8c8d;
+    font-size: 0.8rem;
+    background: #f8f9fa;
+    border-top: 1px solid #e1e5e9;
+  }
+}
+
+/* PC Styles */
+@media (min-width: 1025px) {
+  .results-table-wrapper {
+    overflow-x: visible;
+  }
+  
+  .results-table {
+    min-width: 100%;
+  }
+  
+  .table-header,
+  .table-row {
+    grid-template-columns: 1.5fr 1.5fr 0.8fr 0.8fr 1.2fr 0.8fr;
+  }
+}

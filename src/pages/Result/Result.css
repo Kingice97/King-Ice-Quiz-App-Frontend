@@ -1,0 +1,9 @@
+.result-page {
+  min-height: 100vh;
+  padding: var(--spacing-xl) 0;
+  background: var(--gray-50);
+}
+
+.dark .result-page {
+  background: var(--gray-900);
+}

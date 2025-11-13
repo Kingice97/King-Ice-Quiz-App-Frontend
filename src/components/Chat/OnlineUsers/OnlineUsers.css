@@ -1,0 +1,264 @@
+.online-users {
+  height: 100%;
+}
+
+.users-header {
+  margin-bottom: 1rem;
+}
+
+.users-header h3 {
+  margin: 0 0 0.5rem 0;
+  color: #1c1e21;
+  font-size: 1.1rem;
+  font-weight: 600;
+}
+
+.users-header p {
+  margin: 0;
+  color: #65676b;
+  font-size: 0.85rem;
+}
+
+.users-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.user-item {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  border: 1px solid transparent;
+  background: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.user-item::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.user-item:hover {
+  background: #f8f9fa;
+  border-color: #e4e6eb;
+  transform: translateY(-1px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.user-item:hover::before {
+  background: #1877f2;
+}
+
+/* ✅ FIXED: Avatar styles - simplified without fallback logic */
+.user-avatar {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+}
+
+.user-avatar img {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 2px solid #e4e6eb;
+  transition: border-color 0.2s ease;
+  display: block; /* ✅ Ensure proper display */
+}
+
+.user-item:hover .user-avatar img {
+  border-color: #1877f2;
+}
+
+.avatar-placeholder {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 600;
+  font-size: 1rem;
+  border: 2px solid #e4e6eb;
+  transition: border-color 0.2s ease;
+}
+
+.user-item:hover .avatar-placeholder {
+  border-color: #1877f2;
+}
+
+.online-indicator {
+  position: absolute;
+  bottom: 2px;
+  right: 2px;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid white;
+  transition: all 0.2s ease;
+}
+
+.online-indicator.online {
+  background: #00b894;
+  box-shadow: 0 0 0 2px rgba(0, 184, 148, 0.3);
+}
+
+.online-indicator.offline {
+  background: #dfe6e9;
+}
+
+.user-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.username {
+  font-weight: 600;
+  color: #1c1e21;
+  margin-bottom: 0.25rem;
+  font-size: 0.95rem;
+}
+
+.user-fullname {
+  font-size: 0.8rem;
+  color: #65676b;
+  margin-bottom: 0.25rem;
+}
+
+.user-status {
+  font-size: 0.75rem;
+  color: #00b894;
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
+}
+
+.last-seen {
+  color: #b2bec3;
+}
+
+.admin-badge {
+  background: linear-gradient(135deg, #fd79a8 0%, #fdcb6e 100%);
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.no-users {
+  text-align: center;
+  padding: 3rem 1rem;
+  color: #65676b;
+}
+
+.no-users p {
+  margin: 0 0 0.5rem 0;
+  font-size: 1rem;
+}
+
+.no-users-subtitle {
+  font-size: 0.85rem !important;
+  opacity: 0.7;
+}
+
+.loading-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+}
+
+/* Animation for user items */
+@keyframes userSlideIn {
+  from {
+    opacity: 0;
+    transform: translateX(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.user-item {
+  animation: userSlideIn 0.3s ease-out;
+}
+
+.user-item:nth-child(1) { animation-delay: 0.05s; }
+.user-item:nth-child(2) { animation-delay: 0.1s; }
+.user-item:nth-child(3) { animation-delay: 0.15s; }
+.user-item:nth-child(4) { animation-delay: 0.2s; }
+.user-item:nth-child(5) { animation-delay: 0.25s; }
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .user-item {
+    padding: 0.875rem;
+    gap: 0.875rem;
+  }
+
+  .user-avatar {
+    width: 40px;
+    height: 40px;
+  }
+
+  .username {
+    font-size: 0.9rem;
+  }
+
+  .user-fullname {
+    font-size: 0.75rem;
+  }
+
+  .admin-badge {
+    font-size: 0.65rem;
+    padding: 0.25rem 0.5rem;
+  }
+}
+
+.current-user-badge {
+  background: #1877f2;
+  color: white;
+  padding: 0.3rem 0.6rem;
+  border-radius: 12px;
+  font-size: 0.7rem;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.only-you-online {
+  text-align: center;
+  padding: 2rem 1rem;
+  color: #65676b;
+  border-top: 1px solid #e4e6eb;
+  margin-top: 1rem;
+}
+
+.only-you-online p {
+  margin: 0 0 0.5rem 0;
+}
+
+.only-you-online .subtitle {
+  font-size: 0.85rem;
+  opacity: 0.7;
+}
