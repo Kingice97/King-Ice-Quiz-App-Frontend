@@ -9,6 +9,9 @@ const UsersManagement = () => {
   const [message, setMessage] = useState('');
   const { currentUser } = useAuth();
 
+  // ✅ FIXED: Use absolute API URL
+  const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+
   useEffect(() => {
     const fetchUsers = async () => {
       try {
@@ -23,7 +26,8 @@ const UsersManagement = () => {
           return;
         }
 
-        const response = await fetch('/api/users', {
+        // ✅ FIXED: Use absolute URL
+        const response = await fetch(`${API_URL}/api/users`, {
           headers: {
             'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
@@ -43,11 +47,11 @@ const UsersManagement = () => {
           const regularUsers = usersArray.filter(user => user.role === 'user');
           console.log('Regular users only:', regularUsers);
           
-          // Fetch quiz counts for each user
+          // Fetch quiz counts for each user - ✅ FIXED: Use absolute URL
           const usersWithQuizCounts = await Promise.all(
             regularUsers.map(async (user) => {
               try {
-                const statsResponse = await fetch(`/api/results/user/${user._id}/count`, {
+                const statsResponse = await fetch(`${API_URL}/api/results/user/${user._id}/count`, {
                   headers: {
                     'Authorization': `Bearer ${token}`,
                     'Content-Type': 'application/json'
@@ -98,14 +102,15 @@ const UsersManagement = () => {
     };
 
     fetchUsers();
-  }, [currentUser]);
+  }, [currentUser, API_URL]); // ✅ Added API_URL to dependencies
 
   const toggleUserStatus = async (userId) => {
     try {
       setMessage('');
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/users/${userId}/status`, {
+      // ✅ FIXED: Use absolute URL
+      const response = await fetch(`${API_URL}/api/users/${userId}/status`, {
         method: 'PUT',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -145,7 +150,8 @@ const UsersManagement = () => {
       setMessage('');
       const token = localStorage.getItem('token');
       
-      const response = await fetch(`/api/users/${userId}`, {
+      // ✅ FIXED: Use absolute URL
+      const response = await fetch(`${API_URL}/api/users/${userId}`, {
         method: 'DELETE',
         headers: {
           'Authorization': `Bearer ${token}`
