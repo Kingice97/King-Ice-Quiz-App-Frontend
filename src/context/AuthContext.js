@@ -18,7 +18,7 @@ export const AuthProvider = ({ children }) => {
   const [error, setError] = useState('');
 
   // DEBUG: Log when AuthContext loads
-  console.log('🔄 DEBUG: AuthContext.js LOADED - version 1.0.3');
+  console.log('🔄 DEBUG: AuthContext.js LOADED - version 1.0.4 - FIXED AUTH CHECK');
 
   useEffect(() => {
     checkAuth();
@@ -32,60 +32,76 @@ export const AuthProvider = ({ children }) => {
       console.log('🔐 Auth Check Debug:', { 
         tokenExists: !!token, 
         userDataExists: !!userData,
-        userData: userData ? JSON.parse(userData) : 'No user data'
+        userData: userData ? 'Exists' : 'No user data'
       });
       
-      if (token && userData) {
+      // ✅ FIXED: Only clear data if both token AND userData are missing
+      if (!token && !userData) {
+        console.log('🚫 No auth data found - user not logged in');
+        setUser(null);
+        setLoading(false);
+        return;
+      }
+      
+      // ✅ FIXED: If we have userData but no token, use cached data
+      if (userData && !token) {
+        console.log('⚠️ User data exists but no token - using cached data');
+        try {
+          const parsedUser = JSON.parse(userData);
+          setUser(parsedUser);
+          setLoading(false);
+          return;
+        } catch (parseError) {
+          console.error('Error parsing cached user data:', parseError);
+          clearAuthData();
+          setLoading(false);
+          return;
+        }
+      }
+      
+      // ✅ FIXED: If we have token, try to verify but don't clear on failure
+      if (token) {
         try {
           // Set user immediately from localStorage for better UX
-          const parsedUser = JSON.parse(userData);
-          console.log('📋 Setting user from localStorage:', parsedUser);
-          setUser(parsedUser);
+          if (userData) {
+            const parsedUser = JSON.parse(userData);
+            console.log('📋 Setting user from localStorage:', parsedUser.username);
+            setUser(parsedUser);
+          }
           
           console.log('🔄 Verifying token with backend...');
           const freshUserData = await authService.getMe();
-          console.log('✅ Token valid, fresh user data:', freshUserData);
+          console.log('✅ Token valid, fresh user data received');
           
-          // NEW: Set user as online when they authenticate
+          // Update with fresh data and store it
           const userWithOnlineStatus = {
             ...freshUserData,
             isOnline: true
           };
           
-          // Update with fresh data and store it
           setUser(userWithOnlineStatus);
           localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
           console.log('🎉 Auth successful with fresh data');
+          
         } catch (authError) {
-          console.error('❌ Token invalid or getMe failed:', authError);
-          // Don't clear auth data immediately - use cached data as fallback
-          console.log('🔄 Using cached user data due to API error');
-          // Keep using the localStorage data for now
-        }
-      } else if (token && !userData) {
-        // Token exists but no user data - try to get user data
-        try {
-          console.log('🔄 Token found but no user data, fetching user...');
-          const freshUserData = await authService.getMe();
-          console.log('✅ Fetched user data:', freshUserData);
+          console.error('❌ Token verification failed:', authError.message);
           
-          // NEW: Set user as online
-          const userWithOnlineStatus = {
-            ...freshUserData,
-            isOnline: true
-          };
-          
-          setUser(userWithOnlineStatus);
-          localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
-          console.log('✅ User data restored from API');
-        } catch (error) {
-          console.error('❌ Failed to restore user data from API:', error);
-          // If API fails but we have a token, clear everything
-          clearAuthData();
+          // ✅ FIXED: Don't clear data immediately - use cached data as fallback
+          if (userData) {
+            console.log('🔄 Using cached user data due to API error');
+            try {
+              const parsedUser = JSON.parse(userData);
+              setUser(parsedUser);
+              console.log('✅ Using cached user data:', parsedUser.username);
+            } catch (parseError) {
+              console.error('Error parsing cached user data:', parseError);
+              clearAuthData();
+            }
+          } else {
+            console.log('🔄 No cached user data available, clearing auth');
+            clearAuthData();
+          }
         }
-      } else {
-        console.log('🚫 No valid auth data found');
-        clearAuthData();
       }
     } catch (error) {
       console.error('💥 Auth check failed:', error);
@@ -93,7 +109,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔄 Keeping existing auth data due to unexpected error');
     } finally {
       setLoading(false);
-      console.log('🏁 Auth check completed, loading:', false);
+      console.log('🏁 Auth check completed, loading:', false, 'user:', user ? user.username : 'none');
     }
   };
 
@@ -306,6 +322,9 @@ export const AuthProvider = ({ children }) => {
       console.error('💥 Profile picture update error:', error);
       const message = error.response?.data?.message || 'Profile picture update failed';
       setError(message);
+      
+      // ✅ FIXED: Don't clear auth data on upload failure
+      // Just throw the error and let the component handle it
       throw error;
     }
   };

@@ -1,20 +1,20 @@
 import axios from 'axios';
 
+console.log('🔄 DEBUG: api.js LOADED - version 1.0.6 - FIXED AUTH REDIRECT');
 
-// DEBUG: Check if api.js is loaded correctly
-console.log('🔄 DEBUG: api.js LOADED - version 1.0.4 - FIXED');
-console.log('🔄 DEBUG: API_URL:', process.env.REACT_APP_API_URL);
-// ✅ CORRECT: No /api in the base URL
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+// ✅ FIXED: Use the correct Render URL
+const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+
+console.log('🔄 DEBUG: API_URL:', API_URL);
 
 // Create axios instance with better configuration
 const api = axios.create({
-  baseURL: API_URL + '/api',  // ✅ Add /api here only
-  timeout: 15000, // Increased timeout for file uploads and chat
+  baseURL: API_URL + '/api',
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
-  withCredentials: true, // Important for cookies and sessions
+  withCredentials: false,
 });
 
 // Track if we're already redirecting to prevent multiple redirects
@@ -29,21 +29,22 @@ api.interceptors.request.use(
     if (process.env.NODE_ENV === 'development') {
       console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
         hasToken: !!token,
-        data: config.data,
-        params: config.params
+        endpoint: config.url
       });
     }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
+      console.log('🔐 Token added to request:', token.substring(0, 20) + '...');
+    } else {
+      console.log('⚠️ No token found for request');
     }
     
     // Special handling for file uploads
     if (config.data instanceof FormData) {
       config.headers['Content-Type'] = 'multipart/form-data';
-      // Remove timeout for file uploads as they can take longer
       if (config.url?.includes('/upload')) {
-        config.timeout = 30000; // 30 seconds for uploads
+        config.timeout = 30000;
       }
     }
     
@@ -55,7 +56,7 @@ api.interceptors.request.use(
   }
 );
 
-// Response interceptor - improved with better error handling
+// Response interceptor - FIXED: Prevent automatic redirect on 401
 api.interceptors.response.use(
   (response) => {
     // Log successful responses in development
@@ -81,54 +82,57 @@ api.interceptors.response.use(
         url: originalRequest?.url,
         method: originalRequest?.method,
         message: data?.message || error.message,
-        data: data
       });
       
+      // ✅ FIXED: Only redirect on 401 for specific endpoints, not upload
       if (status === 401) {
-        // Unauthorized - clear token and redirect to login
-        console.log('🛑 401 Unauthorized - clearing auth data');
+        console.log('🛑 401 Unauthorized - checking if we should redirect...');
         
-        // Clear auth data
-        localStorage.removeItem('token');
-        localStorage.removeItem('userData');
-        
-        // Prevent multiple redirects
-        if (!isRedirecting && !window.location.pathname.includes('/login')) {
-          isRedirecting = true;
+        // Don't redirect for upload endpoints - let the component handle it
+        if (originalRequest?.url?.includes('/upload')) {
+          console.log('📸 Upload request failed with 401 - not redirecting');
+          error.userMessage = 'Please log in again to upload files.';
+        } 
+        // Only redirect for auth-related endpoints
+        else if (originalRequest?.url?.includes('/auth/me') || 
+                 originalRequest?.url?.includes('/users/profile')) {
+          console.log('🔐 Auth check failed - redirecting to login');
           
-          // Use setTimeout to avoid React state updates during render
-          setTimeout(() => {
-            window.location.href = '/login?session=expired';
-          }, 100);
+          // Clear auth data
+          localStorage.removeItem('token');
+          localStorage.removeItem('userData');
+          
+          // Prevent multiple redirects
+          if (!isRedirecting && !window.location.pathname.includes('/login')) {
+            isRedirecting = true;
+            
+            // Use setTimeout to avoid React state updates during render
+            setTimeout(() => {
+              window.location.href = '/login?session=expired';
+            }, 100);
+          }
+        } else {
+          console.log('⚠️ 401 on non-auth endpoint - not redirecting');
+          error.userMessage = data?.message || 'Authentication required.';
         }
       }
       
       else if (status === 403) {
-        // Forbidden - user doesn't have permission
         console.error('🔒 Forbidden:', data?.message || 'Access denied');
-        
-        // Show user-friendly message for 403 errors
-        if (data?.message) {
-          error.userMessage = data.message;
-        } else {
-          error.userMessage = 'You do not have permission to perform this action.';
-        }
+        error.userMessage = data?.message || 'You do not have permission to perform this action.';
       }
       
       else if (status === 404) {
-        // Not found
         console.error('🔍 404 Not Found:', originalRequest?.url);
         error.userMessage = data?.message || 'The requested resource was not found.';
       }
       
       else if (status === 429) {
-        // Rate limited
         console.error('🚦 429 Rate Limited');
         error.userMessage = 'Too many requests. Please wait a moment and try again.';
       }
       
       else if (status >= 500) {
-        // Server error
         console.error('💥 Server Error:', status, data?.message);
         error.userMessage = data?.message || 'Server error. Please try again later.';
       }
@@ -159,13 +163,6 @@ api.interceptors.response.use(
       error.userMessage = 'An unexpected error occurred. Please try again.';
     }
     
-    // Add original request info to error for debugging
-    error.requestInfo = {
-      url: originalRequest?.url,
-      method: originalRequest?.method,
-      baseURL: originalRequest?.baseURL
-    };
-    
     return Promise.reject(error);
   }
 );
@@ -174,6 +171,13 @@ api.interceptors.response.use(
 export const isAuthenticated = () => {
   const token = localStorage.getItem('token');
   const userData = localStorage.getItem('userData');
+  
+  console.log('🔐 Auth check:', {
+    tokenExists: !!token,
+    userDataExists: !!userData,
+    token: token ? token.substring(0, 20) + '...' : 'none'
+  });
+  
   return !!(token && userData);
 };
 
@@ -181,7 +185,10 @@ export const isAuthenticated = () => {
 export const getCurrentUser = () => {
   try {
     const userData = localStorage.getItem('userData');
-    return userData ? JSON.parse(userData) : null;
+    const user = userData ? JSON.parse(userData) : null;
+    
+    console.log('👤 Current user:', user ? user.username : 'none');
+    return user;
   } catch (error) {
     console.error('Error parsing user data:', error);
     return null;
@@ -191,6 +198,7 @@ export const getCurrentUser = () => {
 // Helper function to set auth tokens
 export const setAuthToken = (token) => {
   localStorage.setItem('token', token);
+  console.log('💾 Token saved to localStorage');
 };
 
 // Helper function to clear auth data
@@ -198,6 +206,7 @@ export const clearAuthData = () => {
   localStorage.removeItem('token');
   localStorage.removeItem('userData');
   isRedirecting = false;
+  console.log('🧹 Auth data cleared');
 };
 
 // Create a cancel token source for cancelling requests
