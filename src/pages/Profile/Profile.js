@@ -50,17 +50,30 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [imageError, setImageError] = useState(false);
 
-  // Only fetch user stats if user is NOT admin
-  const { data: statsData, loading: statsLoading } = useApi(() =>
-    user?.role !== 'admin' ? userService.getUserStats() : Promise.resolve({ data: { overall: {} } })
+  // FIXED: Fetch user stats for all users (including admin if needed)
+  const { data: statsData, loading: statsLoading, refetch: refetchStats } = useApi(() =>
+    userService.getUserStats ? userService.getUserStats() : Promise.resolve({ data: { overall: {} } })
   );
 
-  // Only fetch results if user is NOT admin
+  // FIXED: Fetch results for all users who can take quizzes
   const { data: resultsData, loading: resultsLoading } = useApi(() =>
-    user?.role !== 'admin' ? quizService.getResults({ limit: 10 }) : Promise.resolve({ data: [] })
+    quizService.getResults ? quizService.getResults({ limit: 10 }) : Promise.resolve({ data: [] })
   );
 
-  const stats = statsData?.data?.overall || {};
+  // FIXED: Use direct user stats if available, otherwise use fetched stats
+  const userStats = user?.stats || {};
+  const fetchedStats = statsData?.data?.overall || {};
+  
+  // Combine stats - prefer fetched stats, fallback to user stats
+  const stats = {
+    quizzesTaken: fetchedStats.quizzesTaken || userStats.quizzesTaken || 0,
+    averageScore: fetchedStats.averageScore || userStats.averageScore || 0,
+    bestScore: fetchedStats.bestScore || userStats.bestScore || 0,
+    successRate: fetchedStats.successRate || userStats.successRate || 0,
+    messagesSent: fetchedStats.messagesSent || userStats.messagesSent || 0,
+    chatParticipation: fetchedStats.chatParticipation || userStats.chatParticipation || 0
+  };
+
   const recentResults = resultsData?.data || [];
 
   const [editForm, setEditForm] = useState({
@@ -103,6 +116,11 @@ const Profile = () => {
       await updateUser(editForm);
       setMessage('Profile updated successfully!');
       setShowEditModal(false);
+      
+      // Refresh stats after profile update
+      if (refetchStats) {
+        refetchStats();
+      }
       
       // Clear message after 3 seconds
       setTimeout(() => setMessage(''), 3000);
@@ -272,36 +290,34 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Show stats only for regular users */}
-        {user?.role !== 'admin' && (
-          <div className="profile-stats">
-            <div className="stat-card">
-              <div className="stat-value">{stats.totalQuizzesTaken || 0}</div>
-              <div className="stat-label">Quizzes Taken</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(stats.averageScore || 0)}%</div>
-              <div className="stat-label">Average Score</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(stats.bestScore || 0)}%</div>
-              <div className="stat-label">Best Score</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(stats.successRate || 0)}%</div>
-              <div className="stat-label">Success Rate</div>
-            </div>
-            {/* Chat stats */}
-            <div className="stat-card">
-              <div className="stat-value">{stats.messagesSent || 0}</div>
-              <div className="stat-label">Messages Sent</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{stats.chatParticipation || 0}</div>
-              <div className="stat-label">Chat Rooms</div>
-            </div>
+        {/* Show stats for all users - admins can see their quiz stats too */}
+        <div className="profile-stats">
+          <div className="stat-card">
+            <div className="stat-value">{stats.quizzesTaken}</div>
+            <div className="stat-label">Quizzes Taken</div>
           </div>
-        )}
+          <div className="stat-card">
+            <div className="stat-value">{Math.round(stats.averageScore)}%</div>
+            <div className="stat-label">Average Score</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{Math.round(stats.bestScore)}%</div>
+            <div className="stat-label">Best Score</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{Math.round(stats.successRate)}%</div>
+            <div className="stat-label">Success Rate</div>
+          </div>
+          {/* Chat stats */}
+          <div className="stat-card">
+            <div className="stat-value">{stats.messagesSent}</div>
+            <div className="stat-label">Messages Sent</div>
+          </div>
+          <div className="stat-card">
+            <div className="stat-value">{stats.chatParticipation}</div>
+            <div className="stat-label">Chat Rooms</div>
+          </div>
+        </div>
 
         {/* Tabs - Updated with Chat tab */}
         <div className="profile-tabs">
@@ -439,11 +455,11 @@ const Profile = () => {
                 <h3>Chat Statistics</h3>
                 <div className="chat-stats-grid">
                   <div className="chat-stat-card">
-                    <div className="chat-stat-value">{stats.messagesSent || 0}</div>
+                    <div className="chat-stat-value">{stats.messagesSent}</div>
                     <div className="chat-stat-label">Total Messages</div>
                   </div>
                   <div className="chat-stat-card">
-                    <div className="chat-stat-value">{stats.chatParticipation || 0}</div>
+                    <div className="chat-stat-value">{stats.chatParticipation}</div>
                     <div className="chat-stat-label">Active Chat Rooms</div>
                   </div>
                   <div className="chat-stat-card">
