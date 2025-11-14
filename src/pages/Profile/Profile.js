@@ -16,20 +16,26 @@ const Profile = () => {
   const { user, updateUser, updatePassword } = useAuth();
   const { isConnected } = useSocket();
 
-  // FIXED: Get the correct profile picture path
+  // ✅ FIXED: Use Cloudinary URL directly - no server URL concatenation
   const getProfilePictureUrl = () => {
     if (!user?.profile?.picture) return null;
     
-    const baseUrl = process.env.REACT_APP_API_URL || 'http://localhost:5000';
-    const picturePath = user.profile.picture;
+    const pictureUrl = user.profile.picture;
     
-    // Ensure the path starts with /uploads
-    const fullUrl = picturePath.startsWith('/uploads') 
-      ? `${baseUrl}${picturePath}`
-      : `${baseUrl}/uploads/${picturePath}`;
+    // ✅ FIX: If it's already a full Cloudinary URL, use it directly
+    // If it's a local path (starts with /uploads), then add server URL
+    if (pictureUrl.startsWith('http')) {
+      console.log('🔍 Profile Debug - Cloudinary URL:', pictureUrl);
+      return pictureUrl;
+    } else if (pictureUrl.startsWith('/uploads')) {
+      const baseUrl = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+      const fullUrl = `${baseUrl}${pictureUrl}`;
+      console.log('🔍 Profile Debug - Local URL:', fullUrl);
+      return fullUrl;
+    }
     
-    console.log('🔍 Profile Debug - Profile Picture URL:', fullUrl);
-    return fullUrl;
+    console.log('🔍 Profile Debug - Unknown URL format:', pictureUrl);
+    return pictureUrl;
   };
 
   const profilePictureUrl = getProfilePictureUrl();
@@ -164,8 +170,14 @@ const Profile = () => {
 
   // Handle image loading error
   const handleImageError = (e) => {
-    console.error('❌ Profile image failed to load:', e);
+    console.error('❌ Profile image failed to load:', profilePictureUrl);
     setImageError(true);
+  };
+
+  // Handle image load success
+  const handleImageLoad = () => {
+    console.log('✅ Profile image loaded successfully:', profilePictureUrl);
+    setImageError(false);
   };
 
   const formatDate = (dateString) => {
@@ -202,7 +214,7 @@ const Profile = () => {
                   src={profilePictureUrl}
                   alt={user.username}
                   className="profile-picture"
-                  onLoad={() => console.log('✅ Profile image loaded successfully')}
+                  onLoad={handleImageLoad}
                   onError={handleImageError}
                 />
               ) : (

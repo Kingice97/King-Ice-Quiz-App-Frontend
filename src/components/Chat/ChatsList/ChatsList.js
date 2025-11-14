@@ -59,7 +59,8 @@ const ChatsList = ({
 
   const getProfilePicture = (participant) => {
     if (participant?.profile?.picture) {
-      return `${process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com'}${participant.profile.picture}`;
+      // Replace with:
+return participant.profile.picture; // Use Cloudinary URL directly
     }
     return null;
   };

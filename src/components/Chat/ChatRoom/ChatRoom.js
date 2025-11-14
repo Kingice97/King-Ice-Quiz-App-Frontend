@@ -372,7 +372,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   <div className="message-avatar">
                     {message.profilePicture ? (
                       <img 
-                       src={`${process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com'}${message.profilePicture}`}
+                       // Replace with:
+                        src={message.profilePicture}
                         alt={message.username}
                         onError={(e) => {
                           e.target.style.display = 'none';

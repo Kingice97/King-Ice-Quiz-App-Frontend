@@ -174,7 +174,8 @@ const UserSearch = ({ onUserSelect, onSearchResults, currentUserId }) => {
                   <div className="user-avatar">
                     {user.profile?.picture ? (
                       <img 
-                        src={`${process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com'}${user.profile.picture}`} 
+                        // Replace with:
+                        src={user.profile.picture}
                         alt={user.username}
                         className="avatar-image"
                         onError={(e) => {
