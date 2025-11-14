@@ -17,6 +17,9 @@ export const AuthProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
 
+  // DEBUG: Log when AuthContext loads
+  console.log('🔄 DEBUG: AuthContext.js LOADED - version 1.0.3');
+
   useEffect(() => {
     checkAuth();
   }, []);
@@ -105,10 +108,20 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       setLoading(true);
-      console.log('🔐 Login attempt with:', { email: credentials.email });
+      console.log('🔐 DEBUG: Login function called with:', { email: credentials.email });
       
+      // DEBUG: Log what authService.login actually is
+      console.log('🔐 DEBUG: authService.login function:', authService.login);
+      console.log('🔐 DEBUG: authService object:', authService);
+      
+      // DEBUG: Test if the function exists and is callable
+      if (typeof authService.login !== 'function') {
+        throw new Error('authService.login is not a function!');
+      }
+      
+      console.log('🔐 DEBUG: Calling authService.login...');
       const response = await authService.login(credentials);
-      console.log('✅ Login API response received:', response);
+      console.log('🔐 DEBUG: authService.login response:', response);
       
       const { token, user } = response;
       
@@ -135,6 +148,11 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (error) {
       console.error('💥 Login error:', error);
+      console.error('💥 Login error details:', {
+        message: error.message,
+        response: error.response,
+        config: error.config
+      });
       
       // Extract error message
       let message = 'Login failed';
@@ -158,10 +176,19 @@ export const AuthProvider = ({ children }) => {
     try {
       setError('');
       setLoading(true);
-      console.log('📝 Registration attempt with:', { username: userData.username, email: userData.email });
+      console.log('📝 DEBUG: Register function called with:', { username: userData.username, email: userData.email });
       
+      // DEBUG: Log what authService.register actually is
+      console.log('📝 DEBUG: authService.register function:', authService.register);
+      
+      // DEBUG: Test if the function exists and is callable
+      if (typeof authService.register !== 'function') {
+        throw new Error('authService.register is not a function!');
+      }
+      
+      console.log('📝 DEBUG: Calling authService.register...');
       const response = await authService.register(userData);
-      console.log('✅ Registration API response:', response);
+      console.log('📝 DEBUG: authService.register response:', response);
       
       const { token, user } = response;
       
@@ -183,6 +210,12 @@ export const AuthProvider = ({ children }) => {
       return response;
     } catch (error) {
       console.error('💥 Registration error:', error);
+      console.error('💥 Registration error details:', {
+        message: error.message,
+        response: error.response,
+        config: error.config
+      });
+      
       const message = error.response?.data?.message || error.message || 'Registration failed';
       setError(message);
       clearAuthData();
