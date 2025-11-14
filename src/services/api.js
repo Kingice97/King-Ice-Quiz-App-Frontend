@@ -1,5 +1,11 @@
 import axios from 'axios';
 
+
+// DEBUG: Check if api.js is loaded correctly
+console.log('🔄 DEBUG: api.js LOADED - version 1.0.4');
+console.log('🔄 DEBUG: API_URL:', process.env.REACT_APP_API_URL);
+console.log('🔄 DEBUG: Expected baseURL:', (process.env.REACT_APP_API_URL || 'http://localhost:5000') + '/api');
+
 // ✅ CORRECT: No /api in the base URL
 const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 
