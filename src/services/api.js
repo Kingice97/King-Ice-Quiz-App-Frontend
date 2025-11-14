@@ -1,10 +1,8 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000/api';
-
-// Create axios instance with better configuration
+const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
 const api = axios.create({
-  baseURL: API_URL,
+  baseURL: API_URL + '/api',
   timeout: 15000, // Increased timeout for file uploads and chat
   headers: {
     'Content-Type': 'application/json',
