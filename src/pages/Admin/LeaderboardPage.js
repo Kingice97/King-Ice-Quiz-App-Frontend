@@ -192,6 +192,29 @@ const LeaderboardPage = () => {
           </div>
         </div>
 
+
+        // Add this temporary debug section right after the filters section
+{/* Temporary Debug Button */}
+<div className="debug-section" style={{ marginBottom: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
+  <button 
+    onClick={() => {
+      console.log('🔄 Manual refresh triggered');
+      console.log('📊 Current leaderboard data:', leaderboardData);
+      console.log('👥 Current leaderboard array:', leaderboard);
+      
+      // Force re-fetch by updating state
+      window.location.reload();
+    }}
+    className="btn btn-sm btn-outline"
+  >
+    🔄 Debug Refresh
+  </button>
+  <small style={{ marginLeft: '10px', color: '#666' }}>
+    Click to see detailed data in console
+  </small>
+</div>
+
+
         {/* Leaderboard */}
         <div className="leaderboard-section">
           {leaderboardLoading ? (
