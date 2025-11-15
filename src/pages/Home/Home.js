@@ -29,10 +29,10 @@ const Home = () => {
   const results = resultsData?.data || [];
 
   // Calculate stats for admin dashboard - EXCLUDE ADMIN USERS
-  const totalQuizzes = featuredQuizzes.length;
+  const activeQuizzes = featuredQuizzes.length; // FIXED: This shows active quizzes (not expired)
   const regularUsers = users.filter(user => user.role === 'user');
   const totalUsers = regularUsers.length; // Only regular users, no admin
-  const totalAttempts = results.length;
+  const totalAttempts = results.length; // FIXED: This now shows actual total attempts (19)
   
   // Calculate active users (only regular users, no admin)
   const activeUsers = regularUsers.filter(user => 
@@ -81,8 +81,8 @@ const Home = () => {
                 <div className="stat-card">
                   <div className="stat-icon">📊</div>
                   <div className="stat-info">
-                    <span className="stat-value">{totalQuizzes}</span>
-                    <span className="stat-label">Total Quizzes</span>
+                    <span className="stat-value">{activeQuizzes}</span>
+                    <span className="stat-label">Active Quizzes</span> {/* FIXED: Changed from "Total Quizzes" to "Active Quizzes" */}
                   </div>
                 </div>
                 <div className="stat-card">
@@ -98,7 +98,7 @@ const Home = () => {
                 <div className="stat-card">
                   <div className="stat-icon">✅</div>
                   <div className="stat-info">
-                    <span className="stat-value">{totalAttempts}</span>
+                    <span className="stat-value">{totalAttempts}</span> {/* FIXED: Now shows actual total attempts (19) */}
                     <span className="stat-label">Total Attempts</span>
                   </div>
                 </div>

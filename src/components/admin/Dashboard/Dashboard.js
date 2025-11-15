@@ -13,7 +13,7 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
   };
 
   // Calculate user counts EXCLUDING admin (assuming 1 admin user)
-  const regularUsersCount = stats.totalUsers ? Math.max(0, stats.totalUsers - 1) : 0;
+  const regularUsersCount = stats.totalUsers || 0; // FIXED: Use actual totalUsers from stats
   const activeRegularUsers = stats.activeUsers || 0;
 
   // Admin quick actions
@@ -42,7 +42,7 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
         <div className="stat-card admin-stat">
           <div className="stat-icon">👥</div>
           <div className="stat-info">
-            <span className="stat-value">{regularUsersCount}</span>
+            <span className="stat-value">{regularUsersCount}</span> {/* FIXED: Show actual total users count */}
             <span className="stat-label">Total Users</span>
           </div>
         </div>
