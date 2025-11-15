@@ -50,25 +50,25 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [imageError, setImageError] = useState(false);
 
-  // FIXED: Proper stats fetching with fallbacks
+  // FIXED: Only fetch user stats for regular users, not admins
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useApi(() =>
-    userService.getUserStats()
+    user?.role !== 'admin' ? userService.getUserStats() : Promise.resolve({ data: { overall: {} } })
   );
 
-  // FIXED: Fetch results for all users who can take quizzes
+  // FIXED: Only fetch results for regular users, not admins
   const { data: resultsData, loading: resultsLoading } = useApi(() =>
-    quizService.getResults ? quizService.getResults({ limit: 10 }) : Promise.resolve({ data: [] })
+    user?.role !== 'admin' ? quizService.getResults({ limit: 10 }) : Promise.resolve({ data: [] })
   );
 
   // FIXED: Use fetched stats with proper fallbacks
   const stats = statsData?.data?.overall || {};
 
-  // If no fetched stats, use user context stats as fallback
+  // If no fetched stats, use user context stats as fallback (only for regular users)
   const finalStats = {
-    quizzesTaken: stats.totalQuizzesTaken || stats.quizzesTaken || user?.stats?.quizzesTaken || 0,
-    averageScore: stats.averageScore || user?.stats?.averageScore || 0,
-    bestScore: stats.bestScore || user?.stats?.bestScore || 0,
-    successRate: stats.successRate || user?.stats?.successRate || 0,
+    quizzesTaken: user?.role !== 'admin' ? (stats.totalQuizzesTaken || stats.quizzesTaken || user?.stats?.quizzesTaken || 0) : 0,
+    averageScore: user?.role !== 'admin' ? (stats.averageScore || user?.stats?.averageScore || 0) : 0,
+    bestScore: user?.role !== 'admin' ? (stats.bestScore || user?.stats?.bestScore || 0) : 0,
+    successRate: user?.role !== 'admin' ? (stats.successRate || user?.stats?.successRate || 0) : 0,
     messagesSent: stats.messagesSent || user?.stats?.messagesSent || 0,
     chatParticipation: stats.chatParticipation || user?.stats?.chatParticipation || 0
   };
@@ -116,8 +116,8 @@ const Profile = () => {
       setMessage('Profile updated successfully!');
       setShowEditModal(false);
       
-      // Refresh stats after profile update
-      if (refetchStats) {
+      // Refresh stats after profile update (only for regular users)
+      if (refetchStats && user?.role !== 'admin') {
         refetchStats();
       }
       
@@ -289,42 +289,66 @@ const Profile = () => {
           </div>
         </div>
 
-        {/* Show stats for all users - admins can see their quiz stats too */}
-        {statsLoading ? (
-          <div className="stats-loading">
-            <Loading text="Loading statistics..." />
-          </div>
+        {/* Show stats only for regular users, not admins */}
+        {user?.role !== 'admin' ? (
+          statsLoading ? (
+            <div className="stats-loading">
+              <Loading text="Loading statistics..." />
+            </div>
+          ) : (
+            <div className="profile-stats">
+              <div className="stat-card">
+                <div className="stat-value">{finalStats.quizzesTaken}</div>
+                <div className="stat-label">Quizzes Taken</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{Math.round(finalStats.averageScore)}%</div>
+                <div className="stat-label">Average Score</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{Math.round(finalStats.bestScore)}%</div>
+                <div className="stat-label">Best Score</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{Math.round(finalStats.successRate)}%</div>
+                <div className="stat-label">Success Rate</div>
+              </div>
+              {/* Chat stats - show for all users */}
+              <div className="stat-card">
+                <div className="stat-value">{finalStats.messagesSent}</div>
+                <div className="stat-label">Messages Sent</div>
+              </div>
+              <div className="stat-card">
+                <div className="stat-value">{finalStats.chatParticipation}</div>
+                <div className="stat-label">Chat Rooms</div>
+              </div>
+            </div>
+          )
         ) : (
-          <div className="profile-stats">
-            <div className="stat-card">
-              <div className="stat-value">{finalStats.quizzesTaken}</div>
-              <div className="stat-label">Quizzes Taken</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(finalStats.averageScore)}%</div>
-              <div className="stat-label">Average Score</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(finalStats.bestScore)}%</div>
-              <div className="stat-label">Best Score</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{Math.round(finalStats.successRate)}%</div>
-              <div className="stat-label">Success Rate</div>
-            </div>
-            {/* Chat stats */}
-            <div className="stat-card">
-              <div className="stat-value">{finalStats.messagesSent}</div>
-              <div className="stat-label">Messages Sent</div>
-            </div>
-            <div className="stat-card">
-              <div className="stat-value">{finalStats.chatParticipation}</div>
-              <div className="stat-label">Chat Rooms</div>
+          // Admin-specific stats/message
+          <div className="admin-stats-message">
+            <div className="admin-message-card">
+              <h3>👑 Administrator Dashboard</h3>
+              <p>As an administrator, you manage quizzes, users, and platform analytics.</p>
+              <div className="admin-quick-stats">
+                <div className="admin-stat">
+                  <span className="admin-stat-icon">📊</span>
+                  <span>Access Analytics</span>
+                </div>
+                <div className="admin-stat">
+                  <span className="admin-stat-icon">👥</span>
+                  <span>Manage Users</span>
+                </div>
+                <div className="admin-stat">
+                  <span className="admin-stat-icon">📝</span>
+                  <span>Create Quizzes</span>
+                </div>
+              </div>
             </div>
           </div>
         )}
 
-        {/* Tabs - Updated with Chat tab */}
+        {/* Tabs - Updated with proper admin/user differentiation */}
         <div className="profile-tabs">
           <button
             className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
@@ -332,6 +356,7 @@ const Profile = () => {
           >
             Overview
           </button>
+          {/* Only show Quiz History for regular users */}
           {user?.role !== 'admin' && (
             <button
               className={`tab ${activeTab === 'history' ? 'active' : ''}`}
@@ -354,7 +379,7 @@ const Profile = () => {
           </button>
         </div>
 
-        {/* Tab Content - Updated with Chat tab */}
+        {/* Tab Content - Updated with proper admin/user differentiation */}
         <div className="tab-content">
           {activeTab === 'overview' && (
             <div className="overview-tab">
@@ -456,7 +481,7 @@ const Profile = () => {
             </div>
           )}
 
-          {/* Chat Activity Tab */}
+          {/* Chat Activity Tab - Show for all users */}
           {activeTab === 'chat' && (
             <div className="chat-tab">
               <div className="chat-stats">
