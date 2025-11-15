@@ -63,7 +63,8 @@ getUserStats: async () => {
   }
 },
 
-// Enhanced getLeaderboard with debugging
+
+// Enhanced getLeaderboard with detailed debugging
 getLeaderboard: async (params = {}) => {
   try {
     console.log('🏆 Fetching leaderboard with params:', params);
@@ -72,10 +73,37 @@ getLeaderboard: async (params = {}) => {
       params,
       headers: { Authorization: `Bearer ${token}` }
     });
-    console.log('✅ Leaderboard API response:', response.data);
+    
+    // FIXED: More detailed logging
+    console.log('✅ Leaderboard API FULL response object:', response);
+    console.log('✅ Leaderboard API response.data:', response.data);
+    console.log('✅ Leaderboard API response.status:', response.status);
+    
+    // Log the actual data structure in detail
+    if (response.data && response.data.data) {
+      console.log('📊 Leaderboard data array length:', response.data.data.length);
+      console.log('📊 Leaderboard data array:', response.data.data);
+      
+      // Log each user's data structure
+      response.data.data.forEach((user, index) => {
+        console.log(`👤 User ${index + 1} full data:`, JSON.stringify(user, null, 2));
+        console.log(`📈 User ${index + 1} stats:`, {
+          username: user.username,
+          bestScore: user.bestScore,
+          averageScore: user.averageScore,
+          quizzesTaken: user.quizzesTaken,
+          totalPoints: user.totalPoints,
+          userObject: user.user // Check if user data is nested
+        });
+      });
+    } else {
+      console.warn('⚠️ No data array found in response:', response.data);
+    }
+    
     return response.data;
   } catch (error) {
     console.error('❌ Leaderboard API error:', error);
+    console.error('❌ Error response:', error.response);
     console.error('❌ Error details:', error.response?.data);
     // Return empty data structure instead of throwing error
     return { 
@@ -85,6 +113,7 @@ getLeaderboard: async (params = {}) => {
     };
   }
 },
+
 
   // Profile picture upload
   uploadProfilePicture: async (formData) => {
