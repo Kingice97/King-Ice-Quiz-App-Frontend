@@ -13,7 +13,24 @@ const LeaderboardPage = () => {
     userService.getLeaderboard({ limit })
   );
 
-  const leaderboard = leaderboardData?.data || [];
+  // DEBUG: Log the actual data structure
+  console.log('🔍 Leaderboard Debug - Raw Data:', leaderboardData);
+  
+  // FIXED: Handle different possible data structures
+  const leaderboard = React.useMemo(() => {
+    if (!leaderboardData) return [];
+    
+    // Handle different response structures
+    if (Array.isArray(leaderboardData.data)) {
+      return leaderboardData.data;
+    } else if (Array.isArray(leaderboardData)) {
+      return leaderboardData;
+    } else if (leaderboardData.leaderboard) {
+      return leaderboardData.leaderboard;
+    }
+    
+    return [];
+  }, [leaderboardData]);
 
   // Filter by time period (you can enhance this with actual date filtering from backend)
   const filteredLeaderboard = leaderboard.filter(user => {
@@ -34,6 +51,36 @@ const LeaderboardPage = () => {
     if (rank === 2) return '🥈';
     if (rank === 3) return '🥉';
     return `#${rank}`;
+  };
+
+  // FIXED: Enhanced username extraction
+  const getUsername = (user) => {
+    // Try different possible field names for username
+    if (user.username) return user.username;
+    if (user.user?.username) return user.user.username;
+    if (user.userName) return user.userName;
+    if (user.user?.userName) return user.user.userName;
+    if (user._id) return `User_${user._id.slice(-6)}`; // Fallback to user ID
+    return 'Unknown User';
+  };
+
+  // FIXED: Enhanced user object extraction
+  const getUserObject = (user) => {
+    return user.user || user;
+  };
+
+  // FIXED: Enhanced stats extraction
+  const getUserStats = (user) => {
+    const userObj = getUserObject(user);
+    
+    return {
+      quizzesTaken: user.quizzesTaken || userObj.quizzesTaken || user.stats?.quizzesTaken || 0,
+      averageScore: user.averageScore || userObj.averageScore || user.stats?.averageScore || 0,
+      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || 0,
+      totalPoints: user.totalPoints || userObj.totalPoints || user.stats?.totalPoints || 0,
+      createdAt: user.createdAt || userObj.createdAt,
+      role: user.role || userObj.role
+    };
   };
 
   // FIXED: Safe date formatting function
@@ -67,17 +114,6 @@ const LeaderboardPage = () => {
     }
   };
 
-  // FIXED: Get username from different possible field names
-  const getUsername = (user) => {
-    // Try different possible field names for username
-    return user.username || user.user?.username || user.userName || 'Unknown User';
-  };
-
-  // FIXED: Get user object for avatar and other info
-  const getUserObject = (user) => {
-    return user.user || user;
-  };
-
   return (
     <div className="leaderboard-page">
       <Helmet>
@@ -94,7 +130,10 @@ const LeaderboardPage = () => {
             <span>Total Users: {leaderboard.length}</span>
             <span>
               Platform Average: {leaderboard.length > 0 
-                ? Math.round(leaderboard.reduce((sum, user) => sum + (user.averageScore || 0), 0) / leaderboard.length)
+                ? Math.round(leaderboard.reduce((sum, user) => {
+                    const stats = getUserStats(user);
+                    return sum + (stats.averageScore || 0);
+                  }, 0) / leaderboard.length)
                 : 0
               }%
             </span>
@@ -134,15 +173,21 @@ const LeaderboardPage = () => {
             <>
               <div className="leaderboard-stats">
                 <span>Showing: {filteredLeaderboard.length} users</span>
+                {leaderboard.length === 0 && (
+                  <div className="data-warning">
+                    <small>No leaderboard data found. Check if users have taken quizzes.</small>
+                  </div>
+                )}
               </div>
 
               <div className="leaderboard-list">
                 {filteredLeaderboard.map((user, index) => {
-                  const userObj = getUserObject(user);
                   const username = getUsername(user);
+                  const stats = getUserStats(user);
+                  const userObj = getUserObject(user);
                   
                   return (
-                    <div key={user._id || index} className="leaderboard-item">
+                    <div key={user._id || user.user?._id || index} className="leaderboard-item">
                       <div className="rank-section">
                         <div 
                           className="rank-badge"
@@ -157,10 +202,9 @@ const LeaderboardPage = () => {
                           {username.charAt(0).toUpperCase()}
                         </div>
                         <div className="user-info">
-                          {/* FIXED: Use the correct username */}
                           <h3>{username}</h3>
-                          <p>Joined {formatJoinDate(userObj.createdAt)}</p>
-                          {userObj.role === 'admin' && (
+                          <p>Joined {formatJoinDate(stats.createdAt)}</p>
+                          {stats.role === 'admin' && (
                             <span className="admin-badge">Admin</span>
                           )}
                         </div>
@@ -169,19 +213,19 @@ const LeaderboardPage = () => {
                       <div className="stats-section">
                         <div className="stat">
                           <span className="stat-label">Quizzes Taken</span>
-                          <span className="stat-value">{user.quizzesTaken || 0}</span>
+                          <span className="stat-value">{stats.quizzesTaken}</span>
                         </div>
                         <div className="stat">
                           <span className="stat-label">Average Score</span>
-                          <span className="stat-value">{Math.round(user.averageScore || 0)}%</span>
+                          <span className="stat-value">{Math.round(stats.averageScore)}%</span>
                         </div>
                         <div className="stat">
                           <span className="stat-label">Best Score</span>
-                          <span className="stat-value">{Math.round(user.bestScore || 0)}%</span>
+                          <span className="stat-value">{Math.round(stats.bestScore)}%</span>
                         </div>
                         <div className="stat">
                           <span className="stat-label">Total Points</span>
-                          <span className="stat-value">{user.totalPoints || 0}</span>
+                          <span className="stat-value">{stats.totalPoints}</span>
                         </div>
                       </div>
 
@@ -189,11 +233,11 @@ const LeaderboardPage = () => {
                         <div className="progress-bar">
                           <div 
                             className="progress-fill"
-                            style={{ width: `${Math.min(user.averageScore || 0, 100)}%` }}
+                            style={{ width: `${Math.min(stats.averageScore, 100)}%` }}
                           ></div>
                         </div>
                         <span className="progress-text">
-                          Average Performance: {Math.round(user.averageScore || 0)}%
+                          Average Performance: {Math.round(stats.averageScore)}%
                         </span>
                       </div>
                     </div>
@@ -201,10 +245,24 @@ const LeaderboardPage = () => {
                 })}
               </div>
 
-              {filteredLeaderboard.length === 0 && (
+              {filteredLeaderboard.length === 0 && !leaderboardLoading && (
                 <div className="empty-state">
-                  <p>No user data available yet.</p>
-                  <p>Leaderboard will populate once users start taking quizzes.</p>
+                  <div className="empty-icon">📊</div>
+                  <h3>No Leaderboard Data</h3>
+                  <p>This could be because:</p>
+                  <ul className="empty-reasons">
+                    <li>No users have taken quizzes yet</li>
+                    <li>The leaderboard API is returning empty data</li>
+                    <li>There might be an issue with user stats calculation</li>
+                  </ul>
+                  <div className="empty-actions">
+                    <button 
+                      onClick={() => window.location.reload()} 
+                      className="btn btn-primary"
+                    >
+                      Refresh Page
+                    </button>
+                  </div>
                 </div>
               )}
             </>
