@@ -50,9 +50,9 @@ const Profile = () => {
   const [message, setMessage] = useState('');
   const [imageError, setImageError] = useState(false);
 
-  // FIXED: Fetch user stats for all users (including admin if needed)
+  // FIXED: Proper stats fetching with fallbacks
   const { data: statsData, loading: statsLoading, refetch: refetchStats } = useApi(() =>
-    userService.getUserStats ? userService.getUserStats() : Promise.resolve({ data: { overall: {} } })
+    userService.getUserStats()
   );
 
   // FIXED: Fetch results for all users who can take quizzes
@@ -60,18 +60,17 @@ const Profile = () => {
     quizService.getResults ? quizService.getResults({ limit: 10 }) : Promise.resolve({ data: [] })
   );
 
-  // FIXED: Use direct user stats if available, otherwise use fetched stats
-  const userStats = user?.stats || {};
-  const fetchedStats = statsData?.data?.overall || {};
-  
-  // Combine stats - prefer fetched stats, fallback to user stats
-  const stats = {
-    quizzesTaken: fetchedStats.quizzesTaken || userStats.quizzesTaken || 0,
-    averageScore: fetchedStats.averageScore || userStats.averageScore || 0,
-    bestScore: fetchedStats.bestScore || userStats.bestScore || 0,
-    successRate: fetchedStats.successRate || userStats.successRate || 0,
-    messagesSent: fetchedStats.messagesSent || userStats.messagesSent || 0,
-    chatParticipation: fetchedStats.chatParticipation || userStats.chatParticipation || 0
+  // FIXED: Use fetched stats with proper fallbacks
+  const stats = statsData?.data?.overall || {};
+
+  // If no fetched stats, use user context stats as fallback
+  const finalStats = {
+    quizzesTaken: stats.totalQuizzesTaken || stats.quizzesTaken || user?.stats?.quizzesTaken || 0,
+    averageScore: stats.averageScore || user?.stats?.averageScore || 0,
+    bestScore: stats.bestScore || user?.stats?.bestScore || 0,
+    successRate: stats.successRate || user?.stats?.successRate || 0,
+    messagesSent: stats.messagesSent || user?.stats?.messagesSent || 0,
+    chatParticipation: stats.chatParticipation || user?.stats?.chatParticipation || 0
   };
 
   const recentResults = resultsData?.data || [];
@@ -291,33 +290,39 @@ const Profile = () => {
         </div>
 
         {/* Show stats for all users - admins can see their quiz stats too */}
-        <div className="profile-stats">
-          <div className="stat-card">
-            <div className="stat-value">{stats.quizzesTaken}</div>
-            <div className="stat-label">Quizzes Taken</div>
+        {statsLoading ? (
+          <div className="stats-loading">
+            <Loading text="Loading statistics..." />
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{Math.round(stats.averageScore)}%</div>
-            <div className="stat-label">Average Score</div>
+        ) : (
+          <div className="profile-stats">
+            <div className="stat-card">
+              <div className="stat-value">{finalStats.quizzesTaken}</div>
+              <div className="stat-label">Quizzes Taken</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{Math.round(finalStats.averageScore)}%</div>
+              <div className="stat-label">Average Score</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{Math.round(finalStats.bestScore)}%</div>
+              <div className="stat-label">Best Score</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{Math.round(finalStats.successRate)}%</div>
+              <div className="stat-label">Success Rate</div>
+            </div>
+            {/* Chat stats */}
+            <div className="stat-card">
+              <div className="stat-value">{finalStats.messagesSent}</div>
+              <div className="stat-label">Messages Sent</div>
+            </div>
+            <div className="stat-card">
+              <div className="stat-value">{finalStats.chatParticipation}</div>
+              <div className="stat-label">Chat Rooms</div>
+            </div>
           </div>
-          <div className="stat-card">
-            <div className="stat-value">{Math.round(stats.bestScore)}%</div>
-            <div className="stat-label">Best Score</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{Math.round(stats.successRate)}%</div>
-            <div className="stat-label">Success Rate</div>
-          </div>
-          {/* Chat stats */}
-          <div className="stat-card">
-            <div className="stat-value">{stats.messagesSent}</div>
-            <div className="stat-label">Messages Sent</div>
-          </div>
-          <div className="stat-card">
-            <div className="stat-value">{stats.chatParticipation}</div>
-            <div className="stat-label">Chat Rooms</div>
-          </div>
-        </div>
+        )}
 
         {/* Tabs - Updated with Chat tab */}
         <div className="profile-tabs">
@@ -443,23 +448,26 @@ const Profile = () => {
               ) : (
                 <div className="empty-state">
                   <p>No quiz results yet. Take your first quiz!</p>
+                  <Link to="/quizzes" className="btn btn-primary">
+                    Browse Quizzes
+                  </Link>
                 </div>
               )}
             </div>
           )}
 
-          {/* Chat Activity Tab - REMOVED Quick Actions section */}
+          {/* Chat Activity Tab */}
           {activeTab === 'chat' && (
             <div className="chat-tab">
               <div className="chat-stats">
                 <h3>Chat Statistics</h3>
                 <div className="chat-stats-grid">
                   <div className="chat-stat-card">
-                    <div className="chat-stat-value">{stats.messagesSent}</div>
+                    <div className="chat-stat-value">{finalStats.messagesSent}</div>
                     <div className="chat-stat-label">Total Messages</div>
                   </div>
                   <div className="chat-stat-card">
-                    <div className="chat-stat-value">{stats.chatParticipation}</div>
+                    <div className="chat-stat-value">{finalStats.chatParticipation}</div>
                     <div className="chat-stat-label">Active Chat Rooms</div>
                   </div>
                   <div className="chat-stat-card">
@@ -476,8 +484,6 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-              
-              {/* ✅ REMOVED: Quick Actions section */}
             </div>
           )}
 
@@ -491,10 +497,6 @@ const Profile = () => {
                       <div className="action-icon">📝</div>
                       <span>Manage Quizzes</span>
                     </Link>
-                    {/* <Link to="/admin/questions" className="admin-action-btn">
-                      <div className="action-icon">❓</div>
-                      <span>Manage Questions</span>
-                    </Link> */}
                     <Link to="/admin/users" className="admin-action-btn">
                       <div className="action-icon">👥</div>
                       <span>User Management</span>
@@ -508,6 +510,7 @@ const Profile = () => {
               ) : (
                 <div className="empty-state">
                   <p>Achievements coming soon!</p>
+                  <p className="small-text">Track your progress and earn badges as you take more quizzes!</p>
                 </div>
               )}
             </div>

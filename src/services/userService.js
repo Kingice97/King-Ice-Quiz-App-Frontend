@@ -32,6 +32,37 @@ export const userService = {
     }
   },
 
+  // Add this to your existing userService.js functions:
+
+// Get user stats
+getUserStats: async () => {
+  try {
+    console.log('📊 Fetching user stats');
+    const token = localStorage.getItem('token');
+    const response = await api.get('/users/stats', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('✅ User stats fetched successfully:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Failed to fetch user stats:', error);
+    // Return default stats if API fails
+    return { 
+      success: true, 
+      data: { 
+        overall: {
+          totalQuizzesTaken: 0,
+          averageScore: 0,
+          bestScore: 0,
+          successRate: 0,
+          messagesSent: 0,
+          chatParticipation: 0
+        }
+      } 
+    };
+  }
+},
+
   // Profile picture upload
   uploadProfilePicture: async (formData) => {
     try {
@@ -257,3 +288,4 @@ export const userService = {
     }
   }
 };
+
