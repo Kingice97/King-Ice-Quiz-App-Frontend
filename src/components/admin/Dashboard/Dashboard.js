@@ -22,6 +22,11 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
     { label: 'System Analytics', path: '/admin/analytics', icon: '📊', description: 'View detailed analytics' },
   ];
 
+  // DEBUG: Check what data we're receiving
+  console.log('🔍 Dashboard Debug - userLeaderboard:', userLeaderboard);
+  console.log('🔍 Dashboard Debug - stats:', stats);
+  console.log('🔍 Dashboard Debug - recentResults:', recentResults);
+
   return (
     <div className="admin-dashboard">
       <div className="dashboard-header">
@@ -161,7 +166,7 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
           </div>
         </div>
 
-        {/* User Leaderboard */}
+        {/* User Leaderboard - FIXED: Better data handling */}
         <div className="dashboard-section">
           <div className="section-header">
             <h3>Top Performers</h3>
@@ -170,23 +175,77 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
             </Link>
           </div>
           <div className="leaderboard-list">
-            {userLeaderboard?.length > 0 ? (
+            {/* FIXED: Better data checking and fallback */}
+            {userLeaderboard && Array.isArray(userLeaderboard) && userLeaderboard.length > 0 ? (
               userLeaderboard.map((user, index) => (
-                <div key={user._id} className="leaderboard-item">
+                <div key={user._id || user.userId || index} className="leaderboard-item">
                   <div className="rank">#{index + 1}</div>
                   <div className="user-info">
-                    <strong>{user.username}</strong>
-                    <span>{user.quizzesTaken} quizzes taken</span>
+                    <strong>{user.username || user.userName || 'Unknown User'}</strong>
+                    <span>{user.quizzesTaken || 0} quizzes taken</span>
                   </div>
                   <div className="user-stats">
-                    <span className="score">{Math.round(user.averageScore)}% avg</span>
-                    <span className="best-score">Best: {Math.round(user.bestScore)}%</span>
+                    <span className="score">{Math.round(user.averageScore || 0)}% avg</span>
+                    <span className="best-score">Best: {Math.round(user.bestScore || 0)}%</span>
                   </div>
                 </div>
               ))
+            ) : recentResults && recentResults.length > 0 ? (
+              // FALLBACK: Create leaderboard from recent results if userLeaderboard is empty
+              (() => {
+                // Group results by user and calculate stats
+                const userStats = {};
+                recentResults.forEach(result => {
+                  if (!userStats[result.userId]) {
+                    userStats[result.userId] = {
+                      userId: result.userId,
+                      username: result.userName,
+                      scores: [],
+                      quizzesTaken: new Set(),
+                      bestScore: 0
+                    };
+                  }
+                  userStats[result.userId].scores.push(result.percentage);
+                  userStats[result.userId].quizzesTaken.add(result.quizId?._id);
+                  if (result.percentage > userStats[result.userId].bestScore) {
+                    userStats[result.userId].bestScore = result.percentage;
+                  }
+                });
+
+                // Convert to array and calculate averages
+                const fallbackLeaderboard = Object.values(userStats).map(user => ({
+                  _id: user.userId,
+                  username: user.username,
+                  quizzesTaken: user.quizzesTaken.size,
+                  averageScore: user.scores.reduce((a, b) => a + b, 0) / user.scores.length,
+                  bestScore: user.bestScore
+                })).sort((a, b) => b.averageScore - a.averageScore).slice(0, 5);
+
+                return fallbackLeaderboard.length > 0 ? (
+                  fallbackLeaderboard.map((user, index) => (
+                    <div key={user._id || index} className="leaderboard-item">
+                      <div className="rank">#{index + 1}</div>
+                      <div className="user-info">
+                        <strong>{user.username}</strong>
+                        <span>{user.quizzesTaken} quizzes taken</span>
+                      </div>
+                      <div className="user-stats">
+                        <span className="score">{Math.round(user.averageScore)}% avg</span>
+                        <span className="best-score">Best: {Math.round(user.bestScore)}%</span>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-data">
+                    <p>No user performance data available yet</p>
+                    <p>User rankings will appear here after more quiz activity</p>
+                  </div>
+                );
+              })()
             ) : (
               <div className="no-data">
                 <p>No user data available yet</p>
+                <p>Top performers will appear here when users take quizzes</p>
               </div>
             )}
           </div>
