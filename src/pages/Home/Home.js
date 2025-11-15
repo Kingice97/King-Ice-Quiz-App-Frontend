@@ -95,13 +95,15 @@ const Home = () => {
                     </small>
                   </div>
                 </div>
+                
                 <div className="stat-card">
-                  <div className="stat-icon">✅</div>
+                  {/* <div className="stat-icon">✅</div> */}
                   <div className="stat-info">
-                    <span className="stat-value">{totalAttempts}</span> {/* FIXED: Now shows actual total attempts (19) */}
-                    <span className="stat-label">Total Attempts</span>
+                    {/* <span className="stat-value">{totalAttempts}</span> FIXED: Now shows actual total attempts (19) */}
+                    {/* <span className="stat-label">Total Attempts</span> */}
                   </div>
                 </div>
+
                 <div className="stat-card">
                   <div className="stat-icon">📈</div>
                   <div className="stat-info">
