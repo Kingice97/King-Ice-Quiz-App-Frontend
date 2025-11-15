@@ -6,21 +6,34 @@ import Loading from '../../components/common/Loading/Loading';
 import './LeaderboardPage.css';
 
 const LeaderboardPage = () => {
-  const [timeFilter, setTimeFilter] = useState('all'); // all, weekly, monthly
+  const [timeFilter, setTimeFilter] = useState('all');
   const [limit, setLimit] = useState(20);
 
-  const { data: leaderboardData, loading: leaderboardLoading } = useApi(() =>
+  // FIXED: Enhanced API call with error handling
+  const { data: leaderboardData, loading: leaderboardLoading, error: leaderboardError } = useApi(() =>
     userService.getLeaderboard({ limit })
   );
 
-  // DEBUG: Log the actual data structure
+  // DEBUG: Enhanced logging
   console.log('🔍 Leaderboard Debug - Raw Data:', leaderboardData);
-  
-  // FIXED: Handle different possible data structures
+  console.log('🔍 Leaderboard Debug - Loading:', leaderboardLoading);
+  console.log('🔍 Leaderboard Debug - Error:', leaderboardError);
+
+  // FIXED: Better data handling with error states
   const leaderboard = React.useMemo(() => {
+    if (leaderboardError) {
+      console.error('🚨 Leaderboard API error:', leaderboardError);
+      return [];
+    }
+    
     if (!leaderboardData) return [];
     
     // Handle different response structures
+    if (leaderboardData.success === false) {
+      console.warn('⚠️ Leaderboard API returned error:', leaderboardData.message);
+      return [];
+    }
+    
     if (Array.isArray(leaderboardData.data)) {
       return leaderboardData.data;
     } else if (Array.isArray(leaderboardData)) {
@@ -29,21 +42,39 @@ const LeaderboardPage = () => {
       return leaderboardData.leaderboard;
     }
     
+    console.warn('⚠️ Unexpected leaderboard data structure:', leaderboardData);
     return [];
-  }, [leaderboardData]);
+  }, [leaderboardData, leaderboardError]);
 
-  // Filter by time period (you can enhance this with actual date filtering from backend)
-  const filteredLeaderboard = leaderboard.filter(user => {
-    if (timeFilter === 'all') return true;
-    // Add date filtering logic here when your backend supports it
-    return true;
-  });
+  // FIXED: Create mock data for testing if API fails
+  const mockLeaderboard = [
+    {
+      _id: '1',
+      username: 'Kingice7',
+      quizzesTaken: 5,
+      averageScore: 85,
+      bestScore: 95,
+      totalPoints: 425,
+      createdAt: new Date().toISOString(),
+      role: 'user'
+    },
+    {
+      _id: '2', 
+      username: 'asylumpupil',
+      quizzesTaken: 3,
+      averageScore: 72,
+      bestScore: 88,
+      totalPoints: 216,
+      createdAt: new Date().toISOString(),
+      role: 'user'
+    }
+  ];
 
   const getRankColor = (rank) => {
-    if (rank === 1) return '#FFD700'; // Gold
-    if (rank === 2) return '#C0C0C0'; // Silver
-    if (rank === 3) return '#CD7F32'; // Bronze
-    return '#6B7280'; // Gray
+    if (rank === 1) return '#FFD700';
+    if (rank === 2) return '#C0C0C0';
+    if (rank === 3) return '#CD7F32';
+    return '#6B7280';
   };
 
   const getRankIcon = (rank) => {
@@ -53,23 +84,14 @@ const LeaderboardPage = () => {
     return `#${rank}`;
   };
 
-  // FIXED: Enhanced username extraction
   const getUsername = (user) => {
-    // Try different possible field names for username
-    if (user.username) return user.username;
-    if (user.user?.username) return user.user.username;
-    if (user.userName) return user.userName;
-    if (user.user?.userName) return user.user.userName;
-    if (user._id) return `User_${user._id.slice(-6)}`; // Fallback to user ID
-    return 'Unknown User';
+    return user.username || user.user?.username || user.userName || 'Unknown User';
   };
 
-  // FIXED: Enhanced user object extraction
   const getUserObject = (user) => {
     return user.user || user;
   };
 
-  // FIXED: Enhanced stats extraction
   const getUserStats = (user) => {
     const userObj = getUserObject(user);
     
@@ -83,16 +105,12 @@ const LeaderboardPage = () => {
     };
   };
 
-  // FIXED: Safe date formatting function
   const formatJoinDate = (dateString) => {
     if (!dateString) return 'Recently';
     
     try {
       const date = new Date(dateString);
-      // Check if date is valid
-      if (isNaN(date.getTime())) {
-        return 'Recently';
-      }
+      if (isNaN(date.getTime())) return 'Recently';
       
       const now = new Date();
       const diffTime = Math.abs(now - date);
@@ -109,10 +127,13 @@ const LeaderboardPage = () => {
         day: 'numeric'
       });
     } catch (error) {
-      console.error('Error formatting date:', error);
       return 'Recently';
     }
   };
+
+  // Determine which data to display
+  const displayData = leaderboard.length > 0 ? leaderboard : mockLeaderboard;
+  const isUsingMockData = leaderboard.length === 0 && !leaderboardLoading && !leaderboardError;
 
   return (
     <div className="leaderboard-page">
@@ -127,16 +148,10 @@ const LeaderboardPage = () => {
             <p>Top performers and quiz statistics</p>
           </div>
           <div className="header-stats">
-            <span>Total Users: {leaderboard.length}</span>
-            <span>
-              Platform Average: {leaderboard.length > 0 
-                ? Math.round(leaderboard.reduce((sum, user) => {
-                    const stats = getUserStats(user);
-                    return sum + (stats.averageScore || 0);
-                  }, 0) / leaderboard.length)
-                : 0
-              }%
-            </span>
+            <span>Total Users: {displayData.length}</span>
+            {isUsingMockData && (
+              <span className="mock-warning">⚠️ Using sample data</span>
+            )}
           </div>
         </div>
 
@@ -165,6 +180,15 @@ const LeaderboardPage = () => {
           </div>
         </div>
 
+        {/* Error Alert */}
+        {leaderboardError && (
+          <div className="error-alert">
+            <h4>❌ Failed to load leaderboard</h4>
+            <p>Error: {leaderboardError.message || 'Unknown error'}</p>
+            <p>Showing sample data instead.</p>
+          </div>
+        )}
+
         {/* Leaderboard */}
         <div className="leaderboard-section">
           {leaderboardLoading ? (
@@ -172,22 +196,24 @@ const LeaderboardPage = () => {
           ) : (
             <>
               <div className="leaderboard-stats">
-                <span>Showing: {filteredLeaderboard.length} users</span>
-                {leaderboard.length === 0 && (
+                <span>Showing: {displayData.length} users</span>
+                {isUsingMockData && (
                   <div className="data-warning">
-                    <small>No leaderboard data found. Check if users have taken quizzes.</small>
+                    <small>
+                      ⚠️ Leaderboard API is not returning data. Showing sample data. 
+                      Check browser console for details.
+                    </small>
                   </div>
                 )}
               </div>
 
               <div className="leaderboard-list">
-                {filteredLeaderboard.map((user, index) => {
+                {displayData.map((user, index) => {
                   const username = getUsername(user);
                   const stats = getUserStats(user);
-                  const userObj = getUserObject(user);
                   
                   return (
-                    <div key={user._id || user.user?._id || index} className="leaderboard-item">
+                    <div key={user._id || index} className="leaderboard-item">
                       <div className="rank-section">
                         <div 
                           className="rank-badge"
@@ -206,6 +232,9 @@ const LeaderboardPage = () => {
                           <p>Joined {formatJoinDate(stats.createdAt)}</p>
                           {stats.role === 'admin' && (
                             <span className="admin-badge">Admin</span>
+                          )}
+                          {isUsingMockData && (
+                            <span className="mock-badge">Sample</span>
                           )}
                         </div>
                       </div>
@@ -245,23 +274,18 @@ const LeaderboardPage = () => {
                 })}
               </div>
 
-              {filteredLeaderboard.length === 0 && !leaderboardLoading && (
+              {displayData.length === 0 && !leaderboardLoading && (
                 <div className="empty-state">
                   <div className="empty-icon">📊</div>
-                  <h3>No Leaderboard Data</h3>
-                  <p>This could be because:</p>
-                  <ul className="empty-reasons">
-                    <li>No users have taken quizzes yet</li>
-                    <li>The leaderboard API is returning empty data</li>
-                    <li>There might be an issue with user stats calculation</li>
-                  </ul>
-                  <div className="empty-actions">
-                    <button 
-                      onClick={() => window.location.reload()} 
-                      className="btn btn-primary"
-                    >
-                      Refresh Page
-                    </button>
+                  <h3>No Leaderboard Data Available</h3>
+                  <p>The leaderboard API is not returning any data.</p>
+                  <div className="troubleshooting">
+                    <h4>Possible issues:</h4>
+                    <ul>
+                      <li>Backend leaderboard endpoint might be down</li>
+                      <li>No quiz results data in the database</li>
+                      <li>API authentication issues</li>
+                    </ul>
                   </div>
                 </div>
               )}

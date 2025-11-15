@@ -63,6 +63,29 @@ getUserStats: async () => {
   }
 },
 
+// Enhanced getLeaderboard with debugging
+getLeaderboard: async (params = {}) => {
+  try {
+    console.log('🏆 Fetching leaderboard with params:', params);
+    const token = localStorage.getItem('token');
+    const response = await api.get('/users/leaderboard', {
+      params,
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    console.log('✅ Leaderboard API response:', response.data);
+    return response.data;
+  } catch (error) {
+    console.error('❌ Leaderboard API error:', error);
+    console.error('❌ Error details:', error.response?.data);
+    // Return empty data structure instead of throwing error
+    return { 
+      success: false, 
+      message: 'Failed to fetch leaderboard',
+      data: [] 
+    };
+  }
+},
+
   // Profile picture upload
   uploadProfilePicture: async (formData) => {
     try {
