@@ -10,15 +10,10 @@ const LeaderboardPage = () => {
   const [limit, setLimit] = useState(20);
 
   const { data: leaderboardData, loading: leaderboardLoading, error: leaderboardError } = useApi(() =>
-    userService.getLeaderboard({ limit, timeframe: timeFilter }) // FIXED: Pass timeframe to backend
+    userService.getLeaderboard({ limit, timeframe: timeFilter })
   );
 
-  // DEBUG: Enhanced logging to inspect data structure
-  console.log('🔍 Leaderboard Debug - Raw Data:', leaderboardData);
-  console.log('🔍 Leaderboard Debug - Data Structure:', leaderboardData?.data);
-  console.log('🔍 Leaderboard Debug - First User:', leaderboardData?.data?.[0]);
-
-  // FIXED: Better data extraction with detailed inspection
+  // FIXED: Better data extraction
   const leaderboard = React.useMemo(() => {
     if (leaderboardError) {
       console.error('🚨 Leaderboard API error:', leaderboardError);
@@ -27,10 +22,6 @@ const LeaderboardPage = () => {
     
     if (!leaderboardData) return [];
     
-    // Log the full data structure for inspection
-    console.log('📊 Full leaderboard data for inspection:', leaderboardData);
-    
-    // Handle different response structures
     let data = [];
     
     if (Array.isArray(leaderboardData.data)) {
@@ -40,19 +31,6 @@ const LeaderboardPage = () => {
     } else if (leaderboardData.leaderboard) {
       data = leaderboardData.leaderboard;
     }
-    
-    console.log('📊 Extracted leaderboard array:', data);
-    
-    // Log each user's data to check bestScore
-    data.forEach((user, index) => {
-      console.log(`👤 User ${index + 1}:`, {
-        username: user.username || user.user?.username,
-        bestScore: user.bestScore,
-        averageScore: user.averageScore,
-        quizzesTaken: user.quizzesTaken,
-        fullData: user
-      });
-    });
     
     return data;
   }, [leaderboardData, leaderboardError]);
@@ -71,30 +49,27 @@ const LeaderboardPage = () => {
     return `#${rank}`;
   };
 
-  // FIXED: Enhanced username extraction with debugging
   const getUsername = (user) => {
-    const username = user.username || user.user?.username || user.userName || 'Unknown User';
-    console.log(`🔍 Extracting username for user:`, { 
-      rawUser: user, 
-      extractedUsername: username 
-    });
-    return username;
+    return user.username || user.user?.username || user.userName || 'Unknown User';
   };
 
-  // FIXED: Enhanced stats extraction with debugging
+  const getUserObject = (user) => {
+    return user.user || user;
+  };
+
+  // FIXED: Enhanced stats extraction with proper nested data handling
   const getUserStats = (user) => {
     const userObj = user.user || user;
     
     const stats = {
       quizzesTaken: user.quizzesTaken || userObj.quizzesTaken || user.stats?.quizzesTaken || 0,
       averageScore: user.averageScore || userObj.averageScore || user.stats?.averageScore || 0,
-      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || 0,
+      // FIXED: Extract bestScore from nested user.stats.bestScore
+      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || userObj.stats?.bestScore || 0,
       totalPoints: user.totalPoints || userObj.totalPoints || user.stats?.totalPoints || 0,
       createdAt: user.createdAt || userObj.createdAt,
       role: user.role || userObj.role
     };
-    
-    console.log(`📊 User stats for ${getUsername(user)}:`, stats);
     
     return stats;
   };
@@ -125,12 +100,6 @@ const LeaderboardPage = () => {
     }
   };
 
-  // Test time filter functionality
-  React.useEffect(() => {
-    console.log(`🕒 Time filter changed to: ${timeFilter}`);
-    console.log(`🔢 Limit changed to: ${limit}`);
-  }, [timeFilter, limit]);
-
   return (
     <div className="leaderboard-page">
       <Helmet>
@@ -142,9 +111,6 @@ const LeaderboardPage = () => {
           <div className="header-content">
             <h1>User Leaderboard</h1>
             <p>Top performers and quiz statistics</p>
-            <div className="debug-info">
-              <small>Users: {leaderboard.length} | Loading: {leaderboardLoading.toString()} | Error: {leaderboardError ? 'Yes' : 'No'}</small>
-            </div>
           </div>
           <div className="header-stats">
             <span>Total Users: {leaderboard.length}</span>
@@ -186,34 +152,7 @@ const LeaderboardPage = () => {
               <option value={100}>Top 100</option>
             </select>
           </div>
-          
-          <div className="filter-info">
-            <small>Current filters: {timeFilter} period, Top {limit} users</small>
-          </div>
         </div>
-
-
-        // Add this temporary debug section right after the filters section
-{/* Temporary Debug Button */}
-<div className="debug-section" style={{ marginBottom: '20px', padding: '10px', background: '#f8f9fa', borderRadius: '8px' }}>
-  <button 
-    onClick={() => {
-      console.log('🔄 Manual refresh triggered');
-      console.log('📊 Current leaderboard data:', leaderboardData);
-      console.log('👥 Current leaderboard array:', leaderboard);
-      
-      // Force re-fetch by updating state
-      window.location.reload();
-    }}
-    className="btn btn-sm btn-outline"
-  >
-    🔄 Debug Refresh
-  </button>
-  <small style={{ marginLeft: '10px', color: '#666' }}>
-    Click to see detailed data in console
-  </small>
-</div>
-
 
         {/* Leaderboard */}
         <div className="leaderboard-section">
@@ -223,11 +162,6 @@ const LeaderboardPage = () => {
             <>
               <div className="leaderboard-stats">
                 <span>Showing: {leaderboard.length} users</span>
-                {leaderboard.length > 0 && (
-                  <span className="data-source">
-                    Data source: Backend API
-                  </span>
-                )}
               </div>
 
               <div className="leaderboard-list">
@@ -256,9 +190,6 @@ const LeaderboardPage = () => {
                           {stats.role === 'admin' && (
                             <span className="admin-badge">Admin</span>
                           )}
-                          <div className="user-debug">
-                            <small>ID: {user._id?.slice(-6)}</small>
-                          </div>
                         </div>
                       </div>
 
@@ -304,7 +235,7 @@ const LeaderboardPage = () => {
                 <div className="empty-state">
                   <div className="empty-icon">📊</div>
                   <h3>No Leaderboard Data</h3>
-                  <p>Check browser console for detailed API response information.</p>
+                  <p>Leaderboard will populate once users start taking quizzes.</p>
                 </div>
               )}
             </>
