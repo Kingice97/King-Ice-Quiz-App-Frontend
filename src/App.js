@@ -1,9 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { initSecurity } from './utils/security';
 import { AuthProvider } from './context/AuthContext';
 import { QuizProvider } from './context/QuizContext';
 import { ThemeProvider } from './context/ThemeContext';
-import { SocketProvider } from './context/SocketContext'; // NEW: Chat context
+import { SocketProvider } from './context/SocketContext';
 import Navbar from './components/common/Navbar/Navbar';
 import Footer from './components/common/Footer/Footer';
 import ProtectedRoute from './components/common/ProtectedRoute/ProtectedRoute';
@@ -21,7 +22,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import QuizResults from './pages/QuizResults/QuizResults';
 import NotFound from './pages/NotFound/NotFound';
 
-// NEW: Chat Pages
+// Chat Pages
 import Chat from './pages/Chat/Chat';
 import UserSearch from './pages/UserSearch/UserSearch';
 
@@ -36,11 +37,16 @@ import LeaderboardPage from './pages/Admin/LeaderboardPage';
 import './App.css';
 
 function App() {
+  useEffect(() => {
+    // Initialize security features
+    initSecurity();
+  }, []);
+
   return (
     <ThemeProvider>
       <AuthProvider>
         <QuizProvider>
-          <SocketProvider> {/* NEW: Wrap with Socket Provider */}
+          <SocketProvider>
             <Router>
               <div className="App">
                 <Navbar />
@@ -86,7 +92,7 @@ function App() {
                       } 
                     />
                     
-                    {/* NEW: Chat Routes */}
+                    {/* Chat Routes */}
                     <Route 
                       path="/chat" 
                       element={
