@@ -9,7 +9,19 @@ const Analytics = () => {
   const [error, setError] = useState(null);
   const [debugInfo, setDebugInfo] = useState(null);
   const [showDebug, setShowDebug] = useState(false);
+  const [apiStatus, setApiStatus] = useState('checking');
   const { currentUser } = useAuth();
+
+  // Test API connectivity first
+  const testApiConnectivity = async () => {
+    try {
+      const response = await fetch('/api/analytics/test');
+      const result = await response.json();
+      return { success: true, data: result };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  };
 
   const fetchAdminAnalytics = async () => {
     if (!currentUser) {
@@ -25,12 +37,29 @@ const Analytics = () => {
       console.log(`📊 Fetching analytics for time range: ${timeRange}`);
       const token = localStorage.getItem('token');
       
+      // First test basic connectivity
+      const connectivityTest = await testApiConnectivity();
+      if (!connectivityTest.success) {
+        setApiStatus('disconnected');
+        throw new Error('Cannot connect to analytics API. The backend service may be unavailable.');
+      }
+      
+      setApiStatus('connected');
+
       const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        console.error('❌ Non-JSON response:', text.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+      }
 
       const result = await response.json();
       console.log('✅ Analytics API response:', result);
@@ -47,7 +76,42 @@ const Analytics = () => {
       
     } catch (error) {
       console.error('❌ Analytics fetch error:', error);
-      setError(error.message || 'Failed to load analytics data. Please try again.');
+      setError(error.message);
+      
+      // Set fallback data for development
+      if (error.message.includes('HTML') || error.message.includes('JSON')) {
+        setAnalyticsData({
+          totalQuizzes: 3,
+          totalUsers: 3,
+          totalQuestions: 15,
+          averageScore: 75,
+          totalAttempts: 8,
+          growthPercentage: 0,
+          scoreDistribution: [
+            { range: '0-20%', count: 0 },
+            { range: '21-40%', count: 1 },
+            { range: '41-60%', count: 2 },
+            { range: '61-80%', count: 3 },
+            { range: '81-100%', count: 2 }
+          ],
+          recentActivity: [
+            {
+              id: 1,
+              userName: 'Example User',
+              quizTitle: 'Sample Quiz',
+              score: 85,
+              percentage: 85,
+              timeTaken: 300,
+              completedAt: new Date(),
+              passed: true
+            }
+          ],
+          timeRange: timeRange,
+          lastUpdated: new Date(),
+          _debug: { status: 'FALLBACK_UI_DATA' }
+        });
+        setError('API Connection Issue - Showing example data');
+      }
     } finally {
       setLoading(false);
     }
@@ -63,12 +127,23 @@ const Analytics = () => {
         }
       });
       
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned HTML: ${text.substring(0, 100)}...`);
+      }
+      
       const result = await response.json();
       setDebugInfo(result);
       setShowDebug(true);
     } catch (error) {
       console.error('Debug fetch error:', error);
-      setDebugInfo({ error: error.message });
+      setDebugInfo({ 
+        error: error.message,
+        note: 'This usually means the /api/analytics/debug endpoint does not exist or returns HTML instead of JSON'
+      });
+      setShowDebug(true);
     }
   };
 
@@ -103,6 +178,7 @@ const Analytics = () => {
         <div className="loading-state">
           <div className="loading-spinner"></div>
           <p>Loading your analytics data...</p>
+          <p className="loading-status">API Status: {apiStatus}</p>
         </div>
       </div>
     );
@@ -119,6 +195,7 @@ const Analytics = () => {
           {analyticsData && (
             <p className="last-updated">
               Last updated: {new Date(analyticsData.lastUpdated).toLocaleString()}
+              {analyticsData._debug?.status && ` (${analyticsData._debug.status})`}
             </p>
           )}
         </div>
@@ -137,7 +214,7 @@ const Analytics = () => {
             className="btn-secondary debug-btn"
             onClick={fetchDebugInfo}
           >
-            Debug Data
+            Debug API
           </button>
           <button 
             className="btn-secondary"
@@ -148,10 +225,15 @@ const Analytics = () => {
         </div>
       </div>
 
+      {/* API Status Indicator */}
+      <div className={`api-status ${apiStatus}`}>
+        API Status: {apiStatus.toUpperCase()}
+      </div>
+
       {error && (
         <div className="error-state">
           <div className="error-icon">⚠️</div>
-          <h3>Unable to Load Analytics</h3>
+          <h3>Analytics Dashboard</h3>
           <p>{error}</p>
           <div className="error-actions">
             <button 
@@ -164,8 +246,16 @@ const Analytics = () => {
               className="btn-secondary"
               onClick={fetchDebugInfo}
             >
-              Check Debug Info
+              Debug API
             </button>
+          </div>
+          <div className="error-help">
+            <p><strong>Common issues:</strong></p>
+            <ul>
+              <li>Backend service might be restarting</li>
+              <li>API routes might not be registered</li>
+              <li>Check browser Network tab for detailed errors</li>
+            </ul>
           </div>
         </div>
       )}
@@ -173,7 +263,7 @@ const Analytics = () => {
       {/* Debug Information */}
       {showDebug && debugInfo && (
         <div className="debug-section">
-          <h3>🔍 Debug Information</h3>
+          <h3>🔍 API Debug Information</h3>
           <button 
             className="btn-secondary"
             onClick={() => setShowDebug(false)}
@@ -187,16 +277,12 @@ const Analytics = () => {
       )}
 
       {/* Show data when available */}
-      {analyticsData && !error && (
+      {analyticsData && (
         <>
-          {/* Debug info in data */}
-          {analyticsData._debug && (
-            <div className="debug-hint">
-              <small>
-                <strong>Debug:</strong> {analyticsData._debug.quizCount} quizzes, 
-                {analyticsData._debug.resultCount} results, 
-                {analyticsData._debug.userCount} users
-              </small>
+          {/* Show data source notice if using fallback */}
+          {analyticsData._debug?.status === 'FALLBACK_UI_DATA' && (
+            <div className="fallback-notice">
+              <strong>Note:</strong> Showing example data. Real analytics will appear when the API connection is working.
             </div>
           )}
 
@@ -336,7 +422,7 @@ const Analytics = () => {
           </div>
 
           {/* Show empty state if no activity yet */}
-          {analyticsData.totalAttempts === 0 && (
+          {analyticsData.totalAttempts === 0 && analyticsData._debug?.status !== 'FALLBACK_UI_DATA' && (
             <div className="empty-state">
               <div className="empty-icon">
                 <i>📊</i>
