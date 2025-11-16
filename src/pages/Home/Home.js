@@ -139,11 +139,11 @@ const Home = () => {
                 </div>
                 <div className="action-arrow">→</div>
               </Link>
-              <Link to="/admin/analytics" className="action-card">
-                <div className="action-icon">📊</div>
+              <Link to="/admin/dashboard"className="action-card">
+                <div className="action-icon">⚙️</div>
                 <div className="action-content">
-                  <h3>Platform Analytics</h3>
-                  <p>Access detailed reports and platform insights</p>
+                  <h3>Admin Dashboard</h3>
+                  <p>Platform management and user analytics</p>
                 </div>
                 <div className="action-arrow">→</div>
               </Link>

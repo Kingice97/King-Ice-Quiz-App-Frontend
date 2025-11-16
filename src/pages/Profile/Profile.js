@@ -329,12 +329,8 @@ const Profile = () => {
           <div className="admin-stats-message">
             <div className="admin-message-card">
               <h3>👑 Administrator Dashboard</h3>
-              <p>As an administrator, you manage quizzes, users, and platform analytics.</p>
+              <p>As an administrator, you manage quizzes, users, and platform settings.</p>
               <div className="admin-quick-stats">
-                <div className="admin-stat">
-                  <span className="admin-stat-icon">📊</span>
-                  <span>Access Analytics</span>
-                </div>
                 <div className="admin-stat">
                   <span className="admin-stat-icon">👥</span>
                   <span>Manage Users</span>
@@ -342,6 +338,10 @@ const Profile = () => {
                 <div className="admin-stat">
                   <span className="admin-stat-icon">📝</span>
                   <span>Create Quizzes</span>
+                </div>
+                <div className="admin-stat">
+                  <span className="admin-stat-icon">⚙️</span>
+                  <span>Platform Settings</span>
                 </div>
               </div>
             </div>
@@ -526,9 +526,9 @@ const Profile = () => {
                       <div className="action-icon">👥</div>
                       <span>User Management</span>
                     </Link>
-                    <Link to="/admin/analytics" className="admin-action-btn">
-                      <div className="action-icon">📊</div>
-                      <span>View Analytics</span>
+                    <Link to="/admin/dashboard" className="admin-action-btn">
+                      <div className="action-icon">⚙️</div>
+                      <span>Admin Dashboard</span>
                     </Link>
                   </div>
                 </div>

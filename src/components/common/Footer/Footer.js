@@ -26,7 +26,7 @@ const Footer = () => {
             </div>
             <p className="footer-description">
               {isAdmin 
-                ? 'Admin dashboard for managing quizzes, questions, users, and platform analytics.'
+                ? 'Admin dashboard for managing quizzes, questions, users, and platform managements.'
                 : 'Test your knowledge with our interactive quiz platform. Challenge yourself and climb the leaderboards!'
               }
             </p>
@@ -56,9 +56,9 @@ const Footer = () => {
               <h4 className="footer-title">Admin Resources</h4>
               <ul className="footer-links">
                 <li><Link to="/admin/quizzes">Manage Quizzes</Link></li>
-                <li><Link to="/admin/questions">Manage Questions</Link></li>
+                <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>
                 <li><Link to="/admin/users">User Management</Link></li>
-                <li><Link to="/admin/analytics">View Analytics</Link></li>
+                <li><Link to="/admin/results">View Results</Link></li>
               </ul>
             </div>
           )}

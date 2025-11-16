@@ -16,11 +16,11 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
   const regularUsersCount = stats.totalUsers || 0; // FIXED: Use actual totalUsers from stats
   const activeRegularUsers = stats.activeUsers || 0;
 
-  // Admin quick actions
-  const quickActions = [
-    { label: 'Manage Users', path: '/admin/users', icon: '👥', description: 'View and manage users' },
-    { label: 'System Analytics', path: '/admin/analytics', icon: '📊', description: 'View detailed analytics' },
-  ];
+  // // Admin quick actions
+  // const quickActions = [
+  //   { label: 'Manage Users', path: '/admin/users', icon: '👥', description: 'View and manage users' },
+  //   { label: 'System Analytics', path: '/admin/analytics', icon: '📊', description: 'View detailed analytics' },
+  // ];
 
   // DEBUG: Check what data we're receiving
   console.log('🔍 Dashboard Debug - userLeaderboard:', userLeaderboard);
@@ -69,7 +69,7 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
         </div>
       </div>
 
-      {/* Quick Actions */}
+      {/* Quick Actions
       <div className="dashboard-section">
         <div className="section-header">
           <h3>Quick Actions</h3>
@@ -86,7 +86,7 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
             </Link>
           ))}
         </div>
-      </div>
+      </div> */}
 
       <div className="dashboard-content">
         {/* Recent Quizzes */}
