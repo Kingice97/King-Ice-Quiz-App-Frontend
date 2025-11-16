@@ -16,20 +16,47 @@ const Analytics = () => {
 
   const isDeveloper = currentUser?.email === 'olubiyiisaacanu@gmail.com';
 
-  // Test API connectivity
-  const testApiConnectivity = async (endpoint = '/api/analytics/test') => {
+  // Test API connectivity with detailed logging
+  const testApiConnectivity = async (endpoint = '/api/analytics/health') => {
     try {
+      console.log(`🔍 Testing endpoint: ${endpoint}`);
       const response = await fetch(endpoint);
       const contentType = response.headers.get('content-type');
+      
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
+        console.error(`❌ Non-JSON response from ${endpoint}:`, text.substring(0, 200));
         throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
       }
+      
       const result = await response.json();
+      console.log(`✅ ${endpoint} response:`, result);
       return { success: true, data: result, status: response.status };
     } catch (error) {
+      console.error(`❌ ${endpoint} test failed:`, error.message);
       return { success: false, error: error.message, endpoint };
     }
+  };
+
+  // Test all analytics endpoints
+  const testAllEndpoints = async () => {
+    const endpoints = [
+      '/api/analytics/',
+      '/api/analytics/health',
+      '/api/analytics/test',
+      '/api/analytics/admin/stats',
+      '/api/analytics/debug'
+    ];
+
+    if (isDeveloper) {
+      endpoints.push('/api/analytics/platform');
+    }
+
+    const results = {};
+    for (const endpoint of endpoints) {
+      results[endpoint] = await testApiConnectivity(endpoint);
+    }
+    return results;
   };
 
   const fetchAdminAnalytics = async () => {
@@ -43,16 +70,22 @@ const Analytics = () => {
     setDebugInfo(null);
     
     try {
+      console.log('📊 Starting admin analytics fetch...');
       const token = localStorage.getItem('token');
       
-      // Test basic connectivity
-      const connectivityTest = await testApiConnectivity('/api/analytics/test');
-      if (!connectivityTest.success) {
+      if (!token) {
+        throw new Error('No authentication token found. Please log in again.');
+      }
+
+      // Test basic connectivity first
+      const healthTest = await testApiConnectivity('/api/analytics/health');
+      if (!healthTest.success) {
         setApiStatus('disconnected');
-        throw new Error(`Cannot connect to analytics API: ${connectivityTest.error}`);
+        throw new Error(`Analytics API not available: ${healthTest.error}`);
       }
       
       setApiStatus('connected');
+      console.log('✅ Analytics API is available, fetching data...');
 
       // Fetch analytics data
       const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
@@ -65,11 +98,12 @@ const Analytics = () => {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+        console.error('❌ Non-JSON response from analytics:', text.substring(0, 200));
+        throw new Error(`Analytics endpoint returned HTML. This means the route doesn't exist or there's a routing issue.`);
       }
 
       const result = await response.json();
-      console.log('✅ Analytics API response:', result);
+      console.log('✅ Analytics data received:', result);
 
       if (!response.ok) {
         throw new Error(result.message || `HTTP error! status: ${response.status}`);
@@ -77,6 +111,7 @@ const Analytics = () => {
 
       if (result.success) {
         setAnalyticsData(result.data);
+        console.log('✅ Analytics data set successfully');
       } else {
         throw new Error(result.message || 'Failed to fetch analytics data');
       }
@@ -85,36 +120,25 @@ const Analytics = () => {
       console.error('❌ Analytics fetch error:', error);
       setError(error.message);
       
-      // Set fallback data
+      // Set minimal fallback data
       setAnalyticsData({
-        totalQuizzes: 3,
-        totalUsers: 3,
-        totalQuestions: 15,
-        averageScore: 75,
-        totalAttempts: 8,
+        totalQuizzes: 0,
+        totalUsers: 0,
+        totalQuestions: 0,
+        averageScore: 0,
+        totalAttempts: 0,
         growthPercentage: 0,
         scoreDistribution: [
           { range: '0-20%', count: 0 },
-          { range: '21-40%', count: 1 },
-          { range: '41-60%', count: 2 },
-          { range: '61-80%', count: 3 },
-          { range: '81-100%', count: 2 }
+          { range: '21-40%', count: 0 },
+          { range: '41-60%', count: 0 },
+          { range: '61-80%', count: 0 },
+          { range: '81-100%', count: 0 }
         ],
-        recentActivity: [
-          {
-            id: 1,
-            userName: 'Example User',
-            quizTitle: 'Sample Quiz',
-            score: 85,
-            percentage: 85,
-            timeTaken: 300,
-            completedAt: new Date(),
-            passed: true
-          }
-        ],
+        recentActivity: [],
         timeRange: timeRange,
         lastUpdated: new Date(),
-        _debug: { status: 'FALLBACK_UI_DATA', error: error.message }
+        _debug: { status: 'ERROR', error: error.message }
       });
     } finally {
       setLoading(false);
@@ -122,13 +146,18 @@ const Analytics = () => {
   };
 
   const fetchPlatformAnalytics = async () => {
-    if (!isDeveloper) return;
+    if (!isDeveloper) {
+      setError('Access denied. Platform analytics are for developer only.');
+      return;
+    }
 
     setLoading(true);
     setError(null);
     
     try {
+      console.log('🔧 Starting platform analytics fetch...');
       const token = localStorage.getItem('token');
+      
       const response = await fetch('/api/analytics/platform', {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -139,11 +168,11 @@ const Analytics = () => {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+        throw new Error(`Platform analytics returned HTML. Status: ${response.status}`);
       }
 
       const result = await response.json();
-      console.log('✅ Platform analytics response:', result);
+      console.log('✅ Platform analytics received:', result);
 
       if (!response.ok) {
         throw new Error(result.message || `HTTP error! status: ${response.status}`);
@@ -165,31 +194,19 @@ const Analytics = () => {
 
   const fetchDebugInfo = async () => {
     try {
-      const token = localStorage.getItem('token');
-      const endpoints = [
-        '/api/analytics/test',
-        '/api/analytics/admin/stats',
-        '/api/analytics/debug'
-      ];
-
-      if (isDeveloper) {
-        endpoints.push('/api/analytics/platform');
-      }
-
-      const endpointTests = {};
-      for (const endpoint of endpoints) {
-        const result = await testApiConnectivity(endpoint);
-        endpointTests[endpoint] = result;
-      }
-
+      console.log('🔍 Starting comprehensive debug...');
+      const endpointTests = await testAllEndpoints();
+      
       setDebugInfo({
         timestamp: new Date().toISOString(),
         endpointTests,
         userInfo: {
           email: currentUser?.email,
           isDeveloper: isDeveloper,
-          hasToken: !!localStorage.getItem('token')
-        }
+          hasToken: !!localStorage.getItem('token'),
+          userId: currentUser?.id
+        },
+        suggestions: generateSuggestions(endpointTests)
       });
       setShowDebug(true);
       
@@ -197,10 +214,37 @@ const Analytics = () => {
       console.error('Debug fetch error:', error);
       setDebugInfo({ 
         error: `Debug failed: ${error.message}`,
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
+        suggestions: ['Check browser console for detailed errors', 'Verify backend is running and routes are registered']
       });
       setShowDebug(true);
     }
+  };
+
+  const generateSuggestions = (endpointTests) => {
+    const suggestions = [];
+    
+    if (!endpointTests['/api/analytics/'].success) {
+      suggestions.push('❌ Analytics routes are not registered in backend server.js');
+    }
+    
+    if (!endpointTests['/api/analytics/health'].success) {
+      suggestions.push('❌ Analytics health endpoint not working - routes not mounted');
+    }
+    
+    if (!endpointTests['/api/analytics/admin/stats'].success) {
+      suggestions.push('❌ Admin stats endpoint requires authentication or not working');
+    }
+    
+    if (endpointTests['/api/analytics/'].success && !endpointTests['/api/analytics/admin/stats'].success) {
+      suggestions.push('✅ Routes are registered! Issue might be with authentication');
+    }
+
+    if (suggestions.length === 0) {
+      suggestions.push('✅ All endpoints are working correctly!');
+    }
+
+    return suggestions;
   };
 
   useEffect(() => {
@@ -226,6 +270,7 @@ const Analytics = () => {
           <div className="loading-spinner"></div>
           <p>Loading analytics data...</p>
           <p className="loading-status">API Status: {apiStatus}</p>
+          <p className="loading-user">User: {currentUser?.email}</p>
         </div>
       </div>
     );
@@ -275,7 +320,7 @@ const Analytics = () => {
               <i>🎯</i>
             </div>
             <div className="stat-info">
-              <h3>Avg Score (My Quizzes)</h3>
+              <h3>Avg Score</h3>
               <p className="stat-number">{analyticsData.averageScore}%</p>
               <span className="stat-change">On your content</span>
             </div>
@@ -288,14 +333,26 @@ const Analytics = () => {
             <div className="stat-info">
               <h3>Total Attempts</h3>
               <p className="stat-number">{analyticsData.totalAttempts}</p>
-              <span className="stat-change">
-                {analyticsData.growthPercentage > 0 ? '↑' : '↓'} 
-                {Math.abs(analyticsData.growthPercentage)}% from previous period
-              </span>
+              <span className="stat-change">Quiz attempts</span>
             </div>
           </div>
         </div>
       </div>
+
+      {/* Show data status */}
+      {analyticsData._debug?.status === 'ERROR' && (
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Analytics Data Unavailable</h3>
+          <p>{analyticsData._debug.error}</p>
+          <p>This could mean:</p>
+          <ul>
+            <li>You haven't created any quizzes yet</li>
+            <li>No users have taken your quizzes</li>
+            <li>The analytics API is not properly configured</li>
+          </ul>
+        </div>
+      )}
 
       {/* Recent Activity */}
       {analyticsData.recentActivity && analyticsData.recentActivity.length > 0 && (
@@ -307,7 +364,7 @@ const Analytics = () => {
                 <div className="activity-icon">📝</div>
                 <div className="activity-info">
                   <p><strong>{activity.userName}</strong> completed <strong>{activity.quizTitle}</strong></p>
-                  <span>Score: {activity.percentage}% • Time: {Math.round(activity.timeTaken / 60)}min • {new Date(activity.completedAt).toLocaleDateString()}</span>
+                  <span>Score: {activity.percentage}% • Time: {Math.round(activity.timeTaken / 60)}min</span>
                 </div>
                 <div className={`activity-status ${activity.passed ? 'passed' : 'failed'}`}>
                   {activity.passed ? 'Passed' : 'Failed'}
@@ -318,49 +375,20 @@ const Analytics = () => {
         </div>
       )}
 
-      {/* Charts */}
-      <div className="charts-grid">
-        <div className="chart-card">
-          <h3>My Users Growth</h3>
-          <div className="chart-content">
-            <p>Total users who took your quizzes: <strong>{analyticsData.totalUsers}</strong></p>
-            <div className="growth-stats">
-              <div className="growth-item">
-                <span className="growth-label">Total Attempts:</span>
-                <span className="growth-value">{analyticsData.totalAttempts}</span>
-              </div>
-            </div>
-          </div>
+      {/* Empty state */}
+      {analyticsData.totalAttempts === 0 && analyticsData._debug?.status !== 'ERROR' && (
+        <div className="empty-state">
+          <div className="empty-icon">📊</div>
+          <h3>No Analytics Data Yet</h3>
+          <p>Your analytics dashboard is ready, but there's no data to display yet.</p>
+          <p>This usually means:</p>
+          <ul>
+            <li>You haven't created any quizzes</li>
+            <li>Users haven't taken your quizzes yet</li>
+            <li>Your quizzes are not published</li>
+          </ul>
         </div>
-
-        <div className="chart-card">
-          <h3>Score Distribution (My Quizzes)</h3>
-          <div className="chart-content">
-            <p>How users scored on your quizzes</p>
-            <div className="score-distribution">
-              {analyticsData.scoreDistribution.map((item, index) => (
-                <div key={index} className="distribution-item">
-                  <span className="range">{item.range}</span>
-                  <div className="distribution-bar">
-                    <div 
-                      className="distribution-fill"
-                      style={{ 
-                        width: analyticsData.totalAttempts > 0 
-                          ? `${(item.count / analyticsData.totalAttempts) * 100}%` 
-                          : '0%' 
-                      }}
-                    ></div>
-                  </div>
-                  <span className="count">{item.count}</span>
-                </div>
-              ))}
-            </div>
-            <p className="chart-note">
-              Average score: <strong>{analyticsData.averageScore}%</strong>
-            </p>
-          </div>
-        </div>
-      </div>
+      )}
     </>
   );
 
@@ -371,10 +399,10 @@ const Analytics = () => {
           <div className="error-icon">🚫</div>
           <h3>Access Denied</h3>
           <p>Platform analytics are only available to the developer.</p>
+          <p>Your email: {currentUser?.email}</p>
         </div>
       ) : platformData ? (
         <>
-          {/* Platform Overview */}
           <div className="admin-content-section">
             <h3>Platform Overview</h3>
             <div className="stats-grid">
@@ -421,52 +449,19 @@ const Analytics = () => {
                   <span className="stat-change">Quiz attempts</span>
                 </div>
               </div>
-
-              <div className="stat-card platform-specific">
-                <div className="stat-icon platform-score">
-                  <i>🎯</i>
-                </div>
-                <div className="stat-info">
-                  <h3>Platform Avg Score</h3>
-                  <p className="stat-number">{platformData.platform.platformAverageScore}%</p>
-                  <span className="stat-change">Across all quizzes</span>
-                </div>
-              </div>
             </div>
           </div>
 
-          {/* Recent Platform Activity */}
           {platformData.recentActivity && platformData.recentActivity.length > 0 && (
             <div className="recent-activity">
               <h3>Recent Platform Activity</h3>
               <div className="activity-list">
-                {platformData.recentActivity.map((activity, index) => (
+                {platformData.recentActivity.slice(0, 10).map((activity, index) => (
                   <div key={activity.id || index} className="activity-item">
                     <div className="activity-icon">📝</div>
                     <div className="activity-info">
                       <p><strong>{activity.userName}</strong> completed <strong>{activity.quizTitle}</strong></p>
                       <span>Score: {activity.percentage}% • {new Date(activity.completedAt).toLocaleDateString()}</span>
-                    </div>
-                    <div className={`activity-status ${activity.passed ? 'passed' : 'failed'}`}>
-                      {activity.passed ? 'Passed' : 'Failed'}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {/* Popular Quizzes */}
-          {platformData.popularQuizzes && platformData.popularQuizzes.length > 0 && (
-            <div className="recent-activity">
-              <h3>Popular Quizzes</h3>
-              <div className="activity-list">
-                {platformData.popularQuizzes.map((quiz, index) => (
-                  <div key={quiz.id || index} className="activity-item">
-                    <div className="activity-icon">🔥</div>
-                    <div className="activity-info">
-                      <p><strong>{quiz.title}</strong> - {quiz.category}</p>
-                      <span>Times taken: {quiz.timesTaken} • Avg score: {quiz.averageScore}% • By: {quiz.createdBy}</span>
                     </div>
                   </div>
                 ))}
@@ -475,8 +470,11 @@ const Analytics = () => {
           )}
         </>
       ) : (
-        <div className="loading-state">
-          <p>No platform data available</p>
+        <div className="empty-state">
+          <div className="empty-icon">🔧</div>
+          <h3>Platform Analytics</h3>
+          <p>Platform analytics will show total platform statistics, user growth, and system-wide activity.</p>
+          <p>Only accessible to the developer.</p>
         </div>
       )}
     </>
@@ -493,8 +491,7 @@ const Analytics = () => {
           </p>
           {analyticsData && (
             <p className="last-updated">
-              Last updated: {new Date(analyticsData.lastUpdated).toLocaleString()}
-              {analyticsData._debug?.status && ` (${analyticsData._debug.status})`}
+              Last updated: {new Date().toLocaleString()}
             </p>
           )}
         </div>
@@ -507,8 +504,6 @@ const Analytics = () => {
               <option value="all">All Time</option>
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
-              <option value="90days">Last 90 Days</option>
-              <option value="1year">Last Year</option>
             </select>
           )}
           <button 
@@ -546,7 +541,7 @@ const Analytics = () => {
 
       {/* API Status */}
       <div className={`api-status ${apiStatus}`}>
-        API Status: {apiStatus.toUpperCase()}
+        API Status: {apiStatus.toUpperCase()} | User: {currentUser?.email} | Role: {isDeveloper ? 'Developer' : 'Admin'}
       </div>
 
       {error && (
@@ -581,22 +576,25 @@ const Analytics = () => {
           >
             Hide Debug
           </button>
+          
+          <div className="debug-suggestions">
+            <h4>Diagnosis & Suggestions:</h4>
+            <ul>
+              {debugInfo.suggestions?.map((suggestion, index) => (
+                <li key={index} dangerouslySetInnerHTML={{ __html: suggestion }} />
+              ))}
+            </ul>
+          </div>
+          
           <pre className="debug-output">
             {JSON.stringify(debugInfo, null, 2)}
           </pre>
         </div>
       )}
 
-      {/* Show data when available */}
+      {/* Show data */}
       {analyticsData && activeTab === 'my-analytics' && renderMyAnalytics()}
       {activeTab === 'platform' && renderPlatformAnalytics()}
-
-      {/* Show fallback notice */}
-      {analyticsData?._debug?.status === 'FALLBACK_UI_DATA' && (
-        <div className="fallback-notice">
-          <strong>Note:</strong> Showing example data. Real analytics will appear when the API connection is working.
-        </div>
-      )}
     </div>
   );
 };
