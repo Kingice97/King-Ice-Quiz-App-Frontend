@@ -12,15 +12,52 @@ const Analytics = () => {
   const [apiStatus, setApiStatus] = useState('checking');
   const { currentUser } = useAuth();
 
-  // Test API connectivity first
-  const testApiConnectivity = async () => {
+  // Test basic API connectivity
+  const testApiConnectivity = async (endpoint = '/api/analytics/test') => {
     try {
-      const response = await fetch('/api/analytics/test');
+      console.log(`🔍 Testing connectivity to: ${endpoint}`);
+      const response = await fetch(endpoint);
+      
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        const text = await response.text();
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+      }
+      
       const result = await response.json();
-      return { success: true, data: result };
+      return { 
+        success: true, 
+        data: result,
+        status: response.status
+      };
     } catch (error) {
-      return { success: false, error: error.message };
+      return { 
+        success: false, 
+        error: error.message,
+        endpoint
+      };
     }
+  };
+
+  // Test all possible endpoints
+  const testAllEndpoints = async () => {
+    const endpoints = [
+      '/api/analytics/test',
+      '/api/analytics/public-debug',
+      '/api/analytics/admin/stats',
+      '/api/analytics/debug'
+    ];
+
+    const results = {};
+    
+    for (const endpoint of endpoints) {
+      console.log(`Testing endpoint: ${endpoint}`);
+      const result = await testApiConnectivity(endpoint);
+      results[endpoint] = result;
+    }
+
+    return results;
   };
 
   const fetchAdminAnalytics = async () => {
@@ -37,15 +74,16 @@ const Analytics = () => {
       console.log(`📊 Fetching analytics for time range: ${timeRange}`);
       const token = localStorage.getItem('token');
       
-      // First test basic connectivity
-      const connectivityTest = await testApiConnectivity();
+      // First test basic connectivity to public endpoint
+      const connectivityTest = await testApiConnectivity('/api/analytics/test');
       if (!connectivityTest.success) {
         setApiStatus('disconnected');
-        throw new Error('Cannot connect to analytics API. The backend service may be unavailable.');
+        throw new Error(`Cannot connect to analytics API: ${connectivityTest.error}`);
       }
       
       setApiStatus('connected');
 
+      // Now try the main analytics endpoint
       const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -57,8 +95,8 @@ const Analytics = () => {
       const contentType = response.headers.get('content-type');
       if (!contentType || !contentType.includes('application/json')) {
         const text = await response.text();
-        console.error('❌ Non-JSON response:', text.substring(0, 200));
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
+        console.error('❌ Non-JSON response from /api/analytics/admin/stats:', text.substring(0, 200));
+        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}. This means the endpoint doesn't exist.`);
       }
 
       const result = await response.json();
@@ -79,39 +117,36 @@ const Analytics = () => {
       setError(error.message);
       
       // Set fallback data for development
-      if (error.message.includes('HTML') || error.message.includes('JSON')) {
-        setAnalyticsData({
-          totalQuizzes: 3,
-          totalUsers: 3,
-          totalQuestions: 15,
-          averageScore: 75,
-          totalAttempts: 8,
-          growthPercentage: 0,
-          scoreDistribution: [
-            { range: '0-20%', count: 0 },
-            { range: '21-40%', count: 1 },
-            { range: '41-60%', count: 2 },
-            { range: '61-80%', count: 3 },
-            { range: '81-100%', count: 2 }
-          ],
-          recentActivity: [
-            {
-              id: 1,
-              userName: 'Example User',
-              quizTitle: 'Sample Quiz',
-              score: 85,
-              percentage: 85,
-              timeTaken: 300,
-              completedAt: new Date(),
-              passed: true
-            }
-          ],
-          timeRange: timeRange,
-          lastUpdated: new Date(),
-          _debug: { status: 'FALLBACK_UI_DATA' }
-        });
-        setError('API Connection Issue - Showing example data');
-      }
+      setAnalyticsData({
+        totalQuizzes: 3,
+        totalUsers: 3,
+        totalQuestions: 15,
+        averageScore: 75,
+        totalAttempts: 8,
+        growthPercentage: 0,
+        scoreDistribution: [
+          { range: '0-20%', count: 0 },
+          { range: '21-40%', count: 1 },
+          { range: '41-60%', count: 2 },
+          { range: '61-80%', count: 3 },
+          { range: '81-100%', count: 2 }
+        ],
+        recentActivity: [
+          {
+            id: 1,
+            userName: 'Example User',
+            quizTitle: 'Sample Quiz',
+            score: 85,
+            percentage: 85,
+            timeTaken: 300,
+            completedAt: new Date(),
+            passed: true
+          }
+        ],
+        timeRange: timeRange,
+        lastUpdated: new Date(),
+        _debug: { status: 'FALLBACK_UI_DATA', error: error.message }
+      });
     } finally {
       setLoading(false);
     }
@@ -119,29 +154,81 @@ const Analytics = () => {
 
   const fetchDebugInfo = async () => {
     try {
+      console.log('🔍 Starting comprehensive debug...');
       const token = localStorage.getItem('token');
-      const response = await fetch('/api/analytics/debug', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-          'Content-Type': 'application/json'
+      
+      // Test all endpoints first
+      const endpointTests = await testAllEndpoints();
+      
+      // Try the debug endpoint with auth
+      let debugResult = null;
+      try {
+        const response = await fetch('/api/analytics/debug', {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+            'Content-Type': 'application/json'
+          }
+        });
+        
+        if (response.ok) {
+          const contentType = response.headers.get('content-type');
+          if (contentType && contentType.includes('application/json')) {
+            debugResult = await response.json();
+          } else {
+            const text = await response.text();
+            debugResult = { error: `Non-JSON response: ${text.substring(0, 100)}...` };
+          }
+        } else {
+          debugResult = { error: `HTTP ${response.status}: ${response.statusText}` };
         }
-      });
-      
-      // Check if response is JSON
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Server returned HTML: ${text.substring(0, 100)}...`);
+      } catch (debugError) {
+        debugResult = { error: `Debug endpoint error: ${debugError.message}` };
       }
-      
-      const result = await response.json();
-      setDebugInfo(result);
+
+      const comprehensiveDebug = {
+        timestamp: new Date().toISOString(),
+        endpointTests,
+        debugEndpoint: debugResult,
+        userInfo: {
+          isAuthenticated: !!currentUser,
+          userId: currentUser?.id,
+          username: currentUser?.username,
+          hasToken: !!localStorage.getItem('token')
+        },
+        suggestions: []
+      };
+
+      // Add suggestions based on test results
+      if (!endpointTests['/api/analytics/test'].success) {
+        comprehensiveDebug.suggestions.push('❌ Basic analytics route not registered in server.js');
+      }
+      if (!endpointTests['/api/analytics/public-debug'].success) {
+        comprehensiveDebug.suggestions.push('❌ Public debug route not working');
+      }
+      if (!endpointTests['/api/analytics/admin/stats'].success) {
+        comprehensiveDebug.suggestions.push('❌ Admin stats route requires authentication or not registered');
+      }
+      if (!endpointTests['/api/analytics/debug'].success) {
+        comprehensiveDebug.suggestions.push('❌ Debug route requires authentication or not registered');
+      }
+
+      if (comprehensiveDebug.suggestions.length === 0) {
+        comprehensiveDebug.suggestions.push('✅ All endpoints are accessible');
+      }
+
+      setDebugInfo(comprehensiveDebug);
       setShowDebug(true);
+      
     } catch (error) {
-      console.error('Debug fetch error:', error);
+      console.error('Comprehensive debug error:', error);
       setDebugInfo({ 
-        error: error.message,
-        note: 'This usually means the /api/analytics/debug endpoint does not exist or returns HTML instead of JSON'
+        error: `Comprehensive debug failed: ${error.message}`,
+        timestamp: new Date().toISOString(),
+        suggestions: [
+          'Check if analytics routes are registered in backend/server.js',
+          'Check backend console for route loading messages',
+          'Verify the backend is running and accessible'
+        ]
       });
       setShowDebug(true);
     }
@@ -233,7 +320,7 @@ const Analytics = () => {
       {error && (
         <div className="error-state">
           <div className="error-icon">⚠️</div>
-          <h3>Analytics Dashboard</h3>
+          <h3>Analytics Dashboard Issue</h3>
           <p>{error}</p>
           <div className="error-actions">
             <button 
@@ -250,11 +337,12 @@ const Analytics = () => {
             </button>
           </div>
           <div className="error-help">
-            <p><strong>Common issues:</strong></p>
+            <p><strong>Quick Fix Checklist:</strong></p>
             <ul>
-              <li>Backend service might be restarting</li>
-              <li>API routes might not be registered</li>
-              <li>Check browser Network tab for detailed errors</li>
+              <li>✅ Check if <code>analyticsRoutes</code> are registered in <code>backend/server.js</code></li>
+              <li>✅ Verify backend is running and routes are loaded</li>
+              <li>✅ Check browser Network tab for exact API call details</li>
+              <li>✅ Click "Debug API" for comprehensive route testing</li>
             </ul>
           </div>
         </div>
@@ -263,13 +351,23 @@ const Analytics = () => {
       {/* Debug Information */}
       {showDebug && debugInfo && (
         <div className="debug-section">
-          <h3>🔍 API Debug Information</h3>
+          <h3>🔍 Comprehensive API Debug Information</h3>
           <button 
             className="btn-secondary"
             onClick={() => setShowDebug(false)}
           >
             Hide Debug
           </button>
+          
+          <div className="debug-suggestions">
+            <h4>Suggestions:</h4>
+            <ul>
+              {debugInfo.suggestions?.map((suggestion, index) => (
+                <li key={index} dangerouslySetInnerHTML={{ __html: suggestion }} />
+              ))}
+            </ul>
+          </div>
+          
           <pre className="debug-output">
             {JSON.stringify(debugInfo, null, 2)}
           </pre>
@@ -283,6 +381,8 @@ const Analytics = () => {
           {analyticsData._debug?.status === 'FALLBACK_UI_DATA' && (
             <div className="fallback-notice">
               <strong>Note:</strong> Showing example data. Real analytics will appear when the API connection is working.
+              <br />
+              <small>Error: {analyticsData._debug.error}</small>
             </div>
           )}
 
