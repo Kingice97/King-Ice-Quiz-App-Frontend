@@ -4,17 +4,117 @@
     <meta charset="utf-8" />
     <link rel="icon" type="image/png" href="%PUBLIC_URL%/brain-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <meta name="theme-color" content="#000000" />
-    <meta
-      name="description"
-      content="King Ice Quiz App - Test your knowledge with interactive quizzes"
-    />
-    <link rel="apple-touch-icon" href="%PUBLIC_URL%/brain-icon.png" />
+    
+    <!-- PWA Meta Tags -->
+    <meta name="theme-color" content="#3182ce" />
+    <meta name="application-name" content="King Ice Quiz">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="default">
+    <meta name="apple-mobile-web-app-title" content="King Ice Quiz">
+    <meta name="description" content="Interactive quiz platform with real-time chat and leaderboards">
+    <meta name="format-detection" content="telephone=no">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="msapplication-TileColor" content="#3182ce">
+    <meta name="msapplication-tap-highlight" content="no">
+    
+    <!-- Apple Touch Icons -->
+    <link rel="apple-touch-icon" href="%PUBLIC_URL%/brain-icon.png">
+    
+    <!-- PWA Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
+    
     <title>King Ice QuizApp - Interactive Quiz Platform</title>
+    
+    <style>
+      /* Loading screen for better app-like experience */
+      #app-loading {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(135deg, #1a202c 0%, #2d3748 100%);
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        z-index: 9999;
+        color: white;
+        font-family: Arial, sans-serif;
+      }
+      
+      .loading-spinner {
+        width: 50px;
+        height: 50px;
+        border: 4px solid #3182ce;
+        border-top: 4px solid transparent;
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+        margin-bottom: 20px;
+      }
+      
+      @keyframes spin {
+        0% { transform: rotate(0deg); }
+        100% { transform: rotate(360deg); }
+      }
+    </style>
   </head>
   <body>
+    <!-- App Loading Screen -->
+    <div id="app-loading">
+      <div class="loading-spinner"></div>
+      <h2>King Ice Quiz</h2>
+      <p>Loading amazing quiz experience...</p>
+    </div>
+    
     <noscript>You need to enable JavaScript to run this app.</noscript>
     <div id="root"></div>
+    
+    <!-- Service Worker Registration -->
+    <script>
+      // Remove loading screen when app loads
+      window.addEventListener('load', function() {
+        setTimeout(function() {
+          const loadingScreen = document.getElementById('app-loading');
+          if (loadingScreen) {
+            loadingScreen.style.opacity = '0';
+            setTimeout(() => loadingScreen.remove(), 500);
+          }
+        }, 1000);
+        
+        // Register Service Worker
+        if ('serviceWorker' in navigator) {
+          navigator.serviceWorker.register('/sw.js')
+            .then(function(registration) {
+              console.log('🟢 Service Worker registered with scope:', registration.scope);
+            })
+            .catch(function(error) {
+              console.log('🔴 Service Worker registration failed:', error);
+            });
+        }
+        
+        // Listen for app installation
+        let deferredPrompt;
+        
+        window.addEventListener('beforeinstallprompt', (e) => {
+          e.preventDefault();
+          deferredPrompt = e;
+          console.log('📱 App install prompt available');
+          
+          // Show custom install button (optional)
+          showInstallPromotion();
+        });
+        
+        window.addEventListener('appinstalled', (evt) => {
+          console.log('🎉 App was installed successfully!');
+          deferredPrompt = null;
+        });
+        
+        function showInstallPromotion() {
+          // You can create a custom install button here
+          console.log('Show your custom install button here');
+        }
+      });
+    </script>
   </body>
 </html>

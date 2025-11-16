@@ -8,5 +8,27 @@
     "no-unused-expressions": "warn",
     "no-console": "warn",
     "jsx-a11y/anchor-is-valid": "warn"
-  }
+  },
+  "overrides": [
+    {
+      "files": ["public/sw.js"],
+      "env": {
+        "serviceworker": true,
+        "browser": true
+      },
+      "globals": {
+        "self": "readonly",
+        "caches": "readonly",
+        "fetch": "readonly",
+        "clients": "readonly",
+        "skipWaiting": "readonly",
+        "importScripts": "readonly"
+      },
+      "rules": {
+        "no-restricted-globals": "off",
+        "no-undef": "off",
+        "no-console": "off"
+      }
+    }
+  ]
 }
