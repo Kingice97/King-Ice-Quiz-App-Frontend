@@ -539,28 +539,6 @@
   }
 }
 
-.debug-suggestions {
-  background: #fff3cd;
-  border: 1px solid #ffeaa7;
-  border-radius: 6px;
-  padding: 15px;
-  margin-bottom: 15px;
-}
-
-.debug-suggestions h4 {
-  margin: 0 0 10px 0;
-  color: #856404;
-}
-
-.debug-suggestions ul {
-  margin: 0;
-  padding-left: 20px;
-}
-
-.debug-suggestions li {
-  margin-bottom: 5px;
-  color: #856404;
-}
 
 code {
   background: #f8f9fa;
@@ -616,3 +594,15 @@ code {
 .stat-icon.platform-quizzes { background: #c6f6d5; color: #276749; }
 .stat-icon.platform-results { background: #e9d8fd; color: #6b46c1; }
 .stat-icon.platform-score { background: #fed7d7; color: #c53030; }
+
+
+/* Remove these debug styles */
+.debug-btn,
+.debug-section,
+.debug-output,
+.debug-suggestions,
+.api-status,
+.loading-status,
+.loading-user {
+  display: none;
+}

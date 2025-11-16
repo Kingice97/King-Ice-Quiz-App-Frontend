@@ -9,30 +9,9 @@ const Analytics = () => {
   const [timeRange, setTimeRange] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [debugInfo, setDebugInfo] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
-  const [apiStatus, setApiStatus] = useState('checking');
   const { currentUser } = useAuth();
 
   const isDeveloper = currentUser?.email === 'olubiyiisaacanu@gmail.com';
-
-  // Test API connectivity
-  const testApiConnectivity = async (endpoint = '/api/analytics/health') => {
-    try {
-      const response = await fetch(endpoint);
-      const contentType = response.headers.get('content-type');
-      
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Server returned HTML instead of JSON. Status: ${response.status}`);
-      }
-      
-      const result = await response.json();
-      return { success: true, data: result, status: response.status };
-    } catch (error) {
-      return { success: false, error: error.message, endpoint };
-    }
-  };
 
   const fetchAdminAnalytics = async () => {
     if (!currentUser) {
@@ -42,27 +21,14 @@ const Analytics = () => {
 
     setLoading(true);
     setError(null);
-    setDebugInfo(null);
     
     try {
-      console.log('📊 Starting admin analytics fetch...');
       const token = localStorage.getItem('token');
       
       if (!token) {
         throw new Error('No authentication token found. Please log in again.');
       }
 
-      // Test basic connectivity first
-      const healthTest = await testApiConnectivity('/api/analytics/health');
-      if (!healthTest.success) {
-        setApiStatus('disconnected');
-        throw new Error(`Analytics API not available: ${healthTest.error}`);
-      }
-      
-      setApiStatus('connected');
-      console.log('✅ Analytics API is available, fetching admin data...');
-
-      // Fetch analytics data with authentication
       const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -70,14 +36,7 @@ const Analytics = () => {
         }
       });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Analytics endpoint returned unexpected response. Status: ${response.status}`);
-      }
-
       const result = await response.json();
-      console.log('✅ Admin analytics data received:', result);
 
       if (!response.ok) {
         throw new Error(result.message || `HTTP error! status: ${response.status}`);
@@ -85,15 +44,13 @@ const Analytics = () => {
 
       if (result.success) {
         setAnalyticsData(result.data);
-        console.log('✅ Admin analytics data set successfully');
       } else {
         throw new Error(result.message || 'Failed to fetch analytics data');
       }
       
     } catch (error) {
-      console.error('❌ Admin analytics fetch error:', error);
+      console.error('Analytics fetch error:', error);
       setError(error.message);
-      setApiStatus('error');
     } finally {
       setLoading(false);
     }
@@ -109,7 +66,6 @@ const Analytics = () => {
     setError(null);
     
     try {
-      console.log('🔧 Starting platform analytics fetch...');
       const token = localStorage.getItem('token');
       
       const response = await fetch('/api/analytics/platform', {
@@ -119,14 +75,7 @@ const Analytics = () => {
         }
       });
 
-      const contentType = response.headers.get('content-type');
-      if (!contentType || !contentType.includes('application/json')) {
-        const text = await response.text();
-        throw new Error(`Platform analytics returned unexpected response. Status: ${response.status}`);
-      }
-
       const result = await response.json();
-      console.log('✅ Platform analytics received:', result);
 
       if (!response.ok) {
         throw new Error(result.message || `HTTP error! status: ${response.status}`);
@@ -134,58 +83,15 @@ const Analytics = () => {
 
       if (result.success) {
         setPlatformData(result.data);
-        console.log('✅ Platform analytics data set successfully');
       } else {
         throw new Error(result.message || 'Failed to fetch platform analytics');
       }
       
     } catch (error) {
-      console.error('❌ Platform analytics fetch error:', error);
+      console.error('Platform analytics fetch error:', error);
       setError(error.message);
     } finally {
       setLoading(false);
-    }
-  };
-
-  const fetchDebugInfo = async () => {
-    try {
-      const endpoints = [
-        '/api/analytics/',
-        '/api/analytics/health',
-        '/api/analytics/test',
-        '/api/analytics/admin/stats',
-        '/api/analytics/debug'
-      ];
-
-      if (isDeveloper) {
-        endpoints.push('/api/analytics/platform');
-      }
-
-      const endpointTests = {};
-      for (const endpoint of endpoints) {
-        endpointTests[endpoint] = await testApiConnectivity(endpoint);
-      }
-
-      setDebugInfo({
-        timestamp: new Date().toISOString(),
-        endpointTests,
-        userInfo: {
-          email: currentUser?.email,
-          isDeveloper: isDeveloper,
-          hasToken: !!localStorage.getItem('token'),
-          userId: currentUser?.id
-        },
-        backendStatus: 'WORKING ✅'
-      });
-      setShowDebug(true);
-      
-    } catch (error) {
-      console.error('Debug fetch error:', error);
-      setDebugInfo({ 
-        error: `Debug failed: ${error.message}`,
-        timestamp: new Date().toISOString()
-      });
-      setShowDebug(true);
     }
   };
 
@@ -211,9 +117,6 @@ const Analytics = () => {
         <div className="loading-state">
           <div className="loading-spinner"></div>
           <p>Loading analytics data...</p>
-          <p className="loading-status">API Status: {apiStatus}</p>
-          <p className="loading-user">User: {currentUser?.email}</p>
-          {isDeveloper && <p className="developer-badge">Developer Access</p>}
         </div>
       </div>
     );
@@ -303,6 +206,39 @@ const Analytics = () => {
         </div>
       )}
 
+      {/* Score Distribution */}
+      {analyticsData?.scoreDistribution && (
+        <div className="charts-grid">
+          <div className="chart-card">
+            <h3>Score Distribution</h3>
+            <div className="chart-content">
+              <p>How users scored on your quizzes</p>
+              <div className="score-distribution">
+                {analyticsData.scoreDistribution.map((item, index) => (
+                  <div key={index} className="distribution-item">
+                    <span className="range">{item.range}</span>
+                    <div className="distribution-bar">
+                      <div 
+                        className="distribution-fill"
+                        style={{ 
+                          width: analyticsData.totalAttempts > 0 
+                            ? `${(item.count / analyticsData.totalAttempts) * 100}%` 
+                            : '0%' 
+                        }}
+                      ></div>
+                    </div>
+                    <span className="count">{item.count}</span>
+                  </div>
+                ))}
+              </div>
+              <p className="chart-note">
+                Average score: <strong>{analyticsData.averageScore}%</strong>
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Empty state */}
       {(!analyticsData || analyticsData.totalAttempts === 0) && (
         <div className="empty-state">
@@ -315,10 +251,6 @@ const Analytics = () => {
             <li>Users haven't taken your quizzes yet</li>
             <li>Your quizzes are not published</li>
           </ul>
-          <div className="success-note">
-            <p><strong>✅ Backend Status:</strong> Analytics API is working correctly!</p>
-            <p>Data will appear here once you have quizzes and user activity.</p>
-          </div>
         </div>
       )}
     </>
@@ -331,7 +263,6 @@ const Analytics = () => {
           <div className="error-icon">🚫</div>
           <h3>Access Denied</h3>
           <p>Platform analytics are only available to the developer.</p>
-          <p>Your email: {currentUser?.email}</p>
         </div>
       ) : platformData ? (
         <>
@@ -455,11 +386,6 @@ const Analytics = () => {
             {activeTab === 'my-analytics' ? 'My Content Analytics' : 'Platform Analytics'}
             {isDeveloper && <span className="developer-badge"> (Developer)</span>}
           </p>
-          {analyticsData && (
-            <p className="last-updated">
-              Last updated: {new Date().toLocaleString()}
-            </p>
-          )}
         </div>
         <div className="time-filter">
           {activeTab === 'my-analytics' && (
@@ -473,16 +399,10 @@ const Analytics = () => {
             </select>
           )}
           <button 
-            className="btn-secondary debug-btn"
-            onClick={fetchDebugInfo}
-          >
-            Debug API
-          </button>
-          <button 
-            className="btn-secondary"
+            className="btn-primary"
             onClick={activeTab === 'my-analytics' ? fetchAdminAnalytics : fetchPlatformAnalytics}
           >
-            Refresh
+            Refresh Data
           </button>
         </div>
       </div>
@@ -505,52 +425,23 @@ const Analytics = () => {
         )}
       </div>
 
-      {/* API Status */}
-      <div className={`api-status ${apiStatus}`}>
-        ✅ Backend API: WORKING | User: {currentUser?.email} | Role: {isDeveloper ? 'Developer' : 'Admin'}
-      </div>
-
       {error && (
         <div className="error-state">
           <div className="error-icon">⚠️</div>
-          <h3>Analytics Issue</h3>
+          <h3>Unable to Load Analytics</h3>
           <p>{error}</p>
-          <div className="error-actions">
-            <button 
-              className="btn-primary"
-              onClick={activeTab === 'my-analytics' ? fetchAdminAnalytics : fetchPlatformAnalytics}
-            >
-              Try Again
-            </button>
-            <button 
-              className="btn-secondary"
-              onClick={fetchDebugInfo}
-            >
-              Debug API
-            </button>
-          </div>
-        </div>
-      )}
-
-      {/* Debug Information */}
-      {showDebug && debugInfo && (
-        <div className="debug-section">
-          <h3>🔍 API Debug Information</h3>
           <button 
-            className="btn-secondary"
-            onClick={() => setShowDebug(false)}
+            className="btn-primary"
+            onClick={activeTab === 'my-analytics' ? fetchAdminAnalytics : fetchPlatformAnalytics}
           >
-            Hide Debug
+            Try Again
           </button>
-          <pre className="debug-output">
-            {JSON.stringify(debugInfo, null, 2)}
-          </pre>
         </div>
       )}
 
       {/* Show data */}
-      {analyticsData && activeTab === 'my-analytics' && renderMyAnalytics()}
-      {activeTab === 'platform' && renderPlatformAnalytics()}
+      {!error && activeTab === 'my-analytics' && renderMyAnalytics()}
+      {!error && activeTab === 'platform' && renderPlatformAnalytics()}
     </div>
   );
 };
