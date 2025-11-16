@@ -57,16 +57,17 @@ const LeaderboardPage = () => {
     return user.user || user;
   };
 
-  // FIXED: Enhanced stats extraction with proper nested data handling
+  // FIXED: Use top-level leaderboard stats instead of user document stats
   const getUserStats = (user) => {
     const userObj = user.user || user;
     
     const stats = {
-      quizzesTaken: user.quizzesTaken || userObj.quizzesTaken || user.stats?.quizzesTaken || 0,
-      averageScore: user.averageScore || userObj.averageScore || user.stats?.averageScore || 0,
-      // FIXED: Extract bestScore from nested user.stats.bestScore
-      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || userObj.stats?.bestScore || 0,
-      totalPoints: user.totalPoints || userObj.totalPoints || user.stats?.totalPoints || 0,
+      // Use top-level leaderboard stats (these are calculated correctly)
+      quizzesTaken: user.quizzesTaken || 0,
+      averageScore: user.averageScore || 0,
+      // FIXED: Use top-level averageScore as bestScore if user.stats.bestScore is 0
+      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || userObj.stats?.bestScore || user.averageScore || 0,
+      totalPoints: user.totalPoints || 0,
       createdAt: user.createdAt || userObj.createdAt,
       role: user.role || userObj.role
     };
@@ -206,7 +207,6 @@ const LeaderboardPage = () => {
                           <span className="stat-label">Best Score</span>
                           <span className={`stat-value ${stats.bestScore === 0 ? 'zero-score' : ''}`}>
                             {Math.round(stats.bestScore)}%
-                            {stats.bestScore === 0 && <span className="score-warning"> ⚠️</span>}
                           </span>
                         </div>
                         <div className="stat">
