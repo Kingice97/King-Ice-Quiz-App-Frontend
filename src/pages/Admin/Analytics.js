@@ -348,6 +348,8 @@ const Analytics = () => {
         </div>
       )}
 
+      
+
       {/* Debug Information */}
       {showDebug && debugInfo && (
         <div className="debug-section">
@@ -548,5 +550,70 @@ const Analytics = () => {
     </div>
   );
 };
+
+// Add this function to test direct backend URL
+const testDirectBackendUrl = async () => {
+  const backendUrl = 'https://king-ice-quiz-app.onrender.com'; // REPLACE with your actual backend URL
+  
+  try {
+    const response = await fetch(`${backendUrl}/api/analytics/`);
+    const text = await response.text();
+    
+    console.log('Direct backend test response:', {
+      status: response.status,
+      contentType: response.headers.get('content-type'),
+      first200Chars: text.substring(0, 200)
+    });
+    
+    // Check if it's JSON
+    if (text.trim().startsWith('{')) {
+      try {
+        const json = JSON.parse(text);
+        setDebugInfo({
+          directTest: {
+            success: true,
+            backendUrl,
+            response: json
+          }
+        });
+      } catch (e) {
+        setDebugInfo({
+          directTest: {
+            success: false,
+            backendUrl, 
+            error: 'Response looks like JSON but parse failed',
+            responseSample: text.substring(0, 200)
+          }
+        });
+      }
+    } else {
+      setDebugInfo({
+        directTest: {
+          success: false,
+          backendUrl,
+          error: 'Response is not JSON',
+          responseSample: text.substring(0, 200),
+          isHtml: text.includes('<!DOCTYPE html>') || text.includes('<html')
+        }
+      });
+    }
+  } catch (error) {
+    setDebugInfo({
+      directTest: {
+        success: false,
+        backendUrl,
+        error: error.message
+      }
+    });
+  }
+  
+  setShowDebug(true);
+};
+<button 
+  className="btn-secondary"
+  onClick={testDirectBackendUrl}
+>
+  Test Backend Directly
+</button>
 
 export default Analytics;
