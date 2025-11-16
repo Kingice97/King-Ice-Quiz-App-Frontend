@@ -350,3 +350,48 @@
     height: 16px;
   }
 }
+
+
+/* Debug styles */
+.debug-btn {
+  margin-left: 10px;
+  font-size: 0.8rem;
+  padding: 5px 10px;
+}
+
+.debug-section {
+  background: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 15px;
+  margin-bottom: 20px;
+}
+
+.debug-section h3 {
+  margin-top: 0;
+  color: #495057;
+}
+
+.debug-output {
+  background: #2d3748;
+  color: #e2e8f0;
+  padding: 15px;
+  border-radius: 4px;
+  overflow-x: auto;
+  font-size: 0.8rem;
+  margin-top: 10px;
+}
+
+.debug-hint {
+  background: #e3f2fd;
+  border: 1px solid #bbdefb;
+  border-radius: 4px;
+  padding: 8px 12px;
+  margin-bottom: 15px;
+}
+
+.error-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 15px;
+}

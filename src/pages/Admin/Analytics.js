@@ -4,54 +4,75 @@ import './Analytics.css';
 
 const Analytics = () => {
   const [analyticsData, setAnalyticsData] = useState(null);
-  const [timeRange, setTimeRange] = useState('7days');
+  const [timeRange, setTimeRange] = useState('all');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [debugInfo, setDebugInfo] = useState(null);
+  const [showDebug, setShowDebug] = useState(false);
   const { currentUser } = useAuth();
 
-  useEffect(() => {
-    const fetchAdminAnalytics = async () => {
-      if (!currentUser) {
-        setLoading(false);
-        return;
-      }
+  const fetchAdminAnalytics = async () => {
+    if (!currentUser) {
+      setLoading(false);
+      return;
+    }
 
-      setLoading(true);
-      setError(null);
+    setLoading(true);
+    setError(null);
+    setDebugInfo(null);
+    
+    try {
+      console.log(`📊 Fetching analytics for time range: ${timeRange}`);
+      const token = localStorage.getItem('token');
       
-      try {
-        console.log(`📊 Fetching analytics for time range: ${timeRange}`);
-        const token = localStorage.getItem('token');
-        
-        // FIXED: Use correct endpoint - /api/analytics/admin/stats
-        const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-            'Content-Type': 'application/json'
-          }
-        });
-
-        if (!response.ok) {
-          throw new Error(`HTTP error! status: ${response.status}`);
+      const response = await fetch(`/api/analytics/admin/stats?range=${timeRange}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
         }
+      });
 
-        const result = await response.json();
-        console.log('✅ Analytics API response:', result);
+      const result = await response.json();
+      console.log('✅ Analytics API response:', result);
 
-        if (result.success) {
-          setAnalyticsData(result.data);
-        } else {
-          throw new Error(result.message || 'Failed to fetch analytics data');
-        }
-        
-      } catch (error) {
-        console.error('❌ Analytics fetch error:', error);
-        setError(error.message || 'Failed to load analytics data. Please try again.');
-      } finally {
-        setLoading(false);
+      if (!response.ok) {
+        throw new Error(result.message || `HTTP error! status: ${response.status}`);
       }
-    };
 
+      if (result.success) {
+        setAnalyticsData(result.data);
+      } else {
+        throw new Error(result.message || 'Failed to fetch analytics data');
+      }
+      
+    } catch (error) {
+      console.error('❌ Analytics fetch error:', error);
+      setError(error.message || 'Failed to load analytics data. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const fetchDebugInfo = async () => {
+    try {
+      const token = localStorage.getItem('token');
+      const response = await fetch('/api/analytics/debug', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      
+      const result = await response.json();
+      setDebugInfo(result);
+      setShowDebug(true);
+    } catch (error) {
+      console.error('Debug fetch error:', error);
+      setDebugInfo({ error: error.message });
+    }
+  };
+
+  useEffect(() => {
     fetchAdminAnalytics();
   }, [currentUser, timeRange]);
 
@@ -71,55 +92,17 @@ const Analytics = () => {
               onChange={(e) => setTimeRange(e.target.value)}
               disabled
             >
+              <option value="all">All Time</option>
               <option value="7days">Last 7 Days</option>
               <option value="30days">Last 30 Days</option>
               <option value="90days">Last 90 Days</option>
               <option value="1year">Last Year</option>
-              <option value="all">All Time</option>
             </select>
           </div>
         </div>
         <div className="loading-state">
           <div className="loading-spinner"></div>
           <p>Loading your analytics data...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (error && !analyticsData) {
-    return (
-      <div className="analytics">
-        <div className="management-header">
-          <div className="admin-welcome">
-            <h1>My Analytics Dashboard</h1>
-            <p className="admin-subtitle">
-              Insights for {currentUser?.name || currentUser?.username || 'Your Content'}
-            </p>
-          </div>
-          <div className="time-filter">
-            <select 
-              value={timeRange} 
-              onChange={(e) => setTimeRange(e.target.value)}
-            >
-              <option value="7days">Last 7 Days</option>
-              <option value="30days">Last 30 Days</option>
-              <option value="90days">Last 90 Days</option>
-              <option value="1year">Last Year</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-        </div>
-        <div className="error-state">
-          <div className="error-icon">⚠️</div>
-          <h3>Unable to Load Analytics</h3>
-          <p>{error}</p>
-          <button 
-            className="btn-primary"
-            onClick={() => window.location.reload()}
-          >
-            Try Again
-          </button>
         </div>
       </div>
     );
@@ -144,18 +127,79 @@ const Analytics = () => {
             value={timeRange} 
             onChange={(e) => setTimeRange(e.target.value)}
           >
+            <option value="all">All Time</option>
             <option value="7days">Last 7 Days</option>
             <option value="30days">Last 30 Days</option>
             <option value="90days">Last 90 Days</option>
             <option value="1year">Last Year</option>
-            <option value="all">All Time</option>
           </select>
+          <button 
+            className="btn-secondary debug-btn"
+            onClick={fetchDebugInfo}
+          >
+            Debug Data
+          </button>
+          <button 
+            className="btn-secondary"
+            onClick={fetchAdminAnalytics}
+          >
+            Refresh
+          </button>
         </div>
       </div>
 
+      {error && (
+        <div className="error-state">
+          <div className="error-icon">⚠️</div>
+          <h3>Unable to Load Analytics</h3>
+          <p>{error}</p>
+          <div className="error-actions">
+            <button 
+              className="btn-primary"
+              onClick={fetchAdminAnalytics}
+            >
+              Try Again
+            </button>
+            <button 
+              className="btn-secondary"
+              onClick={fetchDebugInfo}
+            >
+              Check Debug Info
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* Debug Information */}
+      {showDebug && debugInfo && (
+        <div className="debug-section">
+          <h3>🔍 Debug Information</h3>
+          <button 
+            className="btn-secondary"
+            onClick={() => setShowDebug(false)}
+          >
+            Hide Debug
+          </button>
+          <pre className="debug-output">
+            {JSON.stringify(debugInfo, null, 2)}
+          </pre>
+        </div>
+      )}
+
       {/* Show data when available */}
-      {analyticsData && (
+      {analyticsData && !error && (
         <>
+          {/* Debug info in data */}
+          {analyticsData._debug && (
+            <div className="debug-hint">
+              <small>
+                <strong>Debug:</strong> {analyticsData._debug.quizCount} quizzes, 
+                {analyticsData._debug.resultCount} results, 
+                {analyticsData._debug.userCount} users
+              </small>
+            </div>
+          )}
+
           {/* My Content Overview */}
           <div className="admin-content-section">
             <h3>My Content Overview</h3>
@@ -297,19 +341,19 @@ const Analytics = () => {
               <div className="empty-icon">
                 <i>📊</i>
               </div>
-              <h3>Your Analytics Dashboard is Ready!</h3>
-              <p>This dashboard is now connected and will show insights specifically for <strong>your quizzes and your users</strong>.</p>
+              <h3>Analytics Dashboard Ready - No Data Yet</h3>
+              <p>The system is working, but we haven't found any quiz attempts on your content yet.</p>
               <p className="empty-subtext">
-                Once users start taking your quizzes, you'll see real data here showing:
+                This could mean:
               </p>
               <ul className="features-list">
-                <li>📊 Performance of <strong>your quizzes</strong></li>
-                <li>👥 Users who took <strong>your quizzes</strong></li>
-                <li>⭐ Average scores on <strong>your content</strong></li>
-                <li>📈 Growth metrics for <strong>your audience</strong></li>
+                <li>👥 Users haven't taken your quizzes yet</li>
+                <li>📝 Your quizzes might not be published or active</li>
+                <li>🕒 The time range filter might be excluding existing data</li>
               </ul>
               <div className="success-note">
-                <p><strong>✅ Analytics System Active:</strong> The backend is now fully connected and ready to display your data!</p>
+                <p><strong>✅ System Status:</strong> Analytics backend is connected and ready!</p>
+                <p>Try clicking "Debug Data" to see what quizzes and results the system can detect.</p>
               </div>
             </div>
           )}
