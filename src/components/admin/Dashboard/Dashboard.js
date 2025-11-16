@@ -16,12 +16,6 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
   const regularUsersCount = stats.totalUsers || 0; // FIXED: Use actual totalUsers from stats
   const activeRegularUsers = stats.activeUsers || 0;
 
-  // // Admin quick actions
-  // const quickActions = [
-  //   { label: 'Manage Users', path: '/admin/users', icon: '👥', description: 'View and manage users' },
-  //   { label: 'System Analytics', path: '/admin/analytics', icon: '📊', description: 'View detailed analytics' },
-  // ];
-
   // DEBUG: Check what data we're receiving
   console.log('🔍 Dashboard Debug - userLeaderboard:', userLeaderboard);
   console.log('🔍 Dashboard Debug - stats:', stats);
@@ -68,25 +62,6 @@ const AdminDashboard = ({ stats, recentQuizzes, recentResults, userLeaderboard }
           </div>
         </div>
       </div>
-
-      {/* Quick Actions
-      <div className="dashboard-section">
-        <div className="section-header">
-          <h3>Quick Actions</h3>
-        </div>
-        <div className="quick-actions-grid">
-          {quickActions.map((action, index) => (
-            <Link key={index} to={action.path} className="quick-action-card">
-              <div className="action-icon">{action.icon}</div>
-              <div className="action-content">
-                <h4>{action.label}</h4>
-                <p>{action.description}</p>
-              </div>
-              <div className="action-arrow">→</div>
-            </Link>
-          ))}
-        </div>
-      </div> */}
 
       <div className="dashboard-content">
         {/* Recent Quizzes */}

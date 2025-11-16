@@ -526,7 +526,7 @@ const Profile = () => {
                       <div className="action-icon">👥</div>
                       <span>User Management</span>
                     </Link>
-                    <Link to="/admin/dashboard" className="admin-action-btn">
+                    <Link to="/admin" className="admin-action-btn">
                       <div className="action-icon">⚙️</div>
                       <span>Admin Dashboard</span>
                     </Link>

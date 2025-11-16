@@ -56,7 +56,7 @@ const Footer = () => {
               <h4 className="footer-title">Admin Resources</h4>
               <ul className="footer-links">
                 <li><Link to="/admin/quizzes">Manage Quizzes</Link></li>
-                <li><Link to="/admin/dashboard">Admin Dashboard</Link></li>
+                <li><Link to="/admin">Admin Dashboard</Link></li>
                 <li><Link to="/admin/users">User Management</Link></li>
                 <li><Link to="/admin/results">View Results</Link></li>
               </ul>
