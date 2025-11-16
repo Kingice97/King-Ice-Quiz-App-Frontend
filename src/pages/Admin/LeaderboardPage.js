@@ -13,7 +13,7 @@ const LeaderboardPage = () => {
     userService.getLeaderboard({ limit, timeframe: timeFilter })
   );
 
-  // FIXED: Better data extraction
+  // FIXED: Better data extraction with enhanced debugging
   const leaderboard = React.useMemo(() => {
     if (leaderboardError) {
       console.error('🚨 Leaderboard API error:', leaderboardError);
@@ -30,6 +30,22 @@ const LeaderboardPage = () => {
       data = leaderboardData;
     } else if (leaderboardData.leaderboard) {
       data = leaderboardData.leaderboard;
+    }
+    
+    // FIXED: Enhanced debugging for leaderboard data
+    console.log('📊 Leaderboard raw data:', leaderboardData);
+    console.log('📊 Processed leaderboard array:', data);
+    
+    if (data.length > 0) {
+      data.forEach((user, index) => {
+        console.log(`👤 Frontend User ${index + 1}:`, {
+          username: user.user?.username,
+          bestScore: user.bestScore,
+          averageScore: user.averageScore,
+          quizzesTaken: user.quizzesTaken,
+          has100Percent: user.bestScore === 100
+        });
+      });
     }
     
     return data;
@@ -53,24 +69,29 @@ const LeaderboardPage = () => {
     return user.username || user.user?.username || user.userName || 'Unknown User';
   };
 
-  const getUserObject = (user) => {
-    return user.user || user;
-  };
-
-  // FIXED: Use top-level leaderboard stats instead of user document stats
+  // FIXED: Improved getUserStats to prioritize leaderboard calculated stats
   const getUserStats = (user) => {
     const userObj = user.user || user;
     
+    // FIXED: Use leaderboard-calculated stats first (these are accurate)
     const stats = {
-      // Use top-level leaderboard stats (these are calculated correctly)
+      // Use top-level leaderboard stats (calculated in aggregation)
       quizzesTaken: user.quizzesTaken || 0,
       averageScore: user.averageScore || 0,
-      // FIXED: Use top-level averageScore as bestScore if user.stats.bestScore is 0
-      bestScore: user.bestScore || userObj.bestScore || user.stats?.bestScore || userObj.stats?.bestScore || user.averageScore || 0,
+      // FIXED: Use the bestScore from leaderboard aggregation (this is now calculated correctly)
+      bestScore: user.bestScore || 0, // This now comes from the backend aggregation
       totalPoints: user.totalPoints || 0,
       createdAt: user.createdAt || userObj.createdAt,
-      role: user.role || userObj.role
+      role: user.role || userObj.role,
+      lastActivity: user.lastActivity || userObj.lastActivity
     };
+    
+    console.log(`📈 Stats for ${getUsername(user)}:`, {
+      bestScore: stats.bestScore,
+      averageScore: stats.averageScore,
+      quizzesTaken: stats.quizzesTaken,
+      has100Percent: stats.bestScore === 100
+    });
     
     return stats;
   };
@@ -101,6 +122,17 @@ const LeaderboardPage = () => {
     }
   };
 
+  // FIXED: Add filter change handlers with debugging
+  const handleTimeFilterChange = (value) => {
+    console.log(`🕒 Changing time filter to: ${value}`);
+    setTimeFilter(value);
+  };
+
+  const handleLimitChange = (value) => {
+    console.log(`📊 Changing limit to: ${value}`);
+    setLimit(value);
+  };
+
   return (
     <div className="leaderboard-page">
       <Helmet>
@@ -124,6 +156,13 @@ const LeaderboardPage = () => {
                 : 0
               }%
             </span>
+            {/* FIXED: Add best score stats */}
+            <span>
+              Users with 100% Best: {leaderboard.filter(user => {
+                const stats = getUserStats(user);
+                return stats.bestScore === 100;
+              }).length}
+            </span>
           </div>
         </div>
 
@@ -133,7 +172,7 @@ const LeaderboardPage = () => {
             <label>Time Period:</label>
             <select
               value={timeFilter}
-              onChange={(e) => setTimeFilter(e.target.value)}
+              onChange={(e) => handleTimeFilterChange(e.target.value)}
               className="form-control"
             >
               <option value="all">All Time</option>
@@ -144,7 +183,7 @@ const LeaderboardPage = () => {
             <label>Show Top:</label>
             <select
               value={limit}
-              onChange={(e) => setLimit(Number(e.target.value))}
+              onChange={(e) => handleLimitChange(Number(e.target.value))}
               className="form-control"
             >
               <option value={10}>Top 10</option>
@@ -163,12 +202,20 @@ const LeaderboardPage = () => {
             <>
               <div className="leaderboard-stats">
                 <span>Showing: {leaderboard.length} users</span>
+                <span>Time Filter: {timeFilter}</span>
+                <span>Users with 100% Best Score: {
+                  leaderboard.filter(user => {
+                    const stats = getUserStats(user);
+                    return stats.bestScore === 100;
+                  }).length
+                }</span>
               </div>
 
               <div className="leaderboard-list">
                 {leaderboard.map((user, index) => {
                   const username = getUsername(user);
                   const stats = getUserStats(user);
+                  const hasPerfectScore = stats.bestScore === 100;
                   
                   return (
                     <div key={user._id || user.user?._id || index} className="leaderboard-item">
@@ -191,6 +238,9 @@ const LeaderboardPage = () => {
                           {stats.role === 'admin' && (
                             <span className="admin-badge">Admin</span>
                           )}
+                          {hasPerfectScore && (
+                            <span className="perfect-score-badge">🎯 100% Best</span>
+                          )}
                         </div>
                       </div>
 
@@ -205,8 +255,9 @@ const LeaderboardPage = () => {
                         </div>
                         <div className="stat">
                           <span className="stat-label">Best Score</span>
-                          <span className={`stat-value ${stats.bestScore === 0 ? 'zero-score' : ''}`}>
+                          <span className={`stat-value ${hasPerfectScore ? 'perfect-score' : ''}`}>
                             {Math.round(stats.bestScore)}%
+                            {hasPerfectScore && ' ⭐'}
                           </span>
                         </div>
                         <div className="stat">
