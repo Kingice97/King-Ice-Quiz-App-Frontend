@@ -130,32 +130,95 @@ function App() {
     }
   };
 
-  // ========== CUSTOM INSTALL PROMPT COMPONENT ==========
-  const InstallPrompt = () => (
-    <div className="install-prompt">
-      <div className="install-prompt-content">
-        <div className="install-icon">📱</div>
-        <div className="install-text">
-          <h4>Install King Ice Quiz</h4>
-          <p>Get the full app experience on your home screen!</p>
-        </div>
-        <div className="install-buttons">
-          <button 
-            onClick={handleInstallClick}
-            className="install-btn primary"
-          >
-            Install App
-          </button>
-          <button 
-            onClick={() => setShowInstallPrompt(false)}
-            className="install-btn secondary"
-          >
-            Later
-          </button>
-        </div>
+  // In your App.js, replace the InstallPrompt component with this:
+
+const InstallPrompt = () => (
+  <div style={{
+    position: 'fixed',
+    bottom: '20px',
+    left: '20px',
+    right: '20px',
+    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+    border: 'none',
+    borderRadius: '15px',
+    padding: '20px',
+    boxShadow: '0 10px 30px rgba(0, 0, 0, 0.3)',
+    zIndex: 10000,
+    color: 'white',
+    fontFamily: 'Arial, sans-serif',
+    animation: 'slideInUp 0.5s ease-out'
+  }}>
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: '15px',
+      marginBottom: '15px'
+    }}>
+      <div style={{
+        fontSize: '28px',
+        background: 'rgba(255, 255, 255, 0.2)',
+        borderRadius: '50%',
+        width: '50px',
+        height: '50px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center'
+      }}>
+        📱
+      </div>
+      <div>
+        <h4 style={{ margin: '0 0 5px 0', fontSize: '18px', fontWeight: 'bold' }}>
+          Install King Ice Quiz
+        </h4>
+        <p style={{ margin: 0, fontSize: '14px', opacity: 0.9 }}>
+          Get the full app experience with offline quizzes!
+        </p>
       </div>
     </div>
-  );
+    <div style={{
+      display: 'flex',
+      gap: '10px'
+    }}>
+      <button 
+        onClick={handleInstallClick}
+        style={{
+          background: 'white',
+          color: '#667eea',
+          border: 'none',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          flex: 1,
+          fontSize: '14px',
+          fontWeight: 'bold',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseOver={(e) => e.target.style.transform = 'scale(1.05)'}
+        onMouseOut={(e) => e.target.style.transform = 'scale(1)'}
+      >
+        Install App
+      </button>
+      <button 
+        onClick={() => setShowInstallPrompt(false)}
+        style={{
+          background: 'rgba(255, 255, 255, 0.2)',
+          color: 'white',
+          border: '1px solid rgba(255, 255, 255, 0.3)',
+          padding: '12px 20px',
+          borderRadius: '8px',
+          cursor: 'pointer',
+          flex: 1,
+          fontSize: '14px',
+          transition: 'all 0.3s ease'
+        }}
+        onMouseOver={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.3)'}
+        onMouseOut={(e) => e.target.style.background = 'rgba(255, 255, 255, 0.2)'}
+      >
+        Later
+      </button>
+    </div>
+  </div>
+);
 
   // ========== OFFLINE INDICATOR COMPONENT ==========
   const OfflineIndicator = () => (

@@ -608,3 +608,32 @@ a:hover {
     padding-top: 0;
   }
 }
+
+/* Install Prompt Animations */
+@keyframes slideInUp {
+  from {
+    transform: translateY(100px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes pulse {
+  0% {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+  50% {
+    box-shadow: 0 10px 40px rgba(102, 126, 234, 0.4);
+  }
+  100% {
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+  }
+}
+
+/* Apply pulse animation to install prompt */
+.install-prompt {
+  animation: slideInUp 0.5s ease-out, pulse 2s infinite;
+}
