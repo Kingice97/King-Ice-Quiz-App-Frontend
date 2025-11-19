@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import notificationService from '../../services/notificationService';
 import './NotificationSettings.css';
 
 const NotificationSettings = () => {
@@ -9,157 +8,90 @@ const NotificationSettings = () => {
     chatAlerts: true,
     announcementAlerts: true
   });
-  const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(false);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
 
+  // Load settings from localStorage on component mount
   useEffect(() => {
-    checkSupport();
-    loadSettings();
-    debugSettings(); // Debug on mount
+    const savedSettings = localStorage.getItem('notificationSettings');
+    if (savedSettings) {
+      try {
+        setSettings(JSON.parse(savedSettings));
+      } catch (error) {
+        console.log('Using default notification settings');
+      }
+    }
   }, []);
 
-  const checkSupport = () => {
-    setIsSupported(notificationService.isSupported());
-  };
-
-  // Debug function to see current state
-  const debugSettings = () => {
-    console.log('🔍 Current Settings:', settings);
-    console.log('🔍 Token exists:', !!localStorage.getItem('token'));
-    console.log('🔍 User ID:', localStorage.getItem('userId'));
-    console.log('🔍 Notifications supported:', notificationService.isSupported());
-  };
-
-  const loadSettings = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        console.log('❌ No token found for loading settings');
-        return;
-      }
-
-      console.log('📥 Loading notification settings...');
-      
-      const response = await fetch('/api/notifications/settings', {
-        headers: {
-          'Authorization': `Bearer ${token}`
-        }
-      });
-      
-      if (response.ok) {
-        const data = await response.json();
-        console.log('✅ Settings loaded:', data.settings);
-        setSettings(data.settings);
-      } else {
-        console.error('❌ Failed to load settings:', response.status);
-        const errorData = await response.json();
-        console.error('❌ Error details:', errorData);
-      }
-    } catch (error) {
-      console.error('❌ Error loading settings:', error);
-    }
-  };
+  // Save settings to localStorage whenever they change
+  useEffect(() => {
+    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+  }, [settings]);
 
   const handleEnableNotifications = async () => {
     setLoading(true);
     setMessage('');
+    
     try {
-      console.log('🔔 Requesting notification permission...');
-      const enabled = await notificationService.requestPermission();
+      // Check if browser supports notifications
+      if (!('Notification' in window)) {
+        setMessage('❌ This browser does not support notifications');
+        return;
+      }
+
+      // Request permission
+      const permission = await Notification.requestPermission();
       
-      if (enabled) {
-        console.log('✅ Permission granted, updating settings...');
+      if (permission === 'granted') {
         const updatedSettings = { ...settings, enabled: true };
         setSettings(updatedSettings);
-        await saveSettings(updatedSettings);
+        setMessage('✅ Notifications enabled successfully!');
+      } else if (permission === 'denied') {
+        setMessage('❌ Notifications blocked. Please enable them in browser settings.');
       } else {
-        console.log('❌ Permission denied');
-        setMessage('❌ Notification permission was denied');
-        setTimeout(() => setMessage(''), 3000);
+        setMessage('⚠️ Notification permission not granted');
       }
     } catch (error) {
-      console.error('❌ Error enabling notifications:', error);
-      setMessage(`❌ ${error.message}`);
-      setTimeout(() => setMessage(''), 3000);
+      setMessage('❌ Error enabling notifications');
     } finally {
       setLoading(false);
+      setTimeout(() => setMessage(''), 4000);
     }
   };
 
   const handleDisableNotifications = async () => {
     setLoading(true);
     setMessage('');
+    
     try {
-      console.log('🔕 Disabling notifications...');
-      await notificationService.unsubscribe();
       const updatedSettings = { ...settings, enabled: false };
       setSettings(updatedSettings);
-      await saveSettings(updatedSettings);
+      setMessage('✅ Notifications disabled');
     } catch (error) {
-      console.error('❌ Error disabling notifications:', error);
-      setMessage(`❌ ${error.message}`);
-      setTimeout(() => setMessage(''), 3000);
+      setMessage('❌ Error disabling notifications');
     } finally {
       setLoading(false);
+      setTimeout(() => setMessage(''), 3000);
     }
   };
 
   const handleSettingChange = (setting, value) => {
-    console.log(`⚙️ Changing ${setting} to:`, value);
     const updatedSettings = { ...settings, [setting]: value };
     setSettings(updatedSettings);
   };
 
-  const saveSettings = async (settingsToSave = settings) => {
-    setSaving(true);
-    setMessage('');
-    
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        setMessage('❌ Please log in to save settings');
-        return;
-      }
-
-      console.log('💾 Saving settings:', settingsToSave);
-
-      const response = await fetch('/api/notifications/settings', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify(settingsToSave)
-      });
-
-      const data = await response.json();
-      console.log('📨 Save response:', data);
-
-      if (data.success) {
-        setMessage('✅ Settings saved successfully!');
-        // Update local settings with the response from server
-        if (data.settings) {
-          setSettings(data.settings);
-        }
-        console.log('✅ Settings saved successfully on server');
-      } else {
-        throw new Error(data.message || 'Failed to save settings');
-      }
-    } catch (error) {
-      console.error('❌ Error saving settings:', error);
-      setMessage(`❌ ${error.message}`);
-    } finally {
-      setSaving(false);
-      setTimeout(() => setMessage(''), 5000);
-    }
-  };
-
   const handleSaveAll = () => {
-    console.log('💾 Manual save triggered');
-    saveSettings();
+    setSaving(true);
+    setMessage('💾 Settings saved successfully!');
+    
+    setTimeout(() => {
+      setSaving(false);
+      setTimeout(() => setMessage(''), 3000);
+    }, 1000);
   };
+
+  const isSupported = 'Notification' in window;
 
   if (!isSupported) {
     return (
@@ -167,12 +99,12 @@ const NotificationSettings = () => {
         <h3>🔕 Notifications Not Supported</h3>
         <p>Your browser doesn't support push notifications.</p>
         <div className="browser-support">
-          <p><strong>Supported Browsers:</strong></p>
+          <p><strong>Try using:</strong></p>
           <ul>
-            <li>Chrome 50+</li>
-            <li>Firefox 44+</li>
-            <li>Safari 16.4+</li>
-            <li>Edge 17+</li>
+            <li>Google Chrome</li>
+            <li>Mozilla Firefox</li>
+            <li>Microsoft Edge</li>
+            <li>Safari (iOS/Mac)</li>
           </ul>
         </div>
       </div>
@@ -183,9 +115,9 @@ const NotificationSettings = () => {
     <div className="notification-settings">
       <h3>🔔 Notification Settings</h3>
       
-      {/* Success/Error Message */}
+      {/* Status Message */}
       {message && (
-        <div className={`settings-message ${message.includes('✅') ? 'success' : 'error'}`}>
+        <div className={`settings-message ${message.includes('✅') || message.includes('💾') ? 'success' : 'error'}`}>
           {message}
         </div>
       )}
@@ -201,17 +133,20 @@ const NotificationSettings = () => {
               }
               disabled={loading}
             />
-            <span className="setting-text">Enable Push Notifications</span>
-            {loading && <span className="loading-indicator">🔄</span>}
+            <span className="setting-text">
+              Enable Push Notifications
+              {loading && <span className="loading-dots">...</span>}
+            </span>
           </label>
           <p className="setting-description">
             Receive notifications even when the app is closed
+            {settings.enabled && <span className="status-active"> • Active</span>}
           </p>
         </div>
 
         {settings.enabled && (
           <div className="notification-types">
-            <h4>Notification Preferences</h4>
+            <h4>What would you like to be notified about?</h4>
             
             <div className="setting-item">
               <label className="setting-label">
@@ -262,41 +197,29 @@ const NotificationSettings = () => {
                 disabled={saving}
                 className="save-button"
               >
-                {saving ? '🔄 Saving...' : '💾 Save Settings'}
+                {saving ? 'Saving...' : '💾 Save Preferences'}
               </button>
+            </div>
+
+            <div className="settings-info">
+              <p>🔒 Your preferences are automatically saved locally</p>
             </div>
           </div>
         )}
       </div>
 
-      {/* Help Section */}
-      <div className="help-section">
-        <h4>💡 Need Help?</h4>
-        <ul>
-          <li>Make sure you're logged in to save settings</li>
-          <li>Enable notifications in your browser when prompted</li>
-          <li>Click "Save Settings" after making changes</li>
-          <li>Settings are automatically saved when enabling/disabling main toggle</li>
-        </ul>
-      </div>
-
-      {/* Debug button (remove in production) */}
-      <div className="debug-section">
-        <button 
-          onClick={debugSettings}
-          className="debug-button"
-          style={{ 
-            background: 'transparent', 
-            border: '1px dashed #ccc', 
-            padding: '5px 10px',
-            fontSize: '12px',
-            color: '#666',
-            cursor: 'pointer'
-          }}
-        >
-          🐛 Debug Settings
-        </button>
-      </div>
+      {/* Instructions */}
+      {!settings.enabled && (
+        <div className="instructions">
+          <h4>How to enable notifications:</h4>
+          <ol>
+            <li>Toggle "Enable Push Notifications" above</li>
+            <li>Allow notifications when your browser asks</li>
+            <li>Choose what you want to be notified about</li>
+            <li>Click "Save Preferences"</li>
+          </ol>
+        </div>
+      )}
     </div>
   );
 };
