@@ -11,6 +11,8 @@ const NotificationSettings = () => {
   });
   const [isSupported, setIsSupported] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [message, setMessage] = useState('');
 
   useEffect(() => {
     checkSupport();
@@ -45,7 +47,11 @@ const NotificationSettings = () => {
     setLoading(true);
     try {
       const enabled = await notificationService.requestPermission();
-      setSettings(prev => ({ ...prev, enabled }));
+      if (enabled) {
+        const updatedSettings = { ...settings, enabled: true };
+        setSettings(updatedSettings);
+        await saveSettings(updatedSettings);
+      }
     } finally {
       setLoading(false);
     }
@@ -55,59 +61,56 @@ const NotificationSettings = () => {
     setLoading(true);
     try {
       await notificationService.unsubscribe();
-      setSettings(prev => ({ ...prev, enabled: false }));
+      const updatedSettings = { ...settings, enabled: false };
+      setSettings(updatedSettings);
+      await saveSettings(updatedSettings);
     } finally {
       setLoading(false);
     }
   };
 
-  const handleSettingChange = async (setting, value) => {
+  const handleSettingChange = (setting, value) => {
+    const updatedSettings = { ...settings, [setting]: value };
+    setSettings(updatedSettings);
+  };
+
+  const saveSettings = async (settingsToSave = settings) => {
+    setSaving(true);
+    setMessage('');
+    
     try {
       const token = localStorage.getItem('token');
-      if (!token) return;
+      if (!token) {
+        setMessage('Please log in to save settings');
+        return;
+      }
 
-      const updatedSettings = { ...settings, [setting]: value };
-      setSettings(updatedSettings);
-
-      await fetch('/api/notifications/settings', {
+      const response = await fetch('/api/notifications/settings', {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(updatedSettings)
+        body: JSON.stringify(settingsToSave)
       });
+
+      if (response.ok) {
+        setMessage('✅ Settings saved successfully!');
+        setTimeout(() => setMessage(''), 3000);
+      } else {
+        throw new Error('Failed to save settings');
+      }
     } catch (error) {
-      console.error('Error updating setting:', error);
+      console.error('Error saving settings:', error);
+      setMessage('❌ Failed to save settings');
+      setTimeout(() => setMessage(''), 3000);
+    } finally {
+      setSaving(false);
     }
   };
 
-  const testNotification = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      const userId = localStorage.getItem('userId');
-      
-      if (!token || !userId) return;
-
-      await fetch('/api/notifications/send-to-user', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          userId: userId,
-          title: 'Test Notification',
-          body: 'This is a test notification from King Ice Quiz!',
-          type: 'test'
-        })
-      });
-      
-      alert('Test notification sent!');
-    } catch (error) {
-      console.error('Error sending test notification:', error);
-      alert('Failed to send test notification');
-    }
+  const handleSaveAll = () => {
+    saveSettings();
   };
 
   if (!isSupported) {
@@ -123,8 +126,15 @@ const NotificationSettings = () => {
     <div className="notification-settings">
       <h3>Notification Settings</h3>
       
+      {/* Success/Error Message */}
+      {message && (
+        <div className={`settings-message ${message.includes('✅') ? 'success' : 'error'}`}>
+          {message}
+        </div>
+      )}
+      
       <div className="setting-group">
-        <div className="setting-item">
+        <div className="setting-item main-toggle">
           <label className="setting-label">
             <input
               type="checkbox"
@@ -184,18 +194,25 @@ const NotificationSettings = () => {
                 Important updates and announcements
               </p>
             </div>
+
+            {/* Save Button */}
+            <div className="settings-actions">
+              <button 
+                onClick={handleSaveAll}
+                disabled={saving}
+                className="save-button"
+              >
+                {saving ? 'Saving...' : 'Save Settings'}
+              </button>
+            </div>
           </div>
         )}
       </div>
 
+      {/* Auto-save notice */}
       {settings.enabled && (
-        <div className="notification-test">
-          <button 
-            onClick={testNotification}
-            className="test-button"
-          >
-            Test Notification
-          </button>
+        <div className="auto-save-notice">
+          <p>💡 Settings are automatically saved when you toggle the main switch. Use "Save Settings" to manually save individual preferences.</p>
         </div>
       )}
     </div>
