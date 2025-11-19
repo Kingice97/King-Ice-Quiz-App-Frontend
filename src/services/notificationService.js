@@ -71,13 +71,19 @@ class NotificationService {
     return outputArray;
   }
 
-  // Send subscription to backend
+    // Send subscription to backend
   async sendSubscriptionToBackend(subscription) {
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       const response = await fetch('/api/notifications/subscribe', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify({
           subscription: subscription,
@@ -85,13 +91,17 @@ class NotificationService {
         })
       });
 
+      const data = await response.json();
+
       if (!response.ok) {
-        throw new Error('Failed to save subscription');
+        throw new Error(data.message || 'Failed to save subscription');
       }
 
       console.log('✅ Subscription saved to backend');
+      return data;
     } catch (error) {
       console.error('Error saving subscription:', error);
+      throw error;
     }
   }
 
@@ -103,17 +113,31 @@ class NotificationService {
         console.log('✅ Unsubscribed from push notifications');
         
         // Remove from backend
-        await fetch('/api/notifications/unsubscribe', {
+        const token = localStorage.getItem('token');
+        if (!token) {
+          console.log('⚠️ No token found, skipping backend unsubscribe');
+          return;
+        }
+
+        const response = await fetch('/api/notifications/unsubscribe', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
           },
           body: JSON.stringify({
             userId: localStorage.getItem('userId')
           })
         });
+
+        if (!response.ok) {
+          throw new Error('Failed to remove subscription from backend');
+        }
+
+        console.log('✅ Subscription removed from backend');
       } catch (error) {
         console.error('Error unsubscribing:', error);
+        throw error;
       }
     }
   }
