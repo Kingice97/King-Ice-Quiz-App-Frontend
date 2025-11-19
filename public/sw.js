@@ -1,9 +1,10 @@
 /* eslint-disable no-restricted-globals */
 // Service Worker for King Ice Quiz App
-// Version: 2.1.0
+// Version: 2.2.0
 // Cache Strategy: Network First for APIs, Cache First for static assets
+// Added: Push Notifications for quizzes and chats
 
-const CACHE_NAME = 'king-ice-quiz-v2.1.0';
+const CACHE_NAME = 'king-ice-quiz-v2.2.0';
 const APP_SHELL_CACHE = 'app-shell-v1';
 
 // URLs to cache immediately on install (App Shell)
@@ -65,6 +66,72 @@ self.addEventListener('activate', (event) => {
         return self.clients.claim();
       })
   );
+});
+
+// ==================== PUSH NOTIFICATIONS ====================
+// Handle incoming push notifications
+self.addEventListener('push', (event) => {
+  console.log('📢 Push notification received');
+  
+  if (!event.data) return;
+  
+  const data = event.data.json();
+  const options = {
+    body: data.body || 'New notification from King Ice Quiz',
+    icon: '/brain-icon.png',
+    badge: '/brain-icon.png',
+    image: data.image || null,
+    vibrate: [100, 50, 100],
+    data: {
+      url: data.url || '/',
+      type: data.type || 'general'
+    },
+    actions: [
+      {
+        action: 'open',
+        title: 'Open App'
+      },
+      {
+        action: 'dismiss', 
+        title: 'Dismiss'
+      }
+    ]
+  };
+  
+  event.waitUntil(
+    self.registration.showNotification(data.title || 'King Ice Quiz', options)
+  );
+});
+
+// Handle notification clicks
+self.addEventListener('notificationclick', (event) => {
+  console.log('🔔 Notification clicked:', event.notification.data);
+  
+  event.notification.close();
+  
+  const urlToOpen = event.notification.data.url || '/';
+  
+  event.waitUntil(
+    clients.matchAll({ type: 'window', includeUncontrolled: true })
+      .then((windowClients) => {
+        // Check if app is already open
+        for (let client of windowClients) {
+          if (client.url.includes(self.location.origin) && 'focus' in client) {
+            return client.focus();
+          }
+        }
+        
+        // Open new window if app isn't open
+        if (clients.openWindow) {
+          return clients.openWindow(urlToOpen);
+        }
+      })
+  );
+});
+
+// Handle notification dismiss
+self.addEventListener('notificationclose', (event) => {
+  console.log('❌ Notification dismissed');
 });
 
 // ==================== FETCH EVENT ====================
@@ -190,53 +257,17 @@ async function cacheFirstStrategy(request) {
 }
 
 // ==================== BACKGROUND SYNC ====================
-// Handle background sync for offline actions (future enhancement)
+// Handle background sync for offline actions
 self.addEventListener('sync', (event) => {
   if (event.tag === 'background-sync-messages') {
     console.log('🔄 Background sync triggered for messages');
     event.waitUntil(syncOfflineMessages());
   }
-});
-
-// ==================== PUSH NOTIFICATIONS ====================
-// Handle push notifications (future enhancement)
-self.addEventListener('push', (event) => {
-  if (!event.data) return;
   
-  const data = event.data.json();
-  const options = {
-    body: data.body || 'New notification from King Ice Quiz',
-    icon: '/brain-icon.png',
-    badge: '/brain-icon.png',
-    vibrate: [100, 50, 100],
-    data: {
-      url: data.url || '/'
-    }
-  };
-  
-  event.waitUntil(
-    self.registration.showNotification(data.title || 'King Ice Quiz', options)
-  );
-});
-
-// ==================== NOTIFICATION CLICK ====================
-// Handle when user clicks on notification
-self.addEventListener('notificationclick', (event) => {
-  event.notification.close();
-  
-  event.waitUntil(
-    clients.matchAll({ type: 'window' }).then((clientList) => {
-      // Focus existing app window or open new one
-      for (const client of clientList) {
-        if (client.url === event.notification.data.url && 'focus' in client) {
-          return client.focus();
-        }
-      }
-      if (clients.openWindow) {
-        return clients.openWindow(event.notification.data.url);
-      }
-    })
-  );
+  if (event.tag === 'background-sync-notifications') {
+    console.log('🔄 Background sync for notifications');
+    event.waitUntil(syncPendingNotifications());
+  }
 });
 
 // ==================== MESSAGE HANDLING ====================
@@ -264,8 +295,15 @@ self.addEventListener('message', (event) => {
  * Sync offline messages when coming back online
  */
 async function syncOfflineMessages() {
-  // Future: Sync any pending chat messages or quiz results
-  console.log('🔄 Syncing offline data...');
+  console.log('🔄 Syncing offline messages...');
+  return Promise.resolve();
+}
+
+/**
+ * Sync pending notifications when back online
+ */
+async function syncPendingNotifications() {
+  console.log('🔄 Syncing pending notifications...');
   return Promise.resolve();
 }
 
@@ -273,7 +311,6 @@ async function syncOfflineMessages() {
  * Pre-cache additional resources in background
  */
 async function precacheAdditionalResources() {
-  // Future: Pre-cache popular quizzes or user data
   console.log('📚 Pre-caching additional resources...');
 }
 

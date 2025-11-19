@@ -10,6 +10,7 @@ import Loading from '../../components/common/Loading/Loading';
 import Modal from '../../components/common/Modal/Modal';
 import ProfilePictureUpload from '../../components/UserProfile/ProfilePictureUpload';
 import ChatPreferences from '../../components/UserProfile/ChatPreferences';
+import NotificationSettings from '../../components/Notifications/NotificationSettings';
 import './Profile.css';
 
 const Profile = () => {
@@ -348,7 +349,7 @@ const Profile = () => {
           </div>
         )}
 
-        {/* Tabs - Updated with proper admin/user differentiation */}
+               {/* Tabs - Updated with proper admin/user differentiation */}
         <div className="profile-tabs">
           <button
             className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
@@ -370,6 +371,13 @@ const Profile = () => {
             onClick={() => setActiveTab('chat')}
           >
             Chat Activity
+          </button>
+          {/* 🔔 ADD THIS NEW TAB - Notifications */}
+          <button
+            className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            🔔 Notifications
           </button>
           <button
             className={`tab ${activeTab === 'achievements' ? 'active' : ''}`}
@@ -509,6 +517,13 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* 🔔 ADD THIS NEW TAB CONTENT - Notifications */}
+          {activeTab === 'notifications' && (
+            <div className="notifications-tab">
+              <NotificationSettings />
             </div>
           )}
 
