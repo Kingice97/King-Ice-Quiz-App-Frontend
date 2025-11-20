@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react'; // ✅ Added useRef import
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
