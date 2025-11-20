@@ -386,15 +386,23 @@ const Chat = () => {
         {!selectedRoom && (
           <div className="chat-sidebar">
             <div className="sidebar-header">
-              <h2>Chat</h2>
-              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-                {isConnected ? '🟢 Online' : '🔴 Offline'}
-              </div>
-              <div className="notification-status">
-                🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
-              </div>
-            </div>
-
+  <h2>Chat</h2>
+  <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+    {isConnected ? '🟢 Online' : '🔴 Offline'}
+    {!isConnected && (
+      <button 
+        onClick={() => window.location.reload()} 
+        className="btn-reconnect"
+        style={{marginLeft: '10px', padding: '2px 8px', fontSize: '12px'}}
+      >
+        Retry
+      </button>
+    )}
+  </div>
+  <div className="notification-status">
+    🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
+  </div>
+</div>
             {/* Navigation Tabs */}
             <div className="chat-tabs">
               <button

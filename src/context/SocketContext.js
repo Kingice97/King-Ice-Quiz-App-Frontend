@@ -74,6 +74,7 @@ export const SocketProvider = ({ children }) => {
     const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
     console.log('🔗 Connecting to:', API_URL);
 
+    // ✅ FIXED: Better socket configuration for Render.com
     const newSocket = io(API_URL, {
       auth: {
         userId: userId,
@@ -83,7 +84,10 @@ export const SocketProvider = ({ children }) => {
       reconnection: true,
       reconnectionAttempts: 10,
       reconnectionDelay: 1000,
-      timeout: 20000
+      reconnectionDelayMax: 5000,
+      timeout: 30000, // Increased timeout to 30 seconds
+      forceNew: true,
+      withCredentials: true
     });
 
     setSocket(newSocket);
@@ -102,6 +106,31 @@ export const SocketProvider = ({ children }) => {
     newSocket.on('connect_error', (error) => {
       console.error('❌ Socket connection error:', error);
       setIsConnected(false);
+      
+      // ✅ FIXED: Auto-reconnect after delay
+      setTimeout(() => {
+        if (newSocket && !newSocket.connected) {
+          console.log('🔄 Attempting to reconnect...');
+          newSocket.connect();
+        }
+      }, 2000);
+    });
+
+    newSocket.on('reconnect', (attemptNumber) => {
+      console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
+      setIsConnected(true);
+    });
+
+    newSocket.on('reconnect_attempt', (attemptNumber) => {
+      console.log(`🔄 Reconnection attempt ${attemptNumber}`);
+    });
+
+    newSocket.on('reconnect_error', (error) => {
+      console.error('❌ Reconnection error:', error);
+    });
+
+    newSocket.on('reconnect_failed', () => {
+      console.error('❌ Reconnection failed');
     });
 
     newSocket.on('connection_success', (data) => {
@@ -147,7 +176,7 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // ✅ NEW: Handle conversation updates
+    // Handle conversation updates
     newSocket.on('conversation_updated', (conversationData) => {
       console.log('💬 Conversation updated:', conversationData);
       setConversations(prev => {
@@ -188,6 +217,19 @@ export const SocketProvider = ({ children }) => {
     return () => {
       console.log('🧹 SocketProvider cleanup');
       if (newSocket) {
+        newSocket.off('connect');
+        newSocket.off('disconnect');
+        newSocket.off('connect_error');
+        newSocket.off('reconnect');
+        newSocket.off('reconnect_attempt');
+        newSocket.off('reconnect_error');
+        newSocket.off('reconnect_failed');
+        newSocket.off('connection_success');
+        newSocket.off('receive_message');
+        newSocket.off('receive_private_message');
+        newSocket.off('conversation_updated');
+        newSocket.off('online_users_update');
+        newSocket.off('user_typing');
         newSocket.disconnect();
       }
     };
@@ -236,7 +278,7 @@ export const SocketProvider = ({ children }) => {
 
       const timeout = setTimeout(() => {
         reject(new Error('Message timeout'));
-      }, 10000); // Increased timeout
+      }, 10000);
 
       socket.emit('send_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -281,7 +323,7 @@ export const SocketProvider = ({ children }) => {
 
       const timeout = setTimeout(() => {
         reject(new Error('Message sending timeout'));
-      }, 10000); // Increased timeout
+      }, 10000);
 
       socket.emit('send_private_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -294,7 +336,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
-  // ✅ IMPROVED: Load private chat history with better error handling
+  // Load private chat history with better error handling
   const loadPrivateMessages = useCallback(async (recipientId) => {
     if (!socket || !isConnected) {
       // Try to use HTTP API as fallback when socket is not connected
@@ -311,7 +353,7 @@ export const SocketProvider = ({ children }) => {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Load messages timeout'));
-      }, 15000); // Increased timeout
+      }, 15000);
 
       socket.emit('load_private_messages', { recipientId }, (response) => {
         clearTimeout(timeout);
@@ -324,7 +366,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
-  // ✅ NEW: Load user conversations
+  // Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
       // Try HTTP API fallback
@@ -405,6 +447,14 @@ export const SocketProvider = ({ children }) => {
     return messages[quizId] || [];
   }, [messages]);
 
+  // ✅ NEW: Manual reconnect function
+  const reconnect = useCallback(() => {
+    if (socket) {
+      console.log('🔄 Manual reconnect triggered');
+      socket.connect();
+    }
+  }, [socket]);
+
   const value = {
     socket,
     isConnected,
@@ -421,7 +471,8 @@ export const SocketProvider = ({ children }) => {
     stopTyping,
     getQuizMessages,
     subscribeToMessages,
-    unsubscribeFromMessages
+    unsubscribeFromMessages,
+    reconnect // ✅ NEW: Export reconnect function
   };
 
   console.log('🎯 SocketContext value:', { 
