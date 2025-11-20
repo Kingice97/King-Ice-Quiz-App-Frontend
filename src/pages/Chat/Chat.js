@@ -27,19 +27,27 @@ const Chat = () => {
   const lastNotificationRef = useRef({});
   const notificationSettings = useRef(null);
 
-  // Get consistent user ID
   const getUserId = () => {
     if (!user) return null;
     return user._id || user.id;
   };
 
-  // Load notification settings
+  // ✅ FIXED: Load notification settings properly
   useEffect(() => {
-    const loadSettings = () => {
+    const loadSettings = async () => {
       try {
-        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
-        notificationSettings.current = settings;
-        console.log('🔔 Notification settings loaded:', settings);
+        const response = await notificationService.getSettings();
+        if (response.success) {
+          notificationSettings.current = response.settings;
+        } else {
+          notificationSettings.current = {
+            enabled: false,
+            chatAlerts: true,
+            quizAlerts: true,
+            announcementAlerts: true
+          };
+        }
+        console.log('🔔 Notification settings loaded:', notificationSettings.current);
       } catch (error) {
         console.error('Error loading notification settings:', error);
         notificationSettings.current = {
@@ -52,25 +60,13 @@ const Chat = () => {
     };
 
     loadSettings();
-    
-    // Listen for settings changes
-    const handleStorageChange = () => {
-      loadSettings();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
   }, []);
 
-  // ✅ FIXED: True push notification handler - ALWAYS send notifications
+  // ✅ FIXED: Proper push notification handler
   const handlePushNotification = useCallback(async (message) => {
-    // Don't send notification if:
-    // 1. It's our own message
     const isOwnMessage = message.user === getUserId();
-    // 2. Chat notifications are disabled
     const chatAlertsEnabled = notificationSettings.current?.enabled && 
                               notificationSettings.current?.chatAlerts;
-    // 3. We've already notified for this message
     const isDuplicate = lastNotificationRef.current[message._id];
 
     console.log('🔔 Push Notification Check:', {
@@ -85,25 +81,23 @@ const Chat = () => {
       console.log('📱 SENDING PUSH NOTIFICATION:', message);
       lastNotificationRef.current[message._id] = true;
       
-      // Limit the size of the ref to prevent memory leaks
       if (Object.keys(lastNotificationRef.current).length > 100) {
         lastNotificationRef.current = {};
       }
 
       try {
-        // ✅ FIXED: Use the correct chat notification endpoint
-        console.log('🔄 Sending chat notification via backend...');
+        // ✅ FIXED: Use the correct user ID for recipient
         await notificationService.sendChatNotification(
-          getUserId(), // Send to current user (recipient)
+          getUserId(), // Current user should receive the notification
           message.username, // Sender name
           message.message, // Message content
           message.room // Room ID
         );
         console.log('✅ Backend chat notification sent');
       } catch (backendError) {
-        console.error('❌ Backend chat notification failed, trying service worker...', backendError);
+        console.error('❌ Backend chat notification failed:', backendError);
         
-        // Fallback to service worker notification
+        // Fallback to service worker
         if ('serviceWorker' in navigator) {
           try {
             const registration = await navigator.serviceWorker.ready;
@@ -138,7 +132,7 @@ const Chat = () => {
           } catch (swError) {
             console.error('❌ Service worker notification failed:', swError);
             
-            // Final fallback - browser notification
+            // Final fallback
             if (Notification.permission === 'granted') {
               new Notification(`💬 ${message.username}`, {
                 body: message.message,
@@ -154,7 +148,7 @@ const Chat = () => {
     }
   }, []);
 
-  // ✅ FIXED: Global message listener that works ALWAYS
+  // ✅ FIXED: Global message listener
   useEffect(() => {
     if (!socket || !isConnected) {
       console.log('🚫 Socket not available for global listener');
@@ -179,7 +173,6 @@ const Chat = () => {
       }
     };
 
-    // Listen to ALL message events
     socket.on('receive_private_message', handleIncomingMessage);
     
     return () => {
@@ -251,7 +244,6 @@ const Chat = () => {
     }
   }, [onlineUsers]);
 
-  // Show loading if auth is still loading
   if (authLoading) {
     return (
       <div className="chat-page">
@@ -262,7 +254,6 @@ const Chat = () => {
     );
   }
 
-  // Show error if not authenticated
   if (!isAuthenticated || !user) {
     return (
       <div className="chat-page">
@@ -282,7 +273,6 @@ const Chat = () => {
     );
   }
 
-  // Handle user selection for private chat
   const handleUserSelect = (selectedUser) => {
     const currentUserId = getUserId();
     const selectedUserId = selectedUser?._id || selectedUser?.id;
@@ -292,7 +282,6 @@ const Chat = () => {
       return;
     }
 
-    // Create consistent room ID by sorting user IDs alphabetically
     const userIds = [currentUserId, selectedUserId].sort();
     const roomId = `private_${userIds[0]}_${userIds[1]}`;
     
@@ -306,7 +295,6 @@ const Chat = () => {
     setActiveTab('chat');
   };
 
-  // Handle conversation selection
   const handleConversationSelect = (conversation) => {
     const currentUserId = getUserId();
     const otherParticipant = conversation.participants.find(
@@ -338,7 +326,6 @@ const Chat = () => {
     });
     setActiveTab('chat');
     
-    // Join the global chat room via socket
     if (isConnected) {
       joinQuizRoom('global_chat');
     }
@@ -353,7 +340,6 @@ const Chat = () => {
     setActiveTab('chats');
   };
 
-  // Refresh conversations
   const handleRefreshConversations = async () => {
     try {
       setConversationsLoading(true);
@@ -382,28 +368,18 @@ const Chat = () => {
       </Helmet>
 
       <div className="chat-container">
-        {/* Sidebar */}
         {!selectedRoom && (
           <div className="chat-sidebar">
             <div className="sidebar-header">
-  <h2>Chat</h2>
-  <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-    {isConnected ? '🟢 Online' : '🔴 Offline'}
-    {!isConnected && (
-      <button 
-        onClick={() => window.location.reload()} 
-        className="btn-reconnect"
-        style={{marginLeft: '10px', padding: '2px 8px', fontSize: '12px'}}
-      >
-        Retry
-      </button>
-    )}
-  </div>
-  <div className="notification-status">
-    🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
-  </div>
-</div>
-            {/* Navigation Tabs */}
+              <h2>Chat</h2>
+              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+                {isConnected ? '🟢 Online' : '🔴 Offline'}
+              </div>
+              <div className="notification-status">
+                🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
+              </div>
+            </div>
+
             <div className="chat-tabs">
               <button
                 className={`tab ${activeTab === 'chats' ? 'active' : ''}`}
@@ -434,7 +410,6 @@ const Chat = () => {
               </button>
             </div>
 
-            {/* Tab Content */}
             <div className="tab-content">
               {activeTab === 'chats' && (
                 <ChatsList
@@ -487,7 +462,6 @@ const Chat = () => {
               )}
             </div>
 
-            {/* User Info Footer */}
             <div className="sidebar-footer">
               <div className="user-info">
                 <div className="user-avatar">
@@ -514,7 +488,6 @@ const Chat = () => {
           </div>
         )}
 
-        {/* Main Chat Area */}
         <div className={`chat-main ${selectedRoom ? 'expanded' : ''}`}>
           {selectedRoom ? (
             <ChatRoom
@@ -555,7 +528,6 @@ const Chat = () => {
                   </div>
                 </div>
                 
-                {/* Quick Actions */}
                 {isConnected && (
                   <div className="quick-actions">
                     <button
