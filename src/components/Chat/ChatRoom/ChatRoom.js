@@ -41,11 +41,32 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
+  // ✅ NEW: Cache messages for offline support
+  const cacheMessages = useCallback((roomId, messagesToCache) => {
+    try {
+      localStorage.setItem(`chat_cache_${roomId}`, JSON.stringify(messagesToCache));
+      console.log(`💾 Cached ${messagesToCache.length} messages for room ${roomId}`);
+    } catch (error) {
+      console.error('❌ Failed to cache messages:', error);
+    }
+  }, []);
+
+  // ✅ NEW: Get cached messages for offline support
+  const getCachedMessages = useCallback((roomId) => {
+    try {
+      const cached = localStorage.getItem(`chat_cache_${roomId}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch (error) {
+      console.error('❌ Failed to get cached messages:', error);
+      return [];
+    }
+  }, []);
+
   // ✅ FIXED: Improved notification logic
   const shouldSendNotification = useCallback((message) => {
     // Don't send notification if:
     // 1. It's our own message
-    const isOwnMessage = message.user === currentUser._id || 
+    const isOwnMessage = message.user === (currentUser._id || currentUser.id) || 
                         message.username === currentUser.username;
     
     // 2. We're currently viewing this chat room
@@ -83,7 +104,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     // Also try to use service worker for background notifications
     if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
       navigator.serviceWorker.ready.then(registration => {
-        registration.showNotification(`New message from ${message.username}`, {
+        registration.showNotification(`💬 ${message.username}`, {
           body: message.message.length > 100 ? 
                 message.message.substring(0, 100) + '...' : 
                 message.message,
@@ -92,6 +113,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           vibrate: [200, 100, 200],
           tag: `chat-${message.room}`,
           renotify: true,
+          requireInteraction: true,
           data: {
             url: `/chat`,
             type: 'chat',
@@ -118,7 +140,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   }, [shouldSendNotification]);
 
-  // ✅ UPDATED: Load messages when room changes
+  // ✅ UPDATED: Load messages when room changes with better error handling
   useEffect(() => {
     const loadMessages = async () => {
       try {
@@ -135,40 +157,70 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           // ✅ Load private messages using the actual room ID
           const privateRoomId = getPrivateRoomId();
           console.log(`🔐 Loading private messages for room: ${privateRoomId}`);
-          response = await loadPrivateMessages(room.user._id);
+          
+          try {
+            // Try socket first
+            response = await loadPrivateMessages(room.user._id);
+          } catch (socketError) {
+            console.log('🔄 Socket failed, trying HTTP API...', socketError);
+            // Fallback to HTTP API
+            response = await chatService.getPrivateMessages(room.user._id, 50);
+          }
+          
           // Join private chat room
-          joinPrivateChat(room.user._id);
+          if (isConnected) {
+            joinPrivateChat(room.user._id);
+          }
         }
         
         console.log('📨 Loaded messages:', response.messages?.length || response.data?.length || 0);
         
+        let loadedMessages = [];
         if (room.type === 'private') {
-          setMessages(response.messages || []);
+          loadedMessages = response.messages || [];
         } else {
-          setMessages(response.data || []);
+          loadedMessages = response.data || [];
         }
         
+        setMessages(loadedMessages);
+        
+        // Cache messages for offline support
+        cacheMessages(room.id, loadedMessages);
+        
         // Set last message reference
-        if (response.messages?.length > 0 || response.data?.length > 0) {
-          const lastMsg = response.messages?.[response.messages.length - 1] || 
-                         response.data?.[response.data.length - 1];
+        if (loadedMessages.length > 0) {
+          const lastMsg = loadedMessages[loadedMessages.length - 1];
           lastMessageRef.current = lastMsg._id;
         }
         
       } catch (error) {
         console.error('❌ Failed to load messages:', error);
-        setError('Failed to load messages. Please try again.');
+        
+        // Show cached messages if available
+        const cachedMessages = getCachedMessages(room.id);
+        if (cachedMessages.length > 0) {
+          setMessages(cachedMessages);
+          setError('Using cached messages (offline mode)');
+          console.log(`📂 Loaded ${cachedMessages.length} cached messages`);
+        } else {
+          setError('Failed to load messages. Please check your connection.');
+        }
       } finally {
         setLoading(false);
       }
     };
 
-    loadMessages();
-  }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
+    if (room) {
+      loadMessages();
+    }
+  }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId, isConnected, cacheMessages, getCachedMessages]);
 
   // ✅ FIXED: Subscribe to real-time messages with proper notification triggering
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected) {
+      console.log('🚫 Socket not connected, skipping message subscription');
+      return;
+    }
 
     console.log(`🔗 Subscribing to messages for room: ${room.id}`);
 
@@ -195,7 +247,12 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           if (exists) return prev;
           
           console.log('💬 Adding new message to state');
-          return [...prev, message];
+          const updatedMessages = [...prev, message];
+          
+          // Cache updated messages
+          cacheMessages(room.id, updatedMessages);
+          
+          return updatedMessages;
         });
 
         // ✅ FIXED: Send push notification for new incoming messages
@@ -210,7 +267,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       console.log(`🔴 Unsubscribing from messages for room: ${room.id}`);
       unsubscribeFromMessages(handleNewMessage);
     };
-  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId, sendPushNotification]);
+  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId, sendPushNotification, cacheMessages]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -221,7 +278,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ✅ UPDATED: Handle sending messages for all room types
+  // ✅ UPDATED: Handle sending messages for all room types with offline support
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -233,14 +290,25 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       
       console.log('📤 Sending message:', newMessage.trim());
 
-      if (room.type === 'private') {
-        // ✅ Handle private messages (works for offline users too)
-        await sendPrivateMessage(room.user._id, newMessage.trim());
-      } else if (room.type === 'quiz') {
-        await sendMessage(room.id, newMessage.trim());
-      } else if (room.type === 'global') {
-        await sendMessage('global_chat', newMessage.trim());
-      }
+      // Create temporary message for immediate UI update
+      const tempMessage = {
+        _id: `temp-${Date.now()}`,
+        message: newMessage.trim(),
+        username: currentUser.username,
+        user: currentUser._id || currentUser.id,
+        profilePicture: currentUser.profile?.picture,
+        timestamp: new Date().toISOString(),
+        isTemp: true,
+        room: room.type === 'private' ? getPrivateRoomId() : room.id,
+        type: room.type
+      };
+
+      // Add temporary message immediately for better UX
+      setMessages(prev => {
+        const updatedMessages = [...prev, tempMessage];
+        cacheMessages(room.id, updatedMessages);
+        return updatedMessages;
+      });
 
       // Clear input immediately for better UX
       setNewMessage('');
@@ -260,11 +328,27 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         stopTyping(typingRoomId);
       }
 
+      // Send the actual message
+      if (room.type === 'private') {
+        await sendPrivateMessage(room.user._id, newMessage.trim());
+      } else if (room.type === 'quiz') {
+        await sendMessage(room.id, newMessage.trim());
+      } else if (room.type === 'global') {
+        await sendMessage('global_chat', newMessage.trim());
+      }
+
       console.log('✅ Message sent successfully');
 
     } catch (error) {
       console.error('❌ Failed to send message:', error);
       setError('Failed to send message. Please try again.');
+      
+      // Remove temporary message if sending failed
+      setMessages(prev => {
+        const filteredMessages = prev.filter(msg => !msg.isTemp);
+        cacheMessages(room.id, filteredMessages);
+        return filteredMessages;
+      });
     } finally {
       setSending(false);
     }
@@ -289,7 +373,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           roomId = room.user._id;
         }
         
-        startTyping(roomId);
+        if (isConnected) {
+          startTyping(roomId);
+        }
       }
       
       // Clear existing timeout
@@ -311,7 +397,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           roomId = room.user._id;
         }
         
-        stopTyping(roomId);
+        if (isConnected) {
+          stopTyping(roomId);
+        }
       }, 1000);
       
     } else {
@@ -328,7 +416,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           roomId = room.user._id;
         }
         
-        stopTyping(roomId);
+        if (isConnected) {
+          stopTyping(roomId);
+        }
       }
     }
   };
@@ -347,7 +437,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         roomId = room.user._id;
       }
       
-      stopTyping(roomId);
+      if (isConnected) {
+        stopTyping(roomId);
+      }
     }
   };
 
@@ -413,8 +505,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
       {/* Error Message */}
       {error && (
-        <div className="chat-error">
+        <div className={`chat-error ${error.includes('cached') ? 'chat-warning' : ''}`}>
           {error}
+          {error.includes('cached') && (
+            <button 
+              onClick={() => setError('')}
+              className="btn-dismiss"
+            >
+              Dismiss
+            </button>
+          )}
         </div>
       )}
 
@@ -438,7 +538,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             const showDate = index === 0 || 
               formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
             
-            const isOwnMessage = message.user === currentUser._id || 
+            const isOwnMessage = message.user === (currentUser._id || currentUser.id) || 
                                message.username === currentUser.username;
 
             return (
@@ -449,7 +549,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   </div>
                 )}
                 <div
-                  className={`message ${isOwnMessage ? 'own-message' : 'other-message'}`}
+                  className={`message ${isOwnMessage ? 'own-message' : 'other-message'} ${message.isTemp ? 'message-temp' : ''}`}
                 >
                   <div className="message-avatar">
                     {message.profilePicture ? (
@@ -470,10 +570,11 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                     <div className="message-header">
                       <span className="message-username">
                         {isOwnMessage ? 'You' : message.username}
+                        {message.isTemp && <span className="message-sending"> • Sending...</span>}
                       </span>
                       <span className="message-time">
                         {formatTime(message.timestamp)}
-                        {message.type === 'private' && !message.isDelivered && isOwnMessage && (
+                        {message.type === 'private' && !message.isDelivered && isOwnMessage && !message.isTemp && (
                           <span title="Not delivered yet"> • ⏳</span>
                         )}
                         {message.type === 'private' && message.isDelivered && !message.isRead && isOwnMessage && (
@@ -527,11 +628,11 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             }
             className="message-input"
             maxLength={500}
-            disabled={sending || !isConnected}
+            disabled={sending}
           />
           <button 
             type="submit" 
-            disabled={!newMessage.trim() || sending || !isConnected}
+            disabled={!newMessage.trim() || sending}
             className={`btn-send ${sending ? 'sending' : ''}`}
           >
             {sending ? 'Sending...' : 'Send'}
@@ -539,7 +640,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         </div>
         <div className="input-info">
           <span>
-            {!isConnected ? 'Connecting to chat...' : 'Press Enter to send'}
+            {!isConnected ? '🔴 Offline - Messages will send when connected' : 'Press Enter to send'}
             {room.type === 'private' && !room.user?.isOnline && ' • User is offline'}
           </span>
           <span>{newMessage.length}/500</span>
