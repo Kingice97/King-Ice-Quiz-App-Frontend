@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
-import { sendChatNotification } from '../components/Notifications/NotificationSettings';
 
 const SocketContext = createContext();
 
@@ -82,8 +81,9 @@ export const SocketProvider = ({ children }) => {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000
+      reconnectionAttempts: 10,
+      reconnectionDelay: 1000,
+      timeout: 20000
     });
 
     setSocket(newSocket);
@@ -236,7 +236,7 @@ export const SocketProvider = ({ children }) => {
 
       const timeout = setTimeout(() => {
         reject(new Error('Message timeout'));
-      }, 5000);
+      }, 10000); // Increased timeout
 
       socket.emit('send_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -281,7 +281,7 @@ export const SocketProvider = ({ children }) => {
 
       const timeout = setTimeout(() => {
         reject(new Error('Message sending timeout'));
-      }, 5000);
+      }, 10000); // Increased timeout
 
       socket.emit('send_private_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -294,16 +294,24 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
-  // Load private chat history
+  // ✅ IMPROVED: Load private chat history with better error handling
   const loadPrivateMessages = useCallback(async (recipientId) => {
     if (!socket || !isConnected) {
-      throw new Error('Not connected to chat server');
+      // Try to use HTTP API as fallback when socket is not connected
+      try {
+        console.log('🔄 Socket not connected, trying HTTP API for messages...');
+        const chatService = await import('../services/chatService');
+        const response = await chatService.chatService.getPrivateMessages(recipientId, 50);
+        return response;
+      } catch (error) {
+        throw new Error('Not connected to chat server and HTTP fallback failed');
+      }
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Load messages timeout'));
-      }, 5000);
+      }, 15000); // Increased timeout
 
       socket.emit('load_private_messages', { recipientId }, (response) => {
         clearTimeout(timeout);
@@ -319,13 +327,21 @@ export const SocketProvider = ({ children }) => {
   // ✅ NEW: Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
-      throw new Error('Not connected to chat server');
+      // Try HTTP API fallback
+      try {
+        console.log('🔄 Socket not connected, trying HTTP API for conversations...');
+        const chatService = await import('../services/chatService');
+        const response = await chatService.chatService.getUserConversations();
+        return response;
+      } catch (error) {
+        throw new Error('Not connected to chat server and HTTP fallback failed');
+      }
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Load conversations timeout'));
-      }, 5000);
+      }, 15000);
 
       socket.emit('load_conversations', (response) => {
         clearTimeout(timeout);
@@ -400,7 +416,7 @@ export const SocketProvider = ({ children }) => {
     sendMessage,
     sendPrivateMessage,
     loadPrivateMessages,
-    loadConversations, // ✅ NEW
+    loadConversations,
     startTyping,
     stopTyping,
     getQuizMessages,
