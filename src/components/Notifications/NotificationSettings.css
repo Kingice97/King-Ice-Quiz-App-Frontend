@@ -291,3 +291,46 @@
     width: 100%;
   }
 }
+
+
+
+.browser-support {
+  margin: 15px 0;
+  padding: 15px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  border-left: 4px solid #6c757d;
+}
+
+.browser-support ul {
+  list-style: none;
+  padding: 0;
+  margin: 10px 0;
+}
+
+.browser-support li {
+  padding: 5px 0;
+  font-size: 14px;
+}
+
+.browser-support .supported {
+  color: #28a745;
+}
+
+.browser-support .unsupported {
+  color: #dc3545;
+}
+
+.configuration-warning {
+  margin: 15px 0;
+  padding: 15px;
+  background: #fff3cd;
+  border: 1px solid #ffeaa7;
+  border-radius: 8px;
+  color: #856404;
+}
+
+.configuration-warning h4 {
+  margin: 0 0 10px 0;
+  color: #856404;
+}

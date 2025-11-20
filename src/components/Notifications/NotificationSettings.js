@@ -19,6 +19,9 @@ const NotificationSettings = () => {
     pushManager: 'PushManager' in window
   });
 
+  // ✅ FIXED: Get VAPID public key with proper error handling
+  const vapidPublicKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+
   // Load settings from backend
   useEffect(() => {
     loadSettings();
@@ -49,6 +52,12 @@ const NotificationSettings = () => {
 
     if (!browserSupport.serviceWorker || !browserSupport.pushManager) {
       setMessage('❌ Push notifications are not supported in this browser');
+      return;
+    }
+
+    // ✅ FIXED: Check if VAPID key is available
+    if (!vapidPublicKey) {
+      setMessage('❌ Push notifications are not configured. Please contact administrator.');
       return;
     }
 
@@ -99,10 +108,27 @@ const NotificationSettings = () => {
       const registration = await navigator.serviceWorker.register('/sw.js');
       console.log('Service Worker registered:', registration);
 
+      // ✅ FIXED: Check if we're already subscribed
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        console.log('Already subscribed to push notifications');
+        return subscription;
+      }
+
+      // ✅ FIXED: Safe VAPID key conversion with validation
+      if (!vapidPublicKey) {
+        throw new Error('VAPID public key is not configured');
+      }
+
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      
+      console.log('Subscribing to push notifications with VAPID key...');
+
       // Subscribe to push notifications
-      const subscription = await registration.pushManager.subscribe({
+      subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
-        applicationServerKey: urlBase64ToUint8Array(process.env.REACT_APP_VAPID_PUBLIC_KEY)
+        applicationServerKey: applicationServerKey
       });
 
       console.log('Push subscription successful:', subscription);
@@ -110,27 +136,49 @@ const NotificationSettings = () => {
       // Send subscription to backend
       await notificationService.subscribe(subscription);
 
+      return subscription;
+
     } catch (error) {
       console.error('Error subscribing to push notifications:', error);
-      throw error;
+      
+      // ✅ FIXED: Provide more specific error messages
+      if (error.name === 'NotAllowedError') {
+        throw new Error('Push subscription not allowed. Please check browser permissions.');
+      } else if (error.name === 'InvalidStateError') {
+        throw new Error('Already subscribed to push notifications.');
+      } else if (error.message.includes('VAPID')) {
+        throw new Error('Push notifications are not properly configured.');
+      } else {
+        throw new Error('Failed to subscribe to push notifications: ' + error.message);
+      }
     } finally {
       setIsSubscribing(false);
     }
   };
 
+  // ✅ FIXED: Safe VAPID key conversion function
   const urlBase64ToUint8Array = (base64String) => {
+    if (!base64String) {
+      throw new Error('VAPID public key is undefined');
+    }
+
+    // Remove any whitespace and format the base64 string
     const padding = '='.repeat((4 - base64String.length % 4) % 4);
     const base64 = (base64String + padding)
       .replace(/-/g, '+')
       .replace(/_/g, '/');
 
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
+    try {
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
 
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    } catch (error) {
+      throw new Error('Invalid VAPID public key format');
     }
-    return outputArray;
   };
 
   const handleDisableNotifications = async () => {
@@ -240,20 +288,48 @@ const NotificationSettings = () => {
 
   const permissionStatus = checkPermissionStatus();
 
-  if (!browserSupport.notifications || !browserSupport.serviceWorker) {
+  // ✅ FIXED: Better browser support detection
+  const isFullySupported = browserSupport.notifications && 
+                          browserSupport.serviceWorker && 
+                          browserSupport.pushManager &&
+                          vapidPublicKey;
+
+  if (!isFullySupported) {
     return (
       <div className="notification-settings">
-        <h3>🔕 Notifications Not Supported</h3>
-        <p>Your browser doesn't support push notifications. Please use a modern browser like Chrome, Firefox, or Edge.</p>
+        <h3>🔕 Push Notifications</h3>
         
         <div className="browser-support">
-          <h4>Browser Support:</h4>
+          <h4>Browser Compatibility:</h4>
           <ul>
-            <li>✅ Notifications API: {browserSupport.notifications ? 'Supported' : 'Not Supported'}</li>
-            <li>✅ Service Worker: {browserSupport.serviceWorker ? 'Supported' : 'Not Supported'}</li>
-            <li>✅ Push API: {browserSupport.pushManager ? 'Supported' : 'Not Supported'}</li>
+            <li className={browserSupport.notifications ? 'supported' : 'unsupported'}>
+              ✅ Notifications API: {browserSupport.notifications ? 'Supported' : 'Not Supported'}
+            </li>
+            <li className={browserSupport.serviceWorker ? 'supported' : 'unsupported'}>
+              ✅ Service Worker: {browserSupport.serviceWorker ? 'Supported' : 'Not Supported'}
+            </li>
+            <li className={browserSupport.pushManager ? 'supported' : 'unsupported'}>
+              ✅ Push API: {browserSupport.pushManager ? 'Supported' : 'Not Supported'}
+            </li>
+            <li className={vapidPublicKey ? 'supported' : 'unsupported'}>
+              ✅ Server Configuration: {vapidPublicKey ? 'Configured' : 'Not Configured'}
+            </li>
           </ul>
         </div>
+
+        {!vapidPublicKey && (
+          <div className="configuration-warning">
+            <h4>⚠️ Configuration Required</h4>
+            <p>Push notifications are not fully configured. Please make sure:</p>
+            <ol>
+              <li>VAPID keys are generated and added to environment variables</li>
+              <li>Backend has VAPID_PRIVATE_KEY set</li>
+              <li>Frontend has REACT_APP_VAPID_PUBLIC_KEY set</li>
+            </ol>
+          </div>
+        )}
+
+        <p>Push notifications require a modern browser like Chrome, Firefox, or Edge with proper server configuration.</p>
       </div>
     );
   }
@@ -363,6 +439,7 @@ const NotificationSettings = () => {
                 '⚠️ Permissions needed'
               }</p>
               <p><strong>Service Worker:</strong> {browserSupport.serviceWorker ? '✅ Registered' : '❌ Not available'}</p>
+              <p><strong>VAPID Key:</strong> {vapidPublicKey ? '✅ Configured' : '❌ Missing'}</p>
               {hasChanges && <p className="unsaved-changes">⚠️ You have unsaved changes</p>}
             </div>
           </div>
