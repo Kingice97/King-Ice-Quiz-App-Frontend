@@ -27,6 +27,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const lastMessageRef = useRef(null); // Track last message to avoid duplicates
 
   // ✅ FIXED: Get the actual private chat room ID
   const getPrivateRoomId = useCallback(() => {
@@ -40,33 +41,82 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // Debug logging
-  console.log('💬 ChatRoom Debug:', {
-    room,
-    currentUser: currentUser?.username,
-    messagesCount: messages.length,
-    isConnected,
-    privateRoomId: room.type === 'private' ? getPrivateRoomId() : null
-  });
+  // ✅ FIXED: Improved notification logic
+  const shouldSendNotification = useCallback((message) => {
+    // Don't send notification if:
+    // 1. It's our own message
+    const isOwnMessage = message.user === currentUser._id || 
+                        message.username === currentUser.username;
+    
+    // 2. We're currently viewing this chat room
+    const isViewingThisRoom = document.visibilityState === 'visible';
+    
+    // 3. It's a duplicate message
+    const isDuplicate = lastMessageRef.current === message._id;
+    
+    console.log('🔔 Notification Check:', {
+      isOwnMessage,
+      isViewingThisRoom,
+      isDuplicate,
+      messageId: message._id,
+      lastMessage: lastMessageRef.current
+    });
+    
+    return !isOwnMessage && !isViewingThisRoom && !isDuplicate;
+  }, [currentUser]);
 
-  // ✅ NEW: Send notification for new messages (when receiving, not sending)
-  useEffect(() => {
-    if (messages.length > 0) {
-      const lastMessage = messages[messages.length - 1];
-      
-      // Only send notification if:
-      // - It's not our own message
-      // - It's a new message (not from initial load)
-      // - We're not currently focused on this chat
-      const isOwnMessage = lastMessage.user === currentUser._id || 
-                          lastMessage.username === currentUser.username;
-      
-      if (!isOwnMessage && document.visibilityState === 'hidden') {
-        console.log('🔔 Sending chat notification for new message');
-        sendChatNotification(lastMessage.username, lastMessage.message);
-      }
+  // ✅ FIXED: Send push notification for new messages
+  const sendPushNotification = useCallback((message) => {
+    if (!shouldSendNotification(message)) {
+      console.log('🔕 Skipping notification - conditions not met');
+      return;
     }
-  }, [messages, currentUser]);
+    
+    console.log('📱 Sending push notification for message:', message);
+    
+    // Update last message reference
+    lastMessageRef.current = message._id;
+    
+    // Send the notification
+    sendChatNotification(message.username, message.message);
+    
+    // Also try to use service worker for background notifications
+    if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+      navigator.serviceWorker.ready.then(registration => {
+        registration.showNotification(`New message from ${message.username}`, {
+          body: message.message.length > 100 ? 
+                message.message.substring(0, 100) + '...' : 
+                message.message,
+          icon: '/brain-icon.png',
+          badge: '/brain-icon.png',
+          vibrate: [200, 100, 200],
+          tag: `chat-${message.room}`,
+          renotify: true,
+          data: {
+            url: `/chat`,
+            type: 'chat',
+            roomId: message.room,
+            sender: message.username,
+            timestamp: message.timestamp
+          },
+          actions: [
+            {
+              action: 'open',
+              title: '💬 Open Chat'
+            },
+            {
+              action: 'dismiss',
+              title: '❌ Dismiss'
+            }
+          ]
+        });
+      }).catch(error => {
+        console.error('❌ Service Worker notification failed:', error);
+        // Fallback to regular notification
+        sendChatNotification(message.username, message.message);
+      });
+    }
+  }, [shouldSendNotification]);
 
   // ✅ UPDATED: Load messages when room changes
   useEffect(() => {
@@ -98,6 +148,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           setMessages(response.data || []);
         }
         
+        // Set last message reference
+        if (response.messages?.length > 0 || response.data?.length > 0) {
+          const lastMsg = response.messages?.[response.messages.length - 1] || 
+                         response.data?.[response.data.length - 1];
+          lastMessageRef.current = lastMsg._id;
+        }
+        
       } catch (error) {
         console.error('❌ Failed to load messages:', error);
         setError('Failed to load messages. Please try again.');
@@ -109,7 +166,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     loadMessages();
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
-  // ✅ FIXED: Subscribe to real-time messages with proper room matching
+  // ✅ FIXED: Subscribe to real-time messages with proper notification triggering
   useEffect(() => {
     if (!isConnected) return;
 
@@ -137,18 +194,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           const exists = prev.some(msg => msg._id === message._id);
           if (exists) return prev;
           
+          console.log('💬 Adding new message to state');
           return [...prev, message];
         });
 
-        // ✅ NEW: Send notification for new incoming messages
-        // Only if it's not our own message and app is in background
-        const isOwnMessage = message.user === currentUser._id || 
-                           message.username === currentUser.username;
-        
-        if (!isOwnMessage && document.visibilityState === 'hidden') {
-          console.log('🔔 Sending push notification for new chat message');
-          sendChatNotification(message.username, message.message);
-        }
+        // ✅ FIXED: Send push notification for new incoming messages
+        console.log('🔔 Checking if should send notification for message:', message);
+        sendPushNotification(message);
       }
     };
 
@@ -158,7 +210,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       console.log(`🔴 Unsubscribing from messages for room: ${room.id}`);
       unsubscribeFromMessages(handleNewMessage);
     };
-  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId, currentUser]);
+  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId, sendPushNotification]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {

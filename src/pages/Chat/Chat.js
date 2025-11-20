@@ -24,6 +24,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState(null);
+  const lastNotificationRef = useRef(null); // Track last notification to avoid duplicates
 
   // Get consistent user ID
   const getUserId = () => {
@@ -31,29 +32,95 @@ const Chat = () => {
     return user._id || user.id;
   };
 
+  // ✅ FIXED: Improved background notification handler
+  const handleBackgroundNotification = useCallback((message) => {
+    // Only handle private messages when not in chat room
+    if (selectedRoom || message.type !== 'private') return;
+
+    console.log('🔔 Background notification check for message:', message);
+    
+    // Don't send notification if:
+    // 1. It's our own message
+    const isOwnMessage = message.user === getUserId();
+    // 2. We've already notified for this message
+    const isDuplicate = lastNotificationRef.current === message._id;
+    // 3. App is in foreground
+    const isAppInBackground = document.visibilityState === 'hidden';
+
+    console.log('📱 Notification conditions:', {
+      isOwnMessage,
+      isDuplicate,
+      isAppInBackground,
+      messageId: message._id
+    });
+
+    if (!isOwnMessage && !isDuplicate && isAppInBackground) {
+      console.log('📱 Sending background notification');
+      lastNotificationRef.current = message._id;
+      
+      // Use service worker for better background notifications
+      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification(`💬 ${message.username}`, {
+            body: message.message.length > 100 ? 
+                  message.message.substring(0, 100) + '...' : 
+                  message.message,
+            icon: '/brain-icon.png',
+            badge: '/brain-icon.png',
+            vibrate: [200, 100, 200],
+            tag: `chat-${message.room}`,
+            renotify: true,
+            data: {
+              url: `/chat`,
+              type: 'chat',
+              roomId: message.room,
+              sender: message.username,
+              timestamp: message.timestamp
+            },
+            actions: [
+              {
+                action: 'open',
+                title: '💬 Open Chat'
+              },
+              {
+                action: 'dismiss',
+                title: '❌ Dismiss'
+              }
+            ]
+          });
+        }).catch(error => {
+          console.error('❌ Service Worker notification failed:', error);
+          // Fallback to regular notification
+          sendChatNotification(message.username, message.message);
+        });
+      } else {
+        // Fallback
+        sendChatNotification(message.username, message.message);
+      }
+    }
+  }, [selectedRoom]);
+
   // ✅ NEW: Listen for new private messages when not in chat room
   useEffect(() => {
-    if (!socket || selectedRoom) return; // Don't listen if we're already in a chat room
+    if (!socket) return;
+
+    console.log('🎯 Setting up background message listener');
 
     const handleNewPrivateMessage = (message) => {
       // Only handle private messages
       if (message.type === 'private' && message.room && message.room.includes('private')) {
-        console.log('🔔 New private message received while not in chat:', message);
-        
-        // Check if app is in background/tab not focused
-        if (document.visibilityState === 'hidden') {
-          console.log('📱 App in background, sending notification');
-          sendChatNotification(message.username, message.message);
-        }
+        console.log('📩 Background message received:', message);
+        handleBackgroundNotification(message);
       }
     };
 
     subscribeToMessages(handleNewPrivateMessage);
 
     return () => {
+      console.log('🔴 Removing background message listener');
       unsubscribeFromMessages(handleNewPrivateMessage);
     };
-  }, [socket, selectedRoom, subscribeToMessages, unsubscribeFromMessages]);
+  }, [socket, selectedRoom, subscribeToMessages, unsubscribeFromMessages, handleBackgroundNotification]);
 
   // Load conversations
   useEffect(() => {
@@ -113,15 +180,31 @@ const Chat = () => {
         }
       });
 
-      // ✅ NEW: Send notification for new conversations with unread messages
+      // ✅ FIXED: Send notification for new conversations with unread messages
       if (updatedConversation.unreadCount > 0 && document.visibilityState === 'hidden') {
         const otherParticipant = updatedConversation.participants.find(
           participant => (participant._id || participant.id) !== getUserId()
         );
         
-        if (otherParticipant) {
+        if (otherParticipant && !selectedRoom) {
           console.log('🔔 New conversation with unread messages');
-          sendChatNotification(otherParticipant.username, 'You have new messages');
+          
+          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.ready.then(registration => {
+              registration.showNotification(`💬 ${otherParticipant.username}`, {
+                body: 'You have new unread messages',
+                icon: '/brain-icon.png',
+                badge: '/brain-icon.png',
+                vibrate: [200, 100, 200],
+                tag: `conversation-${updatedConversation._id}`,
+                data: {
+                  url: `/chat`,
+                  type: 'chat',
+                  conversationId: updatedConversation._id
+                }
+              });
+            });
+          }
         }
       }
     };
@@ -131,7 +214,7 @@ const Chat = () => {
     return () => {
       socket.off('conversation_updated', handleConversationUpdate);
     };
-  }, [socket]);
+  }, [socket, selectedRoom]);
 
   // Load online users
   useEffect(() => {
