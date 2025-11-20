@@ -58,12 +58,9 @@ class NotificationService {
   // Send test notification
   async sendTestNotification(title, body) {
     try {
-      const response = await api.post('/notifications/send-to-user', {
-        userId: 'current',
+      const response = await api.post('/notifications/send-test', {
         title: title,
-        body: body,
-        type: 'test',
-        url: window.location.origin
+        body: body
       });
       return response.data;
     } catch (error) {
@@ -87,7 +84,7 @@ class NotificationService {
     }
   }
 
-  // ✅ FIXED: Send chat notification - uses the correct endpoint
+  // ✅ IMPROVED: Send chat notification - uses the correct endpoint
   async sendChatNotification(recipientId, senderName, message, roomId) {
     try {
       const response = await api.post('/notifications/send-chat-notification', {
@@ -124,7 +121,7 @@ class NotificationService {
 // Create and export singleton instance
 export const notificationService = new NotificationService();
 
-// Export helper functions for local notifications
+// ✅ IMPROVED: Helper functions for local notifications
 export const sendQuizNotification = (quizTitle) => {
   const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
   if (settings.enabled && settings.quizAlerts && Notification.permission === 'granted') {
@@ -132,11 +129,14 @@ export const sendQuizNotification = (quizTitle) => {
       body: `Check out: ${quizTitle}`,
       icon: '/brain-icon.png',
       badge: '/brain-icon.png',
-      vibrate: [200, 100, 200]
+      vibrate: [200, 100, 200],
+      tag: `quiz-${Date.now()}`,
+      requireInteraction: true
     });
   }
 };
 
+// ✅ IMPROVED: Chat notification with better handling
 export const sendChatNotification = (sender, message) => {
   const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
   if (settings.enabled && settings.chatAlerts && Notification.permission === 'granted') {
@@ -146,6 +146,7 @@ export const sendChatNotification = (sender, message) => {
       badge: '/brain-icon.png',
       vibrate: [200, 100, 200],
       tag: `chat-${Date.now()}`,
+      requireInteraction: true,
       data: {
         url: '/chat',
         type: 'chat',
@@ -162,12 +163,13 @@ export const sendAnnouncementNotification = (title, message) => {
       body: message,
       icon: '/brain-icon.png',
       badge: '/brain-icon.png',
-      vibrate: [200, 100, 200]
+      vibrate: [200, 100, 200],
+      tag: `announcement-${Date.now()}`
     });
   }
 };
 
-// ✅ NEW: Send immediate browser notification (fallback)
+// ✅ IMPROVED: Send immediate browser notification (fallback)
 export const sendImmediateNotification = (title, body, options = {}) => {
   if (Notification.permission === 'granted') {
     const defaultOptions = {
@@ -175,9 +177,10 @@ export const sendImmediateNotification = (title, body, options = {}) => {
       badge: '/brain-icon.png',
       vibrate: [200, 100, 200],
       tag: `notification-${Date.now()}`,
+      requireInteraction: options.requireInteraction || false,
       data: {
-        url: '/',
-        type: 'general'
+        url: options.url || '/',
+        type: options.type || 'general'
       }
     };
 
@@ -211,27 +214,27 @@ export const requestPermission = async () => {
   return await Notification.requestPermission();
 };
 
-// ✅ NEW: Check if user has enabled notifications
+// ✅ IMPROVED: Check if user has enabled notifications
 export const areNotificationsEnabled = () => {
   try {
     const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
-    return settings.enabled === true;
+    return settings.enabled === true && Notification.permission === 'granted';
   } catch (error) {
     return false;
   }
 };
 
-// ✅ NEW: Check if chat notifications are enabled
+// ✅ IMPROVED: Check if chat notifications are enabled
 export const areChatNotificationsEnabled = () => {
   try {
     const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
-    return settings.enabled === true && settings.chatAlerts !== false;
+    return settings.enabled === true && settings.chatAlerts !== false && Notification.permission === 'granted';
   } catch (error) {
     return false;
   }
 };
 
-// ✅ NEW: Save notification settings
+// ✅ IMPROVED: Save notification settings
 export const saveNotificationSettings = (settings) => {
   try {
     localStorage.setItem('notificationSettings', JSON.stringify(settings));
@@ -242,7 +245,7 @@ export const saveNotificationSettings = (settings) => {
   }
 };
 
-// ✅ NEW: Load notification settings
+// ✅ IMPROVED: Load notification settings
 export const loadNotificationSettings = () => {
   try {
     return JSON.parse(localStorage.getItem('notificationSettings') || '{}');
@@ -253,6 +256,77 @@ export const loadNotificationSettings = () => {
       chatAlerts: true,
       announcementAlerts: true
     };
+  }
+};
+
+// ✅ NEW: Initialize push notifications
+export const initializePushNotifications = async () => {
+  if (!isPushSupported()) {
+    console.log('❌ Push notifications not supported in this browser');
+    return false;
+  }
+
+  if (Notification.permission === 'denied') {
+    console.log('❌ Notifications are blocked by user');
+    return false;
+  }
+
+  try {
+    // Check if we already have a subscription
+    const registration = await navigator.serviceWorker.ready;
+    let subscription = await registration.pushManager.getSubscription();
+
+    if (subscription) {
+      console.log('✅ Already subscribed to push notifications');
+      return true;
+    }
+
+    // Subscribe to push notifications
+    const vapidPublicKey = process.env.REACT_APP_VAPID_PUBLIC_KEY;
+    if (!vapidPublicKey) {
+      console.error('❌ VAPID public key not configured');
+      return false;
+    }
+
+    const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+    subscription = await registration.pushManager.subscribe({
+      userVisibleOnly: true,
+      applicationServerKey: applicationServerKey
+    });
+
+    console.log('✅ Successfully subscribed to push notifications');
+    
+    // Send subscription to backend
+    await notificationService.subscribe(subscription);
+    
+    return true;
+  } catch (error) {
+    console.error('❌ Error initializing push notifications:', error);
+    return false;
+  }
+};
+
+// ✅ NEW: Convert VAPID key
+const urlBase64ToUint8Array = (base64String) => {
+  if (!base64String) {
+    throw new Error('VAPID public key is undefined');
+  }
+
+  const padding = '='.repeat((4 - base64String.length % 4) % 4);
+  const base64 = (base64String + padding)
+    .replace(/-/g, '+')
+    .replace(/_/g, '/');
+
+  try {
+    const rawData = window.atob(base64);
+    const outputArray = new Uint8Array(rawData.length);
+
+    for (let i = 0; i < rawData.length; ++i) {
+      outputArray[i] = rawData.charCodeAt(i);
+    }
+    return outputArray;
+  } catch (error) {
+    throw new Error('Invalid VAPID public key format');
   }
 };
 
