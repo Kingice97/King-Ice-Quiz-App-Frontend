@@ -57,20 +57,22 @@ class NotificationService {
   }
 
   // Send test notification
-  async sendTestNotification() {
-    try {
-      const response = await api.post('/notifications/send-to-user', {
-        userId: 'current', // Will be replaced with actual user ID in backend
-        title: 'Test Notification',
-        body: 'This is a test notification from King Ice Quiz!',
-        type: 'test'
-      });
-      return response.data;
-    } catch (error) {
-      console.error('Error sending test notification:', error);
-      throw error;
-    }
+ // Add this method to your existing notificationService class
+async sendTestNotification(title, body) {
+  try {
+    const response = await api.post('/notifications/send-to-user', {
+      userId: 'current', // Will be replaced with actual user ID in backend
+      title: title,
+      body: body,
+      type: 'chat',
+      url: '/chat'
+    });
+    return response.data;
+  } catch (error) {
+    console.error('Error sending test notification:', error);
+    throw error;
   }
+}
 
   // Send quiz notification (admin only)
   async sendQuizNotification(quizId, quizTitle, quizDescription) {

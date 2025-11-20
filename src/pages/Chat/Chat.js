@@ -1,10 +1,10 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react'; // ✅ Added useRef import
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { userService } from '../../services/userService';
 import { chatService } from '../../services/chatService';
-import { sendChatNotification } from '../../services/notificationService';
+import { notificationService } from '../../services/notificationService';
 import Loading from '../../components/common/Loading/Loading';
 import OnlineUsers from '../../components/Chat/OnlineUsers/OnlineUsers';
 import ChatRoom from '../../components/Chat/ChatRoom/ChatRoom';
@@ -24,7 +24,7 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState(null);
-  const lastNotificationRef = useRef(null); // Track last notification to avoid duplicates
+  const lastNotificationRef = useRef(null);
 
   // Get consistent user ID
   const getUserId = () => {
@@ -32,10 +32,10 @@ const Chat = () => {
     return user._id || user.id;
   };
 
-  // ✅ FIXED: Improved background notification handler
-  const handleBackgroundNotification = useCallback((message) => {
-    // Only handle private messages when not in chat room
-    if (selectedRoom || message.type !== 'private') return;
+  // ✅ FIXED: True push notification handler - works even when app is closed
+  const handleBackgroundNotification = useCallback(async (message) => {
+    // Only handle private messages
+    if (message.type !== 'private') return;
 
     console.log('🔔 Background notification check for message:', message);
     
@@ -44,83 +44,93 @@ const Chat = () => {
     const isOwnMessage = message.user === getUserId();
     // 2. We've already notified for this message
     const isDuplicate = lastNotificationRef.current === message._id;
-    // 3. App is in foreground
-    const isAppInBackground = document.visibilityState === 'hidden';
 
     console.log('📱 Notification conditions:', {
       isOwnMessage,
       isDuplicate,
-      isAppInBackground,
-      messageId: message._id
+      messageId: message._id,
+      appState: document.visibilityState
     });
 
-    if (!isOwnMessage && !isDuplicate && isAppInBackground) {
-      console.log('📱 Sending background notification');
+    if (!isOwnMessage && !isDuplicate) {
+      console.log('📱 Sending TRUE PUSH notification');
       lastNotificationRef.current = message._id;
       
-      // Use service worker for better background notifications
-      if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-        navigator.serviceWorker.ready.then(registration => {
-          registration.showNotification(`💬 ${message.username}`, {
-            body: message.message.length > 100 ? 
-                  message.message.substring(0, 100) + '...' : 
-                  message.message,
-            icon: '/brain-icon.png',
-            badge: '/brain-icon.png',
-            vibrate: [200, 100, 200],
-            tag: `chat-${message.room}`,
-            renotify: true,
-            data: {
-              url: `/chat`,
-              type: 'chat',
-              roomId: message.room,
-              sender: message.username,
-              timestamp: message.timestamp
-            },
-            actions: [
-              {
-                action: 'open',
-                title: '💬 Open Chat'
+      // ✅ Use backend push notification service for TRUE push notifications
+      try {
+        // This will send a REAL push notification via service worker
+        // even when the app is completely closed
+        await notificationService.sendTestNotification(
+          `💬 New message from ${message.username}`,
+          message.message.length > 100 ? 
+          message.message.substring(0, 100) + '...' : 
+          message.message
+        );
+        
+        console.log('✅ Push notification sent via backend');
+      } catch (error) {
+        console.error('❌ Backend push failed, using service worker fallback:', error);
+        
+        // Fallback to service worker
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+          navigator.serviceWorker.ready.then(registration => {
+            registration.showNotification(`💬 ${message.username}`, {
+              body: message.message.length > 100 ? 
+                    message.message.substring(0, 100) + '...' : 
+                    message.message,
+              icon: '/brain-icon.png',
+              badge: '/brain-icon.png',
+              vibrate: [200, 100, 200],
+              tag: `chat-${message.room}`,
+              renotify: true,
+              data: {
+                url: `/chat`,
+                type: 'chat',
+                roomId: message.room,
+                sender: message.username,
+                timestamp: message.timestamp
               },
-              {
-                action: 'dismiss',
-                title: '❌ Dismiss'
-              }
-            ]
+              actions: [
+                {
+                  action: 'open',
+                  title: '💬 Open Chat'
+                },
+                {
+                  action: 'dismiss',
+                  title: '❌ Dismiss'
+                }
+              ]
+            });
           });
-        }).catch(error => {
-          console.error('❌ Service Worker notification failed:', error);
-          // Fallback to regular notification
-          sendChatNotification(message.username, message.message);
-        });
-      } else {
-        // Fallback
-        sendChatNotification(message.username, message.message);
+        }
       }
     }
-  }, [selectedRoom]);
+  }, []);
 
-  // ✅ NEW: Listen for new private messages when not in chat room
+  // ✅ NEW: Listen for ALL incoming messages (not just when in chat)
   useEffect(() => {
-    if (!socket) return;
+    if (!socket || !isConnected) return;
 
-    console.log('🎯 Setting up background message listener');
+    console.log('🎯 Setting up GLOBAL message listener for push notifications');
 
-    const handleNewPrivateMessage = (message) => {
-      // Only handle private messages
-      if (message.type === 'private' && message.room && message.room.includes('private')) {
-        console.log('📩 Background message received:', message);
+    const handleGlobalMessage = (message) => {
+      // Only handle private messages addressed to current user
+      if (message.type === 'private' && message.recipient === getUserId()) {
+        console.log('📩 GLOBAL: Private message received for push notification:', message);
         handleBackgroundNotification(message);
       }
     };
 
-    subscribeToMessages(handleNewPrivateMessage);
+    // Listen to all message events
+    socket.on('receive_private_message', handleGlobalMessage);
+    socket.on('receive_message', handleGlobalMessage);
 
     return () => {
-      console.log('🔴 Removing background message listener');
-      unsubscribeFromMessages(handleNewPrivateMessage);
+      console.log('🔴 Removing GLOBAL message listener');
+      socket.off('receive_private_message', handleGlobalMessage);
+      socket.off('receive_message', handleGlobalMessage);
     };
-  }, [socket, selectedRoom, subscribeToMessages, unsubscribeFromMessages, handleBackgroundNotification]);
+  }, [socket, isConnected, handleBackgroundNotification]);
 
   // Load conversations
   useEffect(() => {
@@ -168,43 +178,31 @@ const Chat = () => {
         const existingIndex = prev.findIndex(conv => conv._id === updatedConversation._id);
         
         if (existingIndex >= 0) {
-          // Update existing conversation
           const updated = [...prev];
           updated[existingIndex] = updatedConversation;
-          // Move to top
           const [moved] = updated.splice(existingIndex, 1);
           return [moved, ...updated];
         } else {
-          // Add new conversation
           return [updatedConversation, ...prev];
         }
       });
 
-      // ✅ FIXED: Send notification for new conversations with unread messages
-      if (updatedConversation.unreadCount > 0 && document.visibilityState === 'hidden') {
+      // Send notification for new conversations with unread messages
+      if (updatedConversation.unreadCount > 0) {
         const otherParticipant = updatedConversation.participants.find(
           participant => (participant._id || participant.id) !== getUserId()
         );
         
-        if (otherParticipant && !selectedRoom) {
-          console.log('🔔 New conversation with unread messages');
+        if (otherParticipant) {
+          console.log('🔔 New unread messages in conversation');
           
-          if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-            navigator.serviceWorker.ready.then(registration => {
-              registration.showNotification(`💬 ${otherParticipant.username}`, {
-                body: 'You have new unread messages',
-                icon: '/brain-icon.png',
-                badge: '/brain-icon.png',
-                vibrate: [200, 100, 200],
-                tag: `conversation-${updatedConversation._id}`,
-                data: {
-                  url: `/chat`,
-                  type: 'chat',
-                  conversationId: updatedConversation._id
-                }
-              });
-            });
-          }
+          // Use backend push service for true push notifications
+          notificationService.sendTestNotification(
+            `💬 ${otherParticipant.username}`,
+            'You have new unread messages'
+          ).catch(error => {
+            console.error('Failed to send conversation notification:', error);
+          });
         }
       }
     };
@@ -214,7 +212,7 @@ const Chat = () => {
     return () => {
       socket.off('conversation_updated', handleConversationUpdate);
     };
-  }, [socket, selectedRoom]);
+  }, [socket]);
 
   // Load online users
   useEffect(() => {
