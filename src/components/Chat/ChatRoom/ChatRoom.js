@@ -158,14 +158,19 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           const privateRoomId = getPrivateRoomId();
           console.log(`🔐 Loading private messages for room: ${privateRoomId}`);
           
-          try {
-            // Try socket first
-            response = await loadPrivateMessages(room.user._id);
-          } catch (socketError) {
-            console.log('🔄 Socket failed, trying HTTP API...', socketError);
-            // Fallback to HTTP API
-            response = await chatService.getPrivateMessages(room.user._id, 50);
-          }
+         try {
+  // Try socket first
+  response = await loadPrivateMessages(room.user._id);
+} catch (socketError) {
+  console.log('🔄 Socket failed, trying HTTP API...', socketError);
+  // Fallback to HTTP API - FIXED: Use the correct function name
+  try {
+    response = await chatService.getPrivateMessages(room.user._id, 50);
+  } catch (httpError) {
+    console.log('❌ HTTP API also failed:', httpError);
+    throw new Error('Failed to load messages from both socket and HTTP');
+  }
+}
           
           // Join private chat room
           if (isConnected) {

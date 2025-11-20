@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -19,31 +19,34 @@ export const SocketProvider = ({ children }) => {
   const [messages, setMessages] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const [conversations, setConversations] = useState([]);
-  const [connectionAttempts, setConnectionAttempts] = useState(0);
-  const { user, isAuthenticated, serverStatus } = useAuth();
-  
-  // ✅ FIXED: Use refs to prevent unnecessary re-renders
-  const connectionAttemptsRef = useRef(0);
-  const isMountedRef = useRef(true);
+  const { user, isAuthenticated } = useAuth();
 
   // Get stable user ID - handles both id and _id formats
   const getUserId = useCallback(() => {
     if (!user) return null;
-    return user._id || user.id;
+    
+    // Try _id first, then id
+    const userId = user._id || user.id;
+    
+    console.log('🆔 User ID check:', {
+      user: user,
+      has_id: !!user._id,
+      hasId: !!user.id,
+      finalUserId: userId
+    });
+    
+    return userId;
   }, [user]);
 
-  // ✅ FIXED: Stable socket connection function with minimal dependencies
-  const connectSocket = useCallback(() => {
-    if (!isMountedRef.current) return;
-    
+  // Initialize socket connection
+  useEffect(() => {
     const userId = getUserId();
     
     console.log('🔄 SocketProvider: Checking connection conditions', {
       isAuthenticated,
       hasUser: !!user,
       userId: userId,
-      serverStatus: serverStatus,
-      connectionAttempts: connectionAttemptsRef.current
+      userObject: user
     });
 
     if (!isAuthenticated || !userId) {
@@ -53,12 +56,6 @@ export const SocketProvider = ({ children }) => {
         setSocket(null);
         setIsConnected(false);
       }
-      return;
-    }
-
-    // Don't attempt connection if server is offline
-    if (serverStatus === 'offline') {
-      console.log('🌐 Server is offline - delaying socket connection');
       return;
     }
 
@@ -74,10 +71,9 @@ export const SocketProvider = ({ children }) => {
       setSocket(null);
     }
 
-    const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
     console.log('🔗 Connecting to:', API_URL);
 
-    // Socket.io configuration for Render.com
     const newSocket = io(API_URL, {
       auth: {
         userId: userId,
@@ -85,85 +81,41 @@ export const SocketProvider = ({ children }) => {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 3,
-      reconnectionDelay: 5000,
-      reconnectionDelayMax: 15000,
-      timeout: 45000,
-      forceNew: true,
-      withCredentials: true
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000
     });
 
     setSocket(newSocket);
-    connectionAttemptsRef.current += 1;
-    setConnectionAttempts(connectionAttemptsRef.current);
 
     // Connection events
-    const handleConnect = () => {
-      if (!isMountedRef.current) return;
+    newSocket.on('connect', () => {
       console.log('✅ SOCKET CONNECTED! ID:', newSocket.id);
       setIsConnected(true);
-      connectionAttemptsRef.current = 0;
-      setConnectionAttempts(0);
-    };
+    });
 
-    const handleDisconnect = (reason) => {
-      if (!isMountedRef.current) return;
+    newSocket.on('disconnect', (reason) => {
       console.log('🔴 Socket disconnected:', reason);
       setIsConnected(false);
-      
-      if (reason === 'transport close' || reason === 'ping timeout') {
-        console.log('🔄 Render.com might be spinning down, waiting 10 seconds...');
-        setTimeout(() => {
-          if (isMountedRef.current && newSocket && !newSocket.connected) {
-            console.log('🔄 Attempting reconnection after Render.com delay...');
-            newSocket.connect();
-          }
-        }, 10000);
-      }
-    };
+    });
 
-    const handleConnectError = (error) => {
-      if (!isMountedRef.current) return;
-      console.error('❌ Socket connection error:', error.message);
+    newSocket.on('connect_error', (error) => {
+      console.error('❌ Socket connection error:', error);
       setIsConnected(false);
-      
-      if (error.message.includes('timeout') || error.message.includes('xhr poll error')) {
-        console.log('⏰ Render.com is spinning up, waiting longer before retry...');
-        
-        const delay = Math.min(connectionAttemptsRef.current * 5000, 30000);
-        
-        setTimeout(() => {
-          if (isMountedRef.current && newSocket && !newSocket.connected && connectionAttemptsRef.current < 3) {
-            console.log(`🔄 Retry attempt ${connectionAttemptsRef.current + 1} after ${delay}ms delay`);
-            newSocket.connect();
-          } else if (connectionAttemptsRef.current >= 3) {
-            console.log('🚫 Max connection attempts reached, giving up');
-          }
-        }, delay);
-      }
-    };
+    });
 
-    const handleReconnect = (attemptNumber) => {
-      if (!isMountedRef.current) return;
-      console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
-      setIsConnected(true);
-      connectionAttemptsRef.current = 0;
-      setConnectionAttempts(0);
-    };
-
-    const handleConnectionSuccess = (data) => {
-      if (!isMountedRef.current) return;
+    newSocket.on('connection_success', (data) => {
       console.log('✅ Server connection success:', data);
       setIsConnected(true);
-    };
+    });
 
-    const handleReceiveMessage = (messageData) => {
-      if (!isMountedRef.current) return;
+    // Message events
+    newSocket.on('receive_message', (messageData) => {
       console.log('📩 Received message:', messageData);
       setMessages(prev => {
         const roomId = messageData.quiz || messageData.quizId;
         const existing = prev[roomId] || [];
         
+        // Prevent duplicates
         if (existing.some(msg => msg._id === messageData._id)) {
           return prev;
         }
@@ -173,15 +125,16 @@ export const SocketProvider = ({ children }) => {
           [roomId]: [...existing, messageData]
         };
       });
-    };
+    });
 
-    const handleReceivePrivateMessage = (messageData) => {
-      if (!isMountedRef.current) return;
+    // Handle private messages
+    newSocket.on('receive_private_message', (messageData) => {
       console.log('📩 Received private message:', messageData);
       setMessages(prev => {
         const roomId = messageData.room;
         const existing = prev[roomId] || [];
         
+        // Prevent duplicates
         if (existing.some(msg => msg._id === messageData._id)) {
           return prev;
         }
@@ -191,33 +144,36 @@ export const SocketProvider = ({ children }) => {
           [roomId]: [...existing, messageData]
         };
       });
-    };
+    });
 
-    const handleConversationUpdated = (conversationData) => {
-      if (!isMountedRef.current) return;
+    // Handle conversation updates
+    newSocket.on('conversation_updated', (conversationData) => {
       console.log('💬 Conversation updated:', conversationData);
       setConversations(prev => {
         const existingIndex = prev.findIndex(conv => conv._id === conversationData._id);
         
         if (existingIndex >= 0) {
+          // Update existing conversation
           const updated = [...prev];
           updated[existingIndex] = conversationData;
+          // Move to top
           const [moved] = updated.splice(existingIndex, 1);
           return [moved, ...updated];
         } else {
+          // Add new conversation
           return [conversationData, ...prev];
         }
       });
-    };
+    });
 
-    const handleOnlineUsersUpdate = (users) => {
-      if (!isMountedRef.current) return;
+    // Online users
+    newSocket.on('online_users_update', (users) => {
       console.log('👥 Online users updated:', users.length);
       setOnlineUsers(users);
-    };
+    });
 
-    const handleUserTyping = (data) => {
-      if (!isMountedRef.current) return;
+    // Typing indicators
+    newSocket.on('user_typing', (data) => {
       console.log('⌨️ Typing:', data);
       setTypingUsers(prev => ({
         ...prev,
@@ -225,80 +181,16 @@ export const SocketProvider = ({ children }) => {
           ? [...new Set([...(prev[data.quizId] || []), data.username])]
           : (prev[data.quizId] || []).filter(u => u !== data.username)
       }));
-    };
+    });
 
-    // Attach event listeners
-    newSocket.on('connect', handleConnect);
-    newSocket.on('disconnect', handleDisconnect);
-    newSocket.on('connect_error', handleConnectError);
-    newSocket.on('reconnect', handleReconnect);
-    newSocket.on('connection_success', handleConnectionSuccess);
-    newSocket.on('receive_message', handleReceiveMessage);
-    newSocket.on('receive_private_message', handleReceivePrivateMessage);
-    newSocket.on('conversation_updated', handleConversationUpdated);
-    newSocket.on('online_users_update', handleOnlineUsersUpdate);
-    newSocket.on('user_typing', handleUserTyping);
-
-    // Store cleanup function on socket instance
-    newSocket._cleanup = () => {
-      newSocket.off('connect', handleConnect);
-      newSocket.off('disconnect', handleDisconnect);
-      newSocket.off('connect_error', handleConnectError);
-      newSocket.off('reconnect', handleReconnect);
-      newSocket.off('connection_success', handleConnectionSuccess);
-      newSocket.off('receive_message', handleReceiveMessage);
-      newSocket.off('receive_private_message', handleReceivePrivateMessage);
-      newSocket.off('conversation_updated', handleConversationUpdated);
-      newSocket.off('online_users_update', handleOnlineUsersUpdate);
-      newSocket.off('user_typing', handleUserTyping);
-    };
-
-  }, [isAuthenticated, user, serverStatus]); // ✅ FIXED: Minimal dependencies
-
-  // ✅ FIXED: Single connection effect with proper cleanup
-  useEffect(() => {
-    isMountedRef.current = true;
-    
-    // Delay connection to allow auth to settle
-    const connectionTimer = setTimeout(() => {
-      if (isMountedRef.current) {
-        connectSocket();
-      }
-    }, 2000);
-
+    // Cleanup
     return () => {
-      clearTimeout(connectionTimer);
-    };
-  }, [connectSocket]);
-
-  // ✅ FIXED: Server status change handler
-  useEffect(() => {
-    if (serverStatus === 'online' && !isConnected && socket) {
-      console.log('🌐 Server is back online, attempting socket reconnection...');
-      const reconnectTimer = setTimeout(() => {
-        if (isMountedRef.current && socket && !socket.connected) {
-          socket.connect();
-        }
-      }, 3000);
-      
-      return () => clearTimeout(reconnectTimer);
-    }
-  }, [serverStatus, isConnected, socket]);
-
-  // ✅ FIXED: Proper cleanup on unmount
-  useEffect(() => {
-    return () => {
-      console.log('🧹 SocketProvider cleanup - disconnecting socket');
-      isMountedRef.current = false;
-      if (socket) {
-        // Call stored cleanup function
-        if (socket._cleanup) {
-          socket._cleanup();
-        }
-        socket.disconnect();
+      console.log('🧹 SocketProvider cleanup');
+      if (newSocket) {
+        newSocket.disconnect();
       }
     };
-  }, [socket]);
+  }, [isAuthenticated, user, getUserId]);
 
   // Socket methods
   const joinQuizRoom = useCallback((quizId) => {
@@ -310,6 +202,7 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected]);
 
+  // Join private chat
   const joinPrivateChat = useCallback((recipientId) => {
     console.log(`🔐 Joining private chat with: ${recipientId}`);
     
@@ -320,6 +213,7 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected]);
 
+  // Send a message
   const sendMessage = useCallback(async (quizId, message) => {
     if (!socket || !isConnected) {
       throw new Error('Not connected to chat');
@@ -340,8 +234,8 @@ export const SocketProvider = ({ children }) => {
       };
 
       const timeout = setTimeout(() => {
-        reject(new Error('Message timeout - server may be spinning up'));
-      }, 15000);
+        reject(new Error('Message timeout'));
+      }, 5000);
 
       socket.emit('send_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -354,6 +248,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
+  // Send private message
   const sendPrivateMessage = useCallback(async (recipientId, message) => {
     console.log(`📤 Sending private message to: ${recipientId}`);
 
@@ -384,8 +279,8 @@ export const SocketProvider = ({ children }) => {
       };
 
       const timeout = setTimeout(() => {
-        reject(new Error('Message sending timeout - server may be spinning up'));
-      }, 15000);
+        reject(new Error('Message sending timeout'));
+      }, 5000);
 
       socket.emit('send_private_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -398,22 +293,16 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
+  // Load private chat history
   const loadPrivateMessages = useCallback(async (recipientId) => {
     if (!socket || !isConnected) {
-      try {
-        console.log('🔄 Socket not connected, trying HTTP API for messages...');
-        const chatService = await import('../services/chatService');
-        const response = await chatService.chatService.getPrivateMessages(recipientId, 50);
-        return response;
-      } catch (error) {
-        throw new Error('Not connected to chat server and HTTP fallback failed');
-      }
+      throw new Error('Not connected to chat server');
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Load messages timeout - server may be spinning up'));
-      }, 20000);
+        reject(new Error('Load messages timeout'));
+      }, 5000);
 
       socket.emit('load_private_messages', { recipientId }, (response) => {
         clearTimeout(timeout);
@@ -426,22 +315,16 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
+  // Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
-      try {
-        console.log('🔄 Socket not connected, trying HTTP API for conversations...');
-        const chatService = await import('../services/chatService');
-        const response = await chatService.chatService.getUserConversations();
-        return response;
-      } catch (error) {
-        throw new Error('Not connected to chat server and HTTP fallback failed');
-      }
+      throw new Error('Not connected to chat server');
     }
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Load conversations timeout - server may be spinning up'));
-      }, 20000);
+        reject(new Error('Load conversations timeout'));
+      }, 5000);
 
       socket.emit('load_conversations', (response) => {
         clearTimeout(timeout);
@@ -455,6 +338,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
+  // Start typing indicator
   const startTyping = useCallback((quizId) => {
     if (socket && isConnected && quizId) {
       socket.emit('typing_start', {
@@ -464,6 +348,7 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected, user]);
 
+  // Stop typing indicator
   const stopTyping = useCallback((quizId) => {
     if (socket && isConnected && quizId) {
       socket.emit('typing_stop', {
@@ -473,6 +358,7 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected, user]);
 
+  // Subscribe to new messages
   const subscribeToMessages = useCallback((callback) => {
     if (!socket) {
       console.warn('⚠️ Cannot subscribe: No socket available');
@@ -497,31 +383,10 @@ export const SocketProvider = ({ children }) => {
     socket.off('receive_private_message', callback);
   }, [socket]);
 
+  // Get messages for a quiz
   const getQuizMessages = useCallback((quizId) => {
     return messages[quizId] || [];
   }, [messages]);
-
-  const reconnect = useCallback(() => {
-    if (socket) {
-      console.log('🔄 Manual reconnect triggered');
-      connectionAttemptsRef.current = 0;
-      setConnectionAttempts(0);
-      socket.connect();
-    } else {
-      console.log('🔄 No socket instance, creating new connection');
-      connectSocket();
-    }
-  }, [socket, connectSocket]);
-
-  const getConnectionStatus = useCallback(() => {
-    return {
-      isConnected,
-      connectionAttempts: connectionAttemptsRef.current,
-      serverStatus,
-      hasSocket: !!socket,
-      socketId: socket?.id
-    };
-  }, [isConnected, serverStatus, socket]);
 
   const value = {
     socket,
@@ -539,19 +404,14 @@ export const SocketProvider = ({ children }) => {
     stopTyping,
     getQuizMessages,
     subscribeToMessages,
-    unsubscribeFromMessages,
-    reconnect,
-    getConnectionStatus,
-    connectionAttempts: connectionAttemptsRef.current
+    unsubscribeFromMessages
   };
 
   console.log('🎯 SocketContext value:', { 
     isConnected, 
     onlineUsersCount: onlineUsers.length,
     conversationsCount: conversations.length,
-    userId: getUserId(),
-    connectionAttempts: connectionAttemptsRef.current,
-    serverStatus
+    userId: getUserId()
   });
 
   return (
