@@ -1,5 +1,6 @@
+
 import React, { useState, useEffect } from 'react';
-import { notificationService, initializePushNotifications, areNotificationsEnabled } from '../../services/notificationService';
+import { notificationService } from '../../services/notificationService';
 import './NotificationSettings.css';
 
 const NotificationSettings = () => {
@@ -32,14 +33,9 @@ const NotificationSettings = () => {
       const response = await notificationService.getSettings();
       if (response.success) {
         setSettings(response.settings);
-        // Also save to localStorage for quick access
-        localStorage.setItem('notificationSettings', JSON.stringify(response.settings));
       }
     } catch (error) {
       console.log('Using default notification settings');
-      // Load from localStorage as fallback
-      const localSettings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
-      setSettings(localSettings);
     }
   };
 
@@ -74,29 +70,22 @@ const NotificationSettings = () => {
       const permission = await Notification.requestPermission();
       
       if (permission === 'granted') {
-        setIsSubscribing(true);
+        // Register service worker and subscribe to push
+        await subscribeToPushNotifications();
         
-        // Initialize push notifications (this will register service worker and subscribe)
-        const success = await initializePushNotifications();
+        const updatedSettings = { ...settings, enabled: true };
+        setSettings(updatedSettings);
+        await saveSettings(updatedSettings);
         
-        if (success) {
-          const updatedSettings = { ...settings, enabled: true };
-          setSettings(updatedSettings);
-          await saveSettings(updatedSettings);
-          
-          setMessage('✅ Notifications enabled successfully!');
-          
-          // Show welcome notification
-          if (Notification.permission === 'granted') {
-            new Notification('Notifications Enabled! 🎉', {
-              body: 'You will now receive push notifications from King Ice Quiz',
-              icon: '/brain-icon.png',
-              badge: '/brain-icon.png',
-              requireInteraction: true
-            });
-          }
-        } else {
-          setMessage('❌ Failed to initialize push notifications');
+        setMessage('✅ Notifications enabled successfully!');
+        
+        // Show welcome notification
+        if (Notification.permission === 'granted') {
+          new Notification('Notifications Enabled! 🎉', {
+            body: 'You will now receive push notifications from King Ice Quiz',
+            icon: '/brain-icon.png',
+            badge: '/brain-icon.png'
+          });
         }
       } else if (permission === 'denied') {
         setMessage('❌ Notifications blocked. Please enable them in your browser settings.');
@@ -108,8 +97,88 @@ const NotificationSettings = () => {
       setMessage('❌ Error enabling notifications: ' + error.message);
     } finally {
       setLoading(false);
-      setIsSubscribing(false);
       setTimeout(() => setMessage(''), 4000);
+    }
+  };
+
+  const subscribeToPushNotifications = async () => {
+    setIsSubscribing(true);
+    
+    try {
+      // Register service worker
+      const registration = await navigator.serviceWorker.register('/sw.js');
+      console.log('Service Worker registered:', registration);
+
+      // ✅ FIXED: Check if we're already subscribed
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (subscription) {
+        console.log('Already subscribed to push notifications');
+        return subscription;
+      }
+
+      // ✅ FIXED: Safe VAPID key conversion with validation
+      if (!vapidPublicKey) {
+        throw new Error('VAPID public key is not configured');
+      }
+
+      const applicationServerKey = urlBase64ToUint8Array(vapidPublicKey);
+      
+      console.log('Subscribing to push notifications with VAPID key...');
+
+      // Subscribe to push notifications
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: applicationServerKey
+      });
+
+      console.log('Push subscription successful:', subscription);
+
+      // Send subscription to backend
+      await notificationService.subscribe(subscription);
+
+      return subscription;
+
+    } catch (error) {
+      console.error('Error subscribing to push notifications:', error);
+      
+      // ✅ FIXED: Provide more specific error messages
+      if (error.name === 'NotAllowedError') {
+        throw new Error('Push subscription not allowed. Please check browser permissions.');
+      } else if (error.name === 'InvalidStateError') {
+        throw new Error('Already subscribed to push notifications.');
+      } else if (error.message.includes('VAPID')) {
+        throw new Error('Push notifications are not properly configured.');
+      } else {
+        throw new Error('Failed to subscribe to push notifications: ' + error.message);
+      }
+    } finally {
+      setIsSubscribing(false);
+    }
+  };
+
+  // ✅ FIXED: Safe VAPID key conversion function
+  const urlBase64ToUint8Array = (base64String) => {
+    if (!base64String) {
+      throw new Error('VAPID public key is undefined');
+    }
+
+    // Remove any whitespace and format the base64 string
+    const padding = '='.repeat((4 - base64String.length % 4) % 4);
+    const base64 = (base64String + padding)
+      .replace(/-/g, '+')
+      .replace(/_/g, '/');
+
+    try {
+      const rawData = window.atob(base64);
+      const outputArray = new Uint8Array(rawData.length);
+
+      for (let i = 0; i < rawData.length; ++i) {
+        outputArray[i] = rawData.charCodeAt(i);
+      }
+      return outputArray;
+    } catch (error) {
+      throw new Error('Invalid VAPID public key format');
     }
   };
 
@@ -139,7 +208,7 @@ const NotificationSettings = () => {
     const updatedSettings = { ...settings, [setting]: value };
     setSettings(updatedSettings);
     
-    // Auto-save preference changes if notifications are enabled
+    // Auto-save preference changes
     if (settings.enabled) {
       await saveSettings(updatedSettings);
     }
@@ -166,51 +235,41 @@ const NotificationSettings = () => {
     }
   };
 
-  const testNotification = async () => {
+  const testNotification = () => {
     if (settings.enabled && Notification.permission === 'granted') {
-      try {
-        // Use backend to send test notification (this will work even when app is closed)
-        await notificationService.sendTestNotification(
-          'Test Notification 🔔', 
-          'This is a test push notification from King Ice Quiz!'
-        );
-        setMessage('✅ Test notification sent!');
-      } catch (error) {
-        console.error('Backend test notification failed, trying local...', error);
-        // Fallback to local notification
-        if ('serviceWorker' in navigator) {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification('Test Notification 🔔', {
-              body: 'This is a test push notification from King Ice Quiz!',
-              icon: '/brain-icon.png',
-              badge: '/brain-icon.png',
-              vibrate: [100, 50, 100],
-              data: {
-                url: window.location.origin,
-                type: 'test'
-              },
-              actions: [
-                {
-                  action: 'open',
-                  title: 'Open App'
-                },
-                {
-                  action: 'dismiss',
-                  title: 'Dismiss'
-                }
-              ]
-            });
-          });
-        } else {
-          // Final fallback
-          new Notification('Test Notification 🔔', {
-            body: 'This is a test notification from King Ice Quiz!',
+      if ('serviceWorker' in navigator) {
+        // Use service worker for push notification test
+        navigator.serviceWorker.ready.then(registration => {
+          registration.showNotification('Test Notification 🔔', {
+            body: 'This is a test push notification from King Ice Quiz!',
             icon: '/brain-icon.png',
-            badge: '/brain-icon.png'
+            badge: '/brain-icon.png',
+            vibrate: [100, 50, 100],
+            data: {
+              url: window.location.origin,
+              type: 'test'
+            },
+            actions: [
+              {
+                action: 'open',
+                title: 'Open App'
+              },
+              {
+                action: 'dismiss',
+                title: 'Dismiss'
+              }
+            ]
           });
-        }
-        setMessage('✅ Test notification sent (local)!');
+        });
+      } else {
+        // Fallback to regular notification
+        new Notification('Test Notification 🔔', {
+          body: 'This is a test notification from King Ice Quiz!',
+          icon: '/brain-icon.png',
+          badge: '/brain-icon.png'
+        });
       }
+      setMessage('✅ Test notification sent!');
       setTimeout(() => setMessage(''), 3000);
     } else {
       setMessage('❌ Please enable notifications first');
@@ -337,7 +396,7 @@ const NotificationSettings = () => {
                 <span className="setting-text">💬 Chat Messages</span>
               </label>
               <p className="setting-description">
-                Notify me when I receive new chat messages (works when app is closed)
+                Notify me when I receive new chat messages
               </p>
             </div>
 
@@ -382,7 +441,6 @@ const NotificationSettings = () => {
               }</p>
               <p><strong>Service Worker:</strong> {browserSupport.serviceWorker ? '✅ Registered' : '❌ Not available'}</p>
               <p><strong>VAPID Key:</strong> {vapidPublicKey ? '✅ Configured' : '❌ Missing'}</p>
-              <p><strong>Background Notifications:</strong> {settings.enabled ? '✅ Enabled' : '❌ Disabled'}</p>
               {hasChanges && <p className="unsaved-changes">⚠️ You have unsaved changes</p>}
             </div>
           </div>
@@ -401,14 +459,13 @@ const NotificationSettings = () => {
             <li>Use "Test Notification" to verify it works</li>
           </ol>
           
-          <div className="feature-highlight">
-            <h5>🎯 Key Features:</h5>
-            <ul>
-              <li>✅ Receive notifications when app is closed</li>
-              <li>✅ Get chat messages instantly</li>
-              <li>✅ New quiz alerts</li>
-              <li>✅ Works on all devices and PCs</li>
-            </ul>
+          <div className="permission-help">
+            <p><strong>Note:</strong> If you previously denied permissions, you'll need to:</p>
+            <ol>
+              <li>Click the lock icon in your browser's address bar</li>
+              <li>Change "Notifications" to "Allow"</li>
+              <li>Refresh this page and try again</li>
+            </ol>
           </div>
         </div>
       )}
