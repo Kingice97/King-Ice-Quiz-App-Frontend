@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
+import { sendChatNotification } from '../components/Notifications/NotificationSettings';
 
 const SocketContext = createContext();
 
@@ -146,7 +147,7 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // Handle conversation updates
+    // ✅ NEW: Handle conversation updates
     newSocket.on('conversation_updated', (conversationData) => {
       console.log('💬 Conversation updated:', conversationData);
       setConversations(prev => {
@@ -315,7 +316,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
-  // Load user conversations
+  // ✅ NEW: Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
       throw new Error('Not connected to chat server');
@@ -399,7 +400,7 @@ export const SocketProvider = ({ children }) => {
     sendMessage,
     sendPrivateMessage,
     loadPrivateMessages,
-    loadConversations,
+    loadConversations, // ✅ NEW
     startTyping,
     stopTyping,
     getQuizMessages,

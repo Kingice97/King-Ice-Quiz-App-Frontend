@@ -1,24 +1,6 @@
 import api from './api';
 
 export const chatService = {
-   // ✅ ADD THIS MISSING FUNCTION:
-  // Get private messages between users
-  getPrivateMessages: async (userId, limit = 50) => {
-    try {
-      const response = await api.get(`/chat/private/${userId}`, {
-        params: { limit }
-      });
-      return response.data;
-    } catch (error) {
-      console.error(`❌ Failed to fetch private messages for user ${userId}:`, error);
-      return { 
-        success: false, 
-        messages: [], 
-        message: 'Failed to load private messages' 
-      };
-    }
-  },
-
   // Get chat messages for a quiz
   getQuizMessages: async (quizId, limit = 50) => {
     try {

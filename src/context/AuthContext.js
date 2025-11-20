@@ -1,7 +1,6 @@
 import React, { createContext, useState, useContext, useEffect } from 'react';
 import { authService } from '../services/authService';
 import { userService } from '../services/userService';
-import { isServerReachable } from '../services/api';
 
 const AuthContext = createContext();
 
@@ -17,28 +16,13 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
-  const [serverStatus, setServerStatus] = useState('checking'); // checking, online, offline
 
   // DEBUG: Log when AuthContext loads
-  console.log('🔄 DEBUG: AuthContext.js LOADED - version 1.0.5 - OPTIMIZED FOR RENDER.COM');
+  console.log('🔄 DEBUG: AuthContext.js LOADED - version 1.0.4 - FIXED AUTH CHECK');
 
   useEffect(() => {
-    checkServerStatus();
     checkAuth();
   }, []);
-
-  // ✅ NEW: Check server status first
-  const checkServerStatus = async () => {
-    try {
-      console.log('🌐 Checking server status...');
-      const isReachable = await isServerReachable();
-      setServerStatus(isReachable ? 'online' : 'offline');
-      console.log(`🌐 Server status: ${isReachable ? '🟢 ONLINE' : '🔴 OFFLINE'}`);
-    } catch (error) {
-      console.error('❌ Server status check failed:', error);
-      setServerStatus('offline');
-    }
-  };
 
   const checkAuth = async () => {
     try {
@@ -48,7 +32,7 @@ export const AuthProvider = ({ children }) => {
       console.log('🔐 Auth Check Debug:', { 
         tokenExists: !!token, 
         userDataExists: !!userData,
-        serverStatus: serverStatus
+        userData: userData ? 'Exists' : 'No user data'
       });
       
       // ✅ FIXED: Only clear data if both token AND userData are missing
@@ -62,22 +46,6 @@ export const AuthProvider = ({ children }) => {
       // ✅ FIXED: If we have userData but no token, use cached data
       if (userData && !token) {
         console.log('⚠️ User data exists but no token - using cached data');
-        try {
-          const parsedUser = JSON.parse(userData);
-          setUser(parsedUser);
-          setLoading(false);
-          return;
-        } catch (parseError) {
-          console.error('Error parsing cached user data:', parseError);
-          clearAuthData();
-          setLoading(false);
-          return;
-        }
-      }
-      
-      // ✅ FIXED: If server is offline, use cached data immediately
-      if (serverStatus === 'offline' && userData) {
-        console.log('🌐 Server offline - using cached user data');
         try {
           const parsedUser = JSON.parse(userData);
           setUser(parsedUser);
@@ -113,7 +81,6 @@ export const AuthProvider = ({ children }) => {
           
           setUser(userWithOnlineStatus);
           localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
-          setServerStatus('online');
           console.log('🎉 Auth successful with fresh data');
           
         } catch (authError) {
@@ -125,7 +92,6 @@ export const AuthProvider = ({ children }) => {
             try {
               const parsedUser = JSON.parse(userData);
               setUser(parsedUser);
-              setServerStatus('offline'); // Mark server as offline
               console.log('✅ Using cached user data:', parsedUser.username);
             } catch (parseError) {
               console.error('Error parsing cached user data:', parseError);
@@ -152,7 +118,6 @@ export const AuthProvider = ({ children }) => {
     localStorage.removeItem('token');
     localStorage.removeItem('userData');
     setUser(null);
-    setServerStatus('checking');
   };
 
   const login = async (credentials) => {
@@ -194,7 +159,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
       setUser(userWithOnlineStatus);
-      setServerStatus('online');
       
       console.log('🎉 Login successful! User:', user.username);
       return response;
@@ -214,11 +178,6 @@ export const AuthProvider = ({ children }) => {
         message = error.message;
       } else if (error.response?.data?.error) {
         message = error.response.data.error;
-      }
-      
-      // Special handling for timeout errors
-      if (error.code === 'ECONNABORTED') {
-        message = 'Server is taking too long to respond. This is normal on free hosting. Please wait and try again.';
       }
       
       setError(message);
@@ -262,7 +221,6 @@ export const AuthProvider = ({ children }) => {
       localStorage.setItem('token', token);
       localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
       setUser(userWithOnlineStatus);
-      setServerStatus('online');
       
       console.log('🎉 Registration successful! User:', user.username);
       return response;
@@ -274,13 +232,7 @@ export const AuthProvider = ({ children }) => {
         config: error.config
       });
       
-      let message = error.response?.data?.message || error.message || 'Registration failed';
-      
-      // Special handling for timeout errors
-      if (error.code === 'ECONNABORTED') {
-        message = 'Server is taking too long to respond. This is normal on free hosting. Please wait and try again.';
-      }
-      
+      const message = error.response?.data?.message || error.message || 'Registration failed';
       setError(message);
       clearAuthData();
       throw new Error(message);
@@ -293,12 +245,8 @@ export const AuthProvider = ({ children }) => {
     console.log('👋 Logging out user:', user?.username);
     
     try {
-      // Only call logout endpoint if server is online
-      if (serverStatus === 'online') {
-        await authService.logout();
-      } else {
-        console.log('🌐 Server offline - skipping logout API call');
-      }
+      // NEW: Call logout endpoint to update online status
+      await authService.logout();
     } catch (error) {
       console.error('Logout API call failed:', error);
     } finally {
@@ -424,25 +372,11 @@ export const AuthProvider = ({ children }) => {
       
       setUser(userWithOnlineStatus);
       localStorage.setItem('userData', JSON.stringify(userWithOnlineStatus));
-      setServerStatus('online');
       console.log('✅ User data refreshed');
     } catch (error) {
       console.error('💥 Refresh user failed:', error);
       // Don't logout on refresh failure, just use cached data
       console.log('🔄 Using cached user data due to refresh failure');
-      setServerStatus('offline');
-    }
-  };
-
-  // ✅ NEW: Retry server connection
-  const retryServerConnection = async () => {
-    try {
-      setLoading(true);
-      console.log('🔄 Retrying server connection...');
-      await checkServerStatus();
-      await checkAuth();
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -475,11 +409,9 @@ export const AuthProvider = ({ children }) => {
     updateProfilePicture,
     updateChatPreferences,
     refreshUser,
-    retryServerConnection, // ✅ NEW
     loading,
     error,
     clearError,
-    serverStatus, // ✅ NEW
     isAuthenticated: !!getSafeUser(), // Use safe getter
     isAdmin: getSafeUser()?.role === 'admin'
   };
