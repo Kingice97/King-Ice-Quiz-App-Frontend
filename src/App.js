@@ -45,6 +45,23 @@ function App() {
     // Initialize security features
     initSecurity();
 
+    // ✅ NEW: Register Service Worker for Push Notifications (Safe Addition)
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js')
+        .then(registration => {
+          console.log('✅ Service Worker registered successfully:', registration);
+          
+          // Check if service worker is controlling the page
+          if (navigator.serviceWorker.controller) {
+            console.log('🎯 Service Worker is controlling the page');
+          }
+        })
+        .catch(error => {
+          console.log('❌ Service Worker registration failed:', error);
+          // This is safe - app continues working without service worker
+        });
+    }
+
     // ========== PWA INSTALLATION HANDLING ==========
     const handleBeforeInstallPrompt = (e) => {
       // Prevent the default browser install prompt

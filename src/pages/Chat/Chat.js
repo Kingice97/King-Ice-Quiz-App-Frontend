@@ -4,6 +4,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { userService } from '../../services/userService';
 import { chatService } from '../../services/chatService';
+import { sendChatNotification } from '../../services/notificationService';
 import Loading from '../../components/common/Loading/Loading';
 import OnlineUsers from '../../components/Chat/OnlineUsers/OnlineUsers';
 import ChatRoom from '../../components/Chat/ChatRoom/ChatRoom';
@@ -13,7 +14,7 @@ import './Chat.css';
 
 const Chat = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { onlineUsers, isConnected, joinQuizRoom, socket } = useSocket();
+  const { onlineUsers, isConnected, joinQuizRoom, socket, subscribeToMessages, unsubscribeFromMessages } = useSocket();
   
   const [activeTab, setActiveTab] = useState('chats');
   const [onlineUsersList, setOnlineUsersList] = useState([]);
@@ -29,6 +30,30 @@ const Chat = () => {
     if (!user) return null;
     return user._id || user.id;
   };
+
+  // ✅ NEW: Listen for new private messages when not in chat room
+  useEffect(() => {
+    if (!socket || selectedRoom) return; // Don't listen if we're already in a chat room
+
+    const handleNewPrivateMessage = (message) => {
+      // Only handle private messages
+      if (message.type === 'private' && message.room && message.room.includes('private')) {
+        console.log('🔔 New private message received while not in chat:', message);
+        
+        // Check if app is in background/tab not focused
+        if (document.visibilityState === 'hidden') {
+          console.log('📱 App in background, sending notification');
+          sendChatNotification(message.username, message.message);
+        }
+      }
+    };
+
+    subscribeToMessages(handleNewPrivateMessage);
+
+    return () => {
+      unsubscribeFromMessages(handleNewPrivateMessage);
+    };
+  }, [socket, selectedRoom, subscribeToMessages, unsubscribeFromMessages]);
 
   // Load conversations
   useEffect(() => {
@@ -87,6 +112,18 @@ const Chat = () => {
           return [updatedConversation, ...prev];
         }
       });
+
+      // ✅ NEW: Send notification for new conversations with unread messages
+      if (updatedConversation.unreadCount > 0 && document.visibilityState === 'hidden') {
+        const otherParticipant = updatedConversation.participants.find(
+          participant => (participant._id || participant.id) !== getUserId()
+        );
+        
+        if (otherParticipant) {
+          console.log('🔔 New conversation with unread messages');
+          sendChatNotification(otherParticipant.username, 'You have new messages');
+        }
+      }
     };
 
     socket.on('conversation_updated', handleConversationUpdate);
@@ -353,7 +390,6 @@ const Chat = () => {
                 <div className="user-avatar">
                   {user?.profile?.picture ? (
                     <img 
-                     // Replace with:
                       src={user.profile.picture}
                       alt={user.username}
                       className="avatar-image"

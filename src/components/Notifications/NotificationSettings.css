@@ -214,3 +214,80 @@
     padding: 14px;
   }
 }
+
+.settings-actions {
+  display: flex;
+  gap: 10px;
+  justify-content: center;
+  margin-top: 25px;
+  padding-top: 20px;
+  border-top: 1px solid #e2e8f0;
+}
+
+.save-button, .test-button {
+  padding: 12px 20px;
+  border-radius: 6px;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 600;
+  transition: all 0.3s ease;
+  min-width: 160px;
+  border: none;
+}
+
+.save-button {
+  background: #3182ce;
+  color: white;
+}
+
+.save-button:hover:not(:disabled) {
+  background: #2c5aa0;
+  transform: translateY(-2px);
+}
+
+.save-button:disabled {
+  background: #a0aec0;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.test-button {
+  background: #38a169;
+  color: white;
+}
+
+.test-button:hover {
+  background: #2f855a;
+  transform: translateY(-2px);
+}
+
+.unsaved-changes {
+  color: #d69e2e;
+  font-weight: 600;
+  margin: 5px 0 0 0;
+}
+
+.settings-info {
+  background: #f7fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 12px 15px;
+  margin-top: 15px;
+  text-align: center;
+}
+
+.settings-info p {
+  margin: 5px 0;
+  color: #4a5568;
+  font-size: 0.9rem;
+}
+
+@media (max-width: 768px) {
+  .settings-actions {
+    flex-direction: column;
+  }
+  
+  .save-button, .test-button {
+    width: 100%;
+  }
+}

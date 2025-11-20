@@ -1,156 +1,152 @@
+import api from './api';
+
 class NotificationService {
-  constructor() {
-    this.permission = null;
-    this.subscription = null;
-  }
-
-  // Request permission for notifications
-  async requestPermission() {
-    if (!('Notification' in window)) {
-      console.log('❌ This browser does not support notifications');
-      return false;
-    }
-
-    try {
-      this.permission = await Notification.requestPermission();
-      
-      if (this.permission === 'granted') {
-        console.log('✅ Notification permission granted');
-        await this.subscribeToPush();
-        return true;
-      } else {
-        console.log('❌ Notification permission denied');
-        return false;
-      }
-    } catch (error) {
-      console.error('Error requesting notification permission:', error);
-      return false;
-    }
-  }
-
   // Subscribe to push notifications
-  async subscribeToPush() {
-    if (!('serviceWorker' in navigator)) {
-      console.log('❌ Service Worker not supported');
-      return null;
-    }
-
+  async subscribe(subscription) {
     try {
-      const registration = await navigator.serviceWorker.ready;
-      
-      this.subscription = await registration.pushManager.subscribe({
-        userVisibleOnly: true,
-        applicationServerKey: this.urlBase64ToUint8Array(process.env.REACT_APP_VAPID_PUBLIC_KEY)
+      const response = await api.post('/notifications/subscribe', {
+        subscription: subscription
       });
-
-      console.log('✅ Push subscription successful');
-      
-      // Send subscription to your backend
-      await this.sendSubscriptionToBackend(this.subscription);
-      
-      return this.subscription;
+      return response.data;
     } catch (error) {
-      console.error('Failed to subscribe to push notifications:', error);
-      return null;
-    }
-  }
-
-  // Convert VAPID key
-  urlBase64ToUint8Array(base64String) {
-    const padding = '='.repeat((4 - base64String.length % 4) % 4);
-    const base64 = (base64String + padding)
-      .replace(/-/g, '+')
-      .replace(/_/g, '/');
-
-    const rawData = window.atob(base64);
-    const outputArray = new Uint8Array(rawData.length);
-
-    for (let i = 0; i < rawData.length; ++i) {
-      outputArray[i] = rawData.charCodeAt(i);
-    }
-    return outputArray;
-  }
-
-    // Send subscription to backend
-  async sendSubscriptionToBackend(subscription) {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch('/api/notifications/subscribe', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
-        body: JSON.stringify({
-          subscription: subscription,
-          userId: localStorage.getItem('userId')
-        })
-      });
-
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Failed to save subscription');
-      }
-
-      console.log('✅ Subscription saved to backend');
-      return data;
-    } catch (error) {
-      console.error('Error saving subscription:', error);
+      console.error('Error subscribing to notifications:', error);
       throw error;
     }
   }
 
-  // Unsubscribe from notifications
+  // Unsubscribe from push notifications
   async unsubscribe() {
-    if (this.subscription) {
-      try {
-        await this.subscription.unsubscribe();
-        console.log('✅ Unsubscribed from push notifications');
-        
-        // Remove from backend
-        const token = localStorage.getItem('token');
-        if (!token) {
-          console.log('⚠️ No token found, skipping backend unsubscribe');
-          return;
-        }
-
-        const response = await fetch('/api/notifications/unsubscribe', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            userId: localStorage.getItem('userId')
-          })
-        });
-
-        if (!response.ok) {
-          throw new Error('Failed to remove subscription from backend');
-        }
-
-        console.log('✅ Subscription removed from backend');
-      } catch (error) {
-        console.error('Error unsubscribing:', error);
-        throw error;
-      }
+    try {
+      const response = await api.post('/notifications/unsubscribe');
+      return response.data;
+    } catch (error) {
+      console.error('Error unsubscribing from notifications:', error);
+      throw error;
     }
   }
 
-  // Check current permission status
-  getPermissionStatus() {
-    return Notification.permission;
+  // Get notification settings
+  async getSettings() {
+    try {
+      const response = await api.get('/notifications/settings');
+      return response.data;
+    } catch (error) {
+      console.error('Error getting notification settings:', error);
+      // Return default settings if API fails
+      return {
+        success: false,
+        settings: {
+          enabled: false,
+          quizAlerts: true,
+          chatAlerts: true,
+          announcementAlerts: true
+        }
+      };
+    }
   }
 
-  // Check if notifications are supported
-  isSupported() {
-    return 'Notification' in window && 'serviceWorker' in navigator;
+  // Update notification settings
+  async updateSettings(settings) {
+    try {
+      const response = await api.put('/notifications/settings', settings);
+      return response.data;
+    } catch (error) {
+      console.error('Error updating notification settings:', error);
+      throw error;
+    }
+  }
+
+  // Send test notification
+  async sendTestNotification() {
+    try {
+      const response = await api.post('/notifications/send-to-user', {
+        userId: 'current', // Will be replaced with actual user ID in backend
+        title: 'Test Notification',
+        body: 'This is a test notification from King Ice Quiz!',
+        type: 'test'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      throw error;
+    }
+  }
+
+  // Send quiz notification (admin only)
+  async sendQuizNotification(quizId, quizTitle, quizDescription) {
+    try {
+      const response = await api.post('/notifications/send-quiz-notification', {
+        quizId,
+        quizTitle,
+        quizDescription
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending quiz notification:', error);
+      throw error;
+    }
   }
 }
 
-export default new NotificationService();
+// Create and export singleton instance
+export const notificationService = new NotificationService();
+
+// Export helper functions for local notifications
+export const sendQuizNotification = (quizTitle) => {
+  const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+  if (settings.enabled && settings.quizAlerts && Notification.permission === 'granted') {
+    new Notification('New Quiz Available!', {
+      body: `Check out: ${quizTitle}`,
+      icon: '/brain-icon.png',
+      badge: '/brain-icon.png'
+    });
+  }
+};
+
+export const sendChatNotification = (sender, message) => {
+  const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+  if (settings.enabled && settings.chatAlerts && Notification.permission === 'granted') {
+    new Notification(`New message from ${sender}`, {
+      body: message.length > 50 ? message.substring(0, 50) + '...' : message,
+      icon: '/brain-icon.png',
+      badge: '/brain-icon.png'
+    });
+  }
+};
+
+export const sendAnnouncementNotification = (title, message) => {
+  const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+  if (settings.enabled && settings.announcementAlerts && Notification.permission === 'granted') {
+    new Notification(title, {
+      body: message,
+      icon: '/brain-icon.png',
+      badge: '/brain-icon.png'
+    });
+  }
+};
+
+// Check if push notifications are supported
+export const isPushSupported = () => {
+  return (
+    'Notification' in window &&
+    'serviceWorker' in navigator &&
+    'PushManager' in window
+  );
+};
+
+// Get current permission status
+export const getPermissionStatus = () => {
+  if (!('Notification' in window)) return 'unsupported';
+  return Notification.permission;
+};
+
+// Request notification permission
+export const requestPermission = async () => {
+  if (!('Notification' in window)) {
+    throw new Error('Notifications are not supported in this browser');
+  }
+  
+  return await Notification.requestPermission();
+};
+
+export default notificationService;

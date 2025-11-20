@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../../../context/SocketContext';
 import { chatService } from '../../../services/chatService';
 import Loading from '../../common/Loading/Loading';
+import { sendChatNotification } from '../../../services/notificationService';
 import './ChatRoom.css';
 
 const ChatRoom = ({ room, currentUser, onBack }) => {
@@ -47,6 +48,25 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     isConnected,
     privateRoomId: room.type === 'private' ? getPrivateRoomId() : null
   });
+
+  // ✅ NEW: Send notification for new messages (when receiving, not sending)
+  useEffect(() => {
+    if (messages.length > 0) {
+      const lastMessage = messages[messages.length - 1];
+      
+      // Only send notification if:
+      // - It's not our own message
+      // - It's a new message (not from initial load)
+      // - We're not currently focused on this chat
+      const isOwnMessage = lastMessage.user === currentUser._id || 
+                          lastMessage.username === currentUser.username;
+      
+      if (!isOwnMessage && document.visibilityState === 'hidden') {
+        console.log('🔔 Sending chat notification for new message');
+        sendChatNotification(lastMessage.username, lastMessage.message);
+      }
+    }
+  }, [messages, currentUser]);
 
   // ✅ UPDATED: Load messages when room changes
   useEffect(() => {
@@ -119,6 +139,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           
           return [...prev, message];
         });
+
+        // ✅ NEW: Send notification for new incoming messages
+        // Only if it's not our own message and app is in background
+        const isOwnMessage = message.user === currentUser._id || 
+                           message.username === currentUser.username;
+        
+        if (!isOwnMessage && document.visibilityState === 'hidden') {
+          console.log('🔔 Sending push notification for new chat message');
+          sendChatNotification(message.username, message.message);
+        }
       }
     };
 
@@ -128,7 +158,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       console.log(`🔴 Unsubscribing from messages for room: ${room.id}`);
       unsubscribeFromMessages(handleNewMessage);
     };
-  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
+  }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId, currentUser]);
 
   // Auto-scroll to bottom when messages change
   useEffect(() => {
@@ -372,7 +402,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   <div className="message-avatar">
                     {message.profilePicture ? (
                       <img 
-                       // Replace with:
                         src={message.profilePicture}
                         alt={message.username}
                         onError={(e) => {
