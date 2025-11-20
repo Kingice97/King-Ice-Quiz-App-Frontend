@@ -193,6 +193,27 @@ export const isServerReachable = async () => {
   }
 };
 
+// ✅ NEW: Keep Render.com awake by pinging health endpoint
+export const keepRenderAwake = async () => {
+  try {
+    const response = await axios.get(API_URL + '/health', {
+      timeout: 10000
+    });
+    console.log('✅ Render.com health ping successful');
+    return true;
+  } catch (error) {
+    console.log('⚠️ Render.com health ping failed (normal during spin-up)');
+    return false;
+  }
+};
+
+// Auto-ping every 10 minutes to keep Render awake
+setInterval(() => {
+  if (localStorage.getItem('token')) {
+    keepRenderAwake();
+  }
+}, 10 * 60 * 1000); // 10 minutes
+
 // Helper function to check if user is authenticated
 export const isAuthenticated = () => {
   const token = localStorage.getItem('token');

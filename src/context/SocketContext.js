@@ -19,7 +19,8 @@ export const SocketProvider = ({ children }) => {
   const [messages, setMessages] = useState({});
   const [typingUsers, setTypingUsers] = useState({});
   const [conversations, setConversations] = useState([]);
-  const { user, isAuthenticated } = useAuth();
+  const [connectionAttempts, setConnectionAttempts] = useState(0);
+  const { user, isAuthenticated, serverStatus } = useAuth();
 
   // Get stable user ID - handles both id and _id formats
   const getUserId = useCallback(() => {
@@ -38,15 +39,17 @@ export const SocketProvider = ({ children }) => {
     return userId;
   }, [user]);
 
-  // Initialize socket connection
-  useEffect(() => {
+  // ✅ NEW: Improved socket connection with Render.com optimization
+  const connectSocket = useCallback(() => {
     const userId = getUserId();
     
     console.log('🔄 SocketProvider: Checking connection conditions', {
       isAuthenticated,
       hasUser: !!user,
       userId: userId,
-      userObject: user
+      userObject: user,
+      serverStatus: serverStatus,
+      connectionAttempts: connectionAttempts
     });
 
     if (!isAuthenticated || !userId) {
@@ -56,6 +59,12 @@ export const SocketProvider = ({ children }) => {
         setSocket(null);
         setIsConnected(false);
       }
+      return;
+    }
+
+    // ✅ FIXED: Don't attempt connection if server is offline
+    if (serverStatus === 'offline') {
+      console.log('🌐 Server is offline - delaying socket connection');
       return;
     }
 
@@ -71,10 +80,10 @@ export const SocketProvider = ({ children }) => {
       setSocket(null);
     }
 
-    const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:5000';
+    const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
     console.log('🔗 Connecting to:', API_URL);
 
-    // ✅ FIXED: Better socket configuration for Render.com
+    // ✅ FIXED: Better configuration for Render.com free tier
     const newSocket = io(API_URL, {
       auth: {
         userId: userId,
@@ -82,43 +91,73 @@ export const SocketProvider = ({ children }) => {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 10,
-      reconnectionDelay: 1000,
-      reconnectionDelayMax: 5000,
-      timeout: 30000, // Increased timeout to 30 seconds
+      reconnectionAttempts: 3, // Reduced for Render.com
+      reconnectionDelay: 5000, // 5 seconds between attempts
+      reconnectionDelayMax: 15000, // Max 15 seconds
+      timeout: 45000, // Increased to 45 seconds for Render spin-up
       forceNew: true,
       withCredentials: true
     });
 
     setSocket(newSocket);
+    setConnectionAttempts(prev => prev + 1);
 
-    // Connection events
+    // Connection events with better Render.com handling
     newSocket.on('connect', () => {
       console.log('✅ SOCKET CONNECTED! ID:', newSocket.id);
       setIsConnected(true);
+      setConnectionAttempts(0); // Reset attempts on successful connection
     });
 
     newSocket.on('disconnect', (reason) => {
       console.log('🔴 Socket disconnected:', reason);
       setIsConnected(false);
+      
+      // Handle Render.com specific disconnection reasons
+      if (reason === 'transport close' || reason === 'ping timeout') {
+        console.log('🔄 Render.com might be spinning down, waiting 10 seconds...');
+        setTimeout(() => {
+          if (newSocket && !newSocket.connected) {
+            console.log('🔄 Attempting reconnection after Render.com delay...');
+            newSocket.connect();
+          }
+        }, 10000);
+      }
     });
 
     newSocket.on('connect_error', (error) => {
-      console.error('❌ Socket connection error:', error);
+      console.error('❌ Socket connection error:', error.message);
       setIsConnected(false);
       
-      // ✅ FIXED: Auto-reconnect after delay
-      setTimeout(() => {
-        if (newSocket && !newSocket.connected) {
-          console.log('🔄 Attempting to reconnect...');
-          newSocket.connect();
-        }
-      }, 2000);
+      // Handle Render.com spin-up delays specifically
+      if (error.message.includes('timeout') || error.message.includes('xhr poll error')) {
+        console.log('⏰ Render.com is spinning up, waiting longer before retry...');
+        
+        // Progressive backoff based on connection attempts
+        const delay = Math.min(connectionAttempts * 5000, 30000); // Max 30 seconds
+        
+        setTimeout(() => {
+          if (newSocket && !newSocket.connected && connectionAttempts < 3) {
+            console.log(`🔄 Retry attempt ${connectionAttempts + 1} after ${delay}ms delay`);
+            newSocket.connect();
+          } else if (connectionAttempts >= 3) {
+            console.log('🚫 Max connection attempts reached, giving up');
+          }
+        }, delay);
+      } else {
+        // Regular reconnection for other errors
+        setTimeout(() => {
+          if (newSocket && !newSocket.connected && connectionAttempts < 2) {
+            newSocket.connect();
+          }
+        }, 5000);
+      }
     });
 
     newSocket.on('reconnect', (attemptNumber) => {
       console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
+      setConnectionAttempts(0);
     });
 
     newSocket.on('reconnect_attempt', (attemptNumber) => {
@@ -130,7 +169,8 @@ export const SocketProvider = ({ children }) => {
     });
 
     newSocket.on('reconnect_failed', () => {
-      console.error('❌ Reconnection failed');
+      console.error('❌ Reconnection failed - giving up');
+      setConnectionAttempts(0);
     });
 
     newSocket.on('connection_success', (data) => {
@@ -213,27 +253,43 @@ export const SocketProvider = ({ children }) => {
       }));
     });
 
-    // Cleanup
+  }, [isAuthenticated, user, getUserId, socket, serverStatus, connectionAttempts]);
+
+  // Initialize socket connection with better timing
+  useEffect(() => {
+    // Delay connection attempt to allow server to spin up
+    const connectionTimer = setTimeout(() => {
+      connectSocket();
+    }, 2000); // Wait 2 seconds before attempting connection
+
     return () => {
-      console.log('🧹 SocketProvider cleanup');
-      if (newSocket) {
-        newSocket.off('connect');
-        newSocket.off('disconnect');
-        newSocket.off('connect_error');
-        newSocket.off('reconnect');
-        newSocket.off('reconnect_attempt');
-        newSocket.off('reconnect_error');
-        newSocket.off('reconnect_failed');
-        newSocket.off('connection_success');
-        newSocket.off('receive_message');
-        newSocket.off('receive_private_message');
-        newSocket.off('conversation_updated');
-        newSocket.off('online_users_update');
-        newSocket.off('user_typing');
-        newSocket.disconnect();
+      clearTimeout(connectionTimer);
+    };
+  }, [connectSocket]);
+
+  // ✅ NEW: Reconnect when server status changes to online
+  useEffect(() => {
+    if (serverStatus === 'online' && !isConnected && socket) {
+      console.log('🌐 Server is back online, attempting socket reconnection...');
+      const reconnectTimer = setTimeout(() => {
+        if (socket && !socket.connected) {
+          socket.connect();
+        }
+      }, 3000); // Wait 3 seconds after server comes online
+      
+      return () => clearTimeout(reconnectTimer);
+    }
+  }, [serverStatus, isConnected, socket]);
+
+  // Cleanup on unmount
+  useEffect(() => {
+    return () => {
+      console.log('🧹 SocketProvider cleanup - disconnecting socket');
+      if (socket) {
+        socket.disconnect();
       }
     };
-  }, [isAuthenticated, user, getUserId]);
+  }, [socket]);
 
   // Socket methods
   const joinQuizRoom = useCallback((quizId) => {
@@ -277,8 +333,8 @@ export const SocketProvider = ({ children }) => {
       };
 
       const timeout = setTimeout(() => {
-        reject(new Error('Message timeout'));
-      }, 10000);
+        reject(new Error('Message timeout - server may be spinning up'));
+      }, 15000); // 15 seconds for message sending
 
       socket.emit('send_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -322,8 +378,8 @@ export const SocketProvider = ({ children }) => {
       };
 
       const timeout = setTimeout(() => {
-        reject(new Error('Message sending timeout'));
-      }, 10000);
+        reject(new Error('Message sending timeout - server may be spinning up'));
+      }, 15000);
 
       socket.emit('send_private_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -352,8 +408,8 @@ export const SocketProvider = ({ children }) => {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Load messages timeout'));
-      }, 15000);
+        reject(new Error('Load messages timeout - server may be spinning up'));
+      }, 20000); // 20 seconds for loading messages
 
       socket.emit('load_private_messages', { recipientId }, (response) => {
         clearTimeout(timeout);
@@ -382,8 +438,8 @@ export const SocketProvider = ({ children }) => {
 
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
-        reject(new Error('Load conversations timeout'));
-      }, 15000);
+        reject(new Error('Load conversations timeout - server may be spinning up'));
+      }, 20000);
 
       socket.emit('load_conversations', (response) => {
         clearTimeout(timeout);
@@ -451,9 +507,24 @@ export const SocketProvider = ({ children }) => {
   const reconnect = useCallback(() => {
     if (socket) {
       console.log('🔄 Manual reconnect triggered');
+      setConnectionAttempts(0); // Reset attempts
       socket.connect();
+    } else {
+      console.log('🔄 No socket instance, creating new connection');
+      connectSocket();
     }
-  }, [socket]);
+  }, [socket, connectSocket]);
+
+  // ✅ NEW: Get connection status with more details
+  const getConnectionStatus = useCallback(() => {
+    return {
+      isConnected,
+      connectionAttempts,
+      serverStatus,
+      hasSocket: !!socket,
+      socketId: socket?.id
+    };
+  }, [isConnected, connectionAttempts, serverStatus, socket]);
 
   const value = {
     socket,
@@ -472,14 +543,18 @@ export const SocketProvider = ({ children }) => {
     getQuizMessages,
     subscribeToMessages,
     unsubscribeFromMessages,
-    reconnect // ✅ NEW: Export reconnect function
+    reconnect, // ✅ NEW: Manual reconnect
+    getConnectionStatus, // ✅ NEW: Detailed status
+    connectionAttempts // ✅ NEW: Connection attempts count
   };
 
   console.log('🎯 SocketContext value:', { 
     isConnected, 
     onlineUsersCount: onlineUsers.length,
     conversationsCount: conversations.length,
-    userId: getUserId()
+    userId: getUserId(),
+    connectionAttempts,
+    serverStatus
   });
 
   return (
