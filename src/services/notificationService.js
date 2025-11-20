@@ -32,7 +32,6 @@ class NotificationService {
       return response.data;
     } catch (error) {
       console.error('Error getting notification settings:', error);
-      // Return default settings if API fails
       return {
         success: false,
         settings: {
@@ -57,22 +56,21 @@ class NotificationService {
   }
 
   // Send test notification
- // Add this method to your existing notificationService class
-async sendTestNotification(title, body) {
-  try {
-    const response = await api.post('/notifications/send-to-user', {
-      userId: 'current', // Will be replaced with actual user ID in backend
-      title: title,
-      body: body,
-      type: 'chat',
-      url: '/chat'
-    });
-    return response.data;
-  } catch (error) {
-    console.error('Error sending test notification:', error);
-    throw error;
+  async sendTestNotification(title, body) {
+    try {
+      const response = await api.post('/notifications/send-to-user', {
+        userId: 'current',
+        title: title,
+        body: body,
+        type: 'test',
+        url: window.location.origin
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending test notification:', error);
+      throw error;
+    }
   }
-}
 
   // Send quiz notification (admin only)
   async sendQuizNotification(quizId, quizTitle, quizDescription) {
@@ -85,6 +83,22 @@ async sendTestNotification(title, body) {
       return response.data;
     } catch (error) {
       console.error('Error sending quiz notification:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NEW: Send chat notification
+  async sendChatNotification(recipientId, senderName, message, roomId) {
+    try {
+      const response = await api.post('/notifications/send-chat-notification', {
+        recipientId,
+        senderName,
+        message,
+        roomId
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending chat notification:', error);
       throw error;
     }
   }

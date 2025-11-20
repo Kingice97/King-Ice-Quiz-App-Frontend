@@ -1,12 +1,9 @@
 /* eslint-disable no-restricted-globals */
-// Service Worker for King Ice Quiz App
-// Version: 3.0.0 - Push Notifications Enabled
-// Cache Strategy: Network First for APIs, Cache First for static assets
-
-const CACHE_NAME = 'king-ice-quiz-v3.0.0';
+// Service Worker for King Ice Quiz App - Push Notifications
+const CACHE_NAME = 'king-ice-quiz-push-v1';
 const APP_SHELL_CACHE = 'app-shell-v1';
 
-// URLs to cache immediately on install (App Shell)
+// URLs to cache
 const APP_SHELL_URLS = [
   '/',
   '/index.html',
@@ -19,27 +16,24 @@ const APP_SHELL_URLS = [
 
 // ==================== INSTALL EVENT ====================
 self.addEventListener('install', (event) => {
-  console.log('🟢 Service Worker: Installing King Ice Quiz App...');
+  console.log('🟢 Service Worker: Installing...');
   
   event.waitUntil(
     caches.open(APP_SHELL_CACHE)
       .then((cache) => {
-        console.log('📦 Service Worker: Caching app shell');
+        console.log('📦 Caching app shell');
         return cache.addAll(APP_SHELL_URLS);
       })
       .then(() => {
-        console.log('⚡ Service Worker: Installation complete - skipping waiting');
+        console.log('⚡ Installation complete - skipping waiting');
         return self.skipWaiting();
-      })
-      .catch((error) => {
-        console.error('❌ Service Worker: Installation failed', error);
       })
   );
 });
 
 // ==================== ACTIVATE EVENT ====================
 self.addEventListener('activate', (event) => {
-  console.log('🟢 Service Worker: King Ice Quiz App activated');
+  console.log('🟢 Service Worker: Activated');
   
   event.waitUntil(
     caches.keys()
@@ -47,21 +41,20 @@ self.addEventListener('activate', (event) => {
         return Promise.all(
           cacheNames.map((cacheName) => {
             if (cacheName !== CACHE_NAME && cacheName !== APP_SHELL_CACHE) {
-              console.log('🗑️ Service Worker: Removing old cache', cacheName);
+              console.log('🗑️ Removing old cache', cacheName);
               return caches.delete(cacheName);
             }
           })
         );
       })
       .then(() => {
-        console.log('👑 Service Worker: Now controlling all clients');
+        console.log('👑 Service Worker ready for push notifications');
         return self.clients.claim();
       })
   );
 });
 
 // ==================== PUSH NOTIFICATIONS ====================
-// Handle incoming push notifications
 self.addEventListener('push', (event) => {
   console.log('📢 Push notification received', event);
   
@@ -73,10 +66,9 @@ self.addEventListener('push', (event) => {
   let data;
   try {
     data = event.data.json();
-    console.log('📨 Push notification data:', data);
+    console.log('📨 Push data:', data);
   } catch (error) {
     console.error('❌ Error parsing push data:', error);
-    // Try to get text data as fallback
     data = {
       title: 'King Ice Quiz',
       body: event.data.text() || 'New notification',
@@ -89,29 +81,30 @@ self.addEventListener('push', (event) => {
     icon: data.icon || '/brain-icon.png',
     badge: '/brain-icon.png',
     image: data.image || null,
-    vibrate: [100, 50, 100],
+    vibrate: data.vibrate || [200, 100, 200],
     data: {
       url: data.url || '/',
       type: data.type || 'general',
-      quizId: data.quizId,
+      roomId: data.roomId,
+      sender: data.sender,
       timestamp: data.timestamp || new Date().toISOString()
     },
-    actions: [
+    actions: data.actions || [
       {
         action: 'open',
         title: 'Open App'
       },
       {
-        action: 'dismiss', 
+        action: 'dismiss',
         title: 'Dismiss'
       }
     ],
-    tag: data.type || 'general',
+    tag: data.tag || `notification-${Date.now()}`,
     renotify: true,
     requireInteraction: false
   };
 
-  console.log('🔄 Showing notification with options:', options);
+  console.log('🔄 Showing notification:', options);
 
   event.waitUntil(
     self.registration.showNotification(data.title || 'King Ice Quiz', options)
@@ -135,15 +128,13 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil(
     clients.matchAll({ type: 'window', includeUncontrolled: true })
       .then((windowClients) => {
-        // Check if app is already open
         for (let client of windowClients) {
           if (client.url.includes(self.location.origin) && 'focus' in client) {
-            console.log('🔍 Found existing client, focusing:', client.url);
+            console.log('🔍 Focusing existing client');
             return client.focus();
           }
         }
         
-        // Open new window if app isn't open
         if (clients.openWindow) {
           console.log('🪟 Opening new window:', urlToOpen);
           return clients.openWindow(urlToOpen);
@@ -157,7 +148,7 @@ self.addEventListener('notificationclick', (event) => {
 
 // Handle notification dismiss
 self.addEventListener('notificationclose', (event) => {
-  console.log('❌ Notification dismissed:', event.notification.data);
+  console.log('❌ Notification dismissed');
 });
 
 // ==================== FETCH EVENT ====================
@@ -168,13 +159,11 @@ self.addEventListener('fetch', (event) => {
 
   const requestUrl = new URL(event.request.url);
 
-  // API REQUESTS - Network first
   if (requestUrl.pathname.startsWith('/api/')) {
     event.respondWith(networkFirstStrategy(event.request));
     return;
   }
 
-  // STATIC ASSETS - Cache first
   if (requestUrl.pathname.startsWith('/static/') || 
       requestUrl.pathname.endsWith('.png') ||
       requestUrl.pathname.endsWith('.jpg') ||
@@ -184,7 +173,6 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // HTML PAGES - Network first
   event.respondWith(networkFirstStrategy(event.request));
 });
 
@@ -202,16 +190,13 @@ async function networkFirstStrategy(request) {
     
     return networkResponse;
   } catch (error) {
-    console.log('🌐 Network failed, trying cache for:', request.url);
     const cachedResponse = await caches.match(request);
     
     if (cachedResponse) {
-      console.log('💾 Serving from cache:', request.url);
       return cachedResponse;
     }
     
-    console.error('❌ Both network and cache failed for:', request.url);
-    return new Response('You are offline and this content is not cached.', {
+    return new Response('You are offline', {
       status: 503,
       headers: { 'Content-Type': 'text/plain' }
     });
@@ -237,71 +222,18 @@ async function cacheFirstStrategy(request) {
     
     return networkResponse;
   } catch (error) {
-    console.error('❌ Failed to fetch:', request.url, error);
-    
-    if (request.url.match(/\.(png|jpg|jpeg|gif)$/)) {
-      return new Response(
-        '<svg width="100" height="100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" fill="#e2e8f0"/><text x="50" y="50" font-family="Arial" font-size="10" text-anchor="middle" fill="#4a5568">Image</text></svg>',
-        { headers: { 'Content-Type': 'image/svg+xml' } }
-      );
-    }
-    
-    return new Response('Resource not available offline.', {
+    return new Response('Resource not available offline', {
       status: 503,
       headers: { 'Content-Type': 'text/plain' }
     });
   }
 }
 
-// ==================== BACKGROUND SYNC ====================
-self.addEventListener('sync', (event) => {
-  if (event.tag === 'background-sync-messages') {
-    console.log('🔄 Background sync triggered for messages');
-    event.waitUntil(syncOfflineMessages());
-  }
-  
-  if (event.tag === 'background-sync-notifications') {
-    console.log('🔄 Background sync for notifications');
-    event.waitUntil(syncPendingNotifications());
-  }
-});
-
 // ==================== MESSAGE HANDLING ====================
 self.addEventListener('message', (event) => {
   if (event.data && event.data.type === 'SKIP_WAITING') {
-    console.log('⏩ Skipping waiting phase');
     self.skipWaiting();
-  }
-  
-  if (event.data && event.data.type === 'GET_CACHE_STATUS') {
-    caches.has(CACHE_NAME).then((hasCache) => {
-      event.ports[0].postMessage({
-        type: 'CACHE_STATUS',
-        hasCache: hasCache
-      });
-    });
-  }
-
-  if (event.data && event.data.type === 'TEST_NOTIFICATION') {
-    self.registration.showNotification('Test from Service Worker', {
-      body: 'This is a test notification from the service worker!',
-      icon: '/brain-icon.png',
-      badge: '/brain-icon.png'
-    });
   }
 });
 
-// ==================== HELPER FUNCTIONS ====================
-async function syncOfflineMessages() {
-  console.log('🔄 Syncing offline messages...');
-  // Implement offline message sync logic here
-  return Promise.resolve();
-}
-
-async function syncPendingNotifications() {
-  console.log('🔄 Syncing pending notifications...');
-  // Implement notification sync logic here
-  return Promise.resolve();
-}
-
-console.log('👑 King Ice Quiz Service Worker v3.0.0 loaded successfully!');
+console.log('👑 King Ice Quiz Service Worker loaded - Push Ready!');
