@@ -14,7 +14,7 @@ import './Chat.css';
 
 const Chat = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
-  const { onlineUsers, isConnected, joinQuizRoom, socket, subscribeToMessages, unsubscribeFromMessages } = useSocket();
+  const { onlineUsers, isConnected, joinQuizRoom, socket } = useSocket();
   
   const [activeTab, setActiveTab] = useState('chats');
   const [onlineUsersList, setOnlineUsersList] = useState([]);
@@ -24,7 +24,8 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState(null);
-  const lastNotificationRef = useRef(null);
+  const lastNotificationRef = useRef({});
+  const notificationSettings = useRef(null);
 
   // Get consistent user ID
   const getUserId = () => {
@@ -32,56 +33,88 @@ const Chat = () => {
     return user._id || user.id;
   };
 
-  // ✅ FIXED: True push notification handler - works even when app is closed
-  const handleBackgroundNotification = useCallback(async (message) => {
-    // Only handle private messages
-    if (message.type !== 'private') return;
+  // Load notification settings
+  useEffect(() => {
+    const loadSettings = () => {
+      try {
+        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+        notificationSettings.current = settings;
+        console.log('🔔 Notification settings loaded:', settings);
+      } catch (error) {
+        console.error('Error loading notification settings:', error);
+        notificationSettings.current = {
+          enabled: false,
+          chatAlerts: true,
+          quizAlerts: true,
+          announcementAlerts: true
+        };
+      }
+    };
 
-    console.log('🔔 Background notification check for message:', message);
+    loadSettings();
     
+    // Listen for settings changes
+    const handleStorageChange = () => {
+      loadSettings();
+    };
+    
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, []);
+
+  // ✅ FIXED: True push notification handler - ALWAYS send notifications
+  const handlePushNotification = useCallback(async (message) => {
     // Don't send notification if:
     // 1. It's our own message
     const isOwnMessage = message.user === getUserId();
-    // 2. We've already notified for this message
-    const isDuplicate = lastNotificationRef.current === message._id;
+    // 2. Chat notifications are disabled
+    const chatAlertsEnabled = notificationSettings.current?.enabled && 
+                              notificationSettings.current?.chatAlerts;
+    // 3. We've already notified for this message
+    const isDuplicate = lastNotificationRef.current[message._id];
 
-    console.log('📱 Notification conditions:', {
+    console.log('🔔 Push Notification Check:', {
       isOwnMessage,
+      chatAlertsEnabled,
       isDuplicate,
       messageId: message._id,
-      appState: document.visibilityState
+      settings: notificationSettings.current
     });
 
-    if (!isOwnMessage && !isDuplicate) {
-      console.log('📱 Sending TRUE PUSH notification');
-      lastNotificationRef.current = message._id;
+    if (!isOwnMessage && chatAlertsEnabled && !isDuplicate) {
+      console.log('📱 SENDING PUSH NOTIFICATION:', message);
+      lastNotificationRef.current[message._id] = true;
       
-      // ✅ Use backend push notification service for TRUE push notifications
+      // Limit the size of the ref to prevent memory leaks
+      if (Object.keys(lastNotificationRef.current).length > 100) {
+        lastNotificationRef.current = {};
+      }
+
       try {
-        // This will send a REAL push notification via service worker
-        // even when the app is completely closed
-        await notificationService.sendTestNotification(
-          `💬 New message from ${message.username}`,
-          message.message.length > 100 ? 
-          message.message.substring(0, 100) + '...' : 
-          message.message
+        // ✅ FIXED: Use the correct chat notification endpoint
+        console.log('🔄 Sending chat notification via backend...');
+        await notificationService.sendChatNotification(
+          getUserId(), // Send to current user (recipient)
+          message.username, // Sender name
+          message.message, // Message content
+          message.room // Room ID
         );
+        console.log('✅ Backend chat notification sent');
+      } catch (backendError) {
+        console.error('❌ Backend chat notification failed, trying service worker...', backendError);
         
-        console.log('✅ Push notification sent via backend');
-      } catch (error) {
-        console.error('❌ Backend push failed, using service worker fallback:', error);
-        
-        // Fallback to service worker
-        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-          navigator.serviceWorker.ready.then(registration => {
-            registration.showNotification(`💬 ${message.username}`, {
+        // Fallback to service worker notification
+        if ('serviceWorker' in navigator) {
+          try {
+            const registration = await navigator.serviceWorker.ready;
+            await registration.showNotification(`💬 ${message.username}`, {
               body: message.message.length > 100 ? 
                     message.message.substring(0, 100) + '...' : 
                     message.message,
               icon: '/brain-icon.png',
               badge: '/brain-icon.png',
               vibrate: [200, 100, 200],
-              tag: `chat-${message.room}`,
+              tag: `chat-${message.room}-${Date.now()}`,
               renotify: true,
               data: {
                 url: `/chat`,
@@ -101,36 +134,59 @@ const Chat = () => {
                 }
               ]
             });
-          });
+            console.log('✅ Service worker notification sent');
+          } catch (swError) {
+            console.error('❌ Service worker notification failed:', swError);
+            
+            // Final fallback - browser notification
+            if (Notification.permission === 'granted') {
+              new Notification(`💬 ${message.username}`, {
+                body: message.message,
+                icon: '/brain-icon.png'
+              });
+              console.log('✅ Browser notification sent');
+            }
+          }
         }
       }
+    } else {
+      console.log('🔕 Notification skipped - conditions not met');
     }
   }, []);
 
-  // ✅ NEW: Listen for ALL incoming messages (not just when in chat)
+  // ✅ FIXED: Global message listener that works ALWAYS
   useEffect(() => {
-    if (!socket || !isConnected) return;
+    if (!socket || !isConnected) {
+      console.log('🚫 Socket not available for global listener');
+      return;
+    }
 
-    console.log('🎯 Setting up GLOBAL message listener for push notifications');
+    console.log('🎯 Setting up GLOBAL message listener for ALL incoming messages');
 
-    const handleGlobalMessage = (message) => {
-      // Only handle private messages addressed to current user
+    const handleIncomingMessage = (message) => {
+      console.log('📩 GLOBAL LISTENER: Message received:', {
+        type: message.type,
+        recipient: message.recipient,
+        currentUser: getUserId(),
+        isPrivate: message.type === 'private',
+        isForCurrentUser: message.recipient === getUserId()
+      });
+
+      // Handle private messages addressed to current user
       if (message.type === 'private' && message.recipient === getUserId()) {
-        console.log('📩 GLOBAL: Private message received for push notification:', message);
-        handleBackgroundNotification(message);
+        console.log('🔔 GLOBAL: Private message for current user - triggering notification');
+        handlePushNotification(message);
       }
     };
 
-    // Listen to all message events
-    socket.on('receive_private_message', handleGlobalMessage);
-    socket.on('receive_message', handleGlobalMessage);
-
+    // Listen to ALL message events
+    socket.on('receive_private_message', handleIncomingMessage);
+    
     return () => {
-      console.log('🔴 Removing GLOBAL message listener');
-      socket.off('receive_private_message', handleGlobalMessage);
-      socket.off('receive_message', handleGlobalMessage);
+      console.log('🔴 Removing GLOBAL message listeners');
+      socket.off('receive_private_message', handleIncomingMessage);
     };
-  }, [socket, isConnected, handleBackgroundNotification]);
+  }, [socket, isConnected, handlePushNotification]);
 
   // Load conversations
   useEffect(() => {
@@ -168,51 +224,6 @@ const Chat = () => {
       loadUserConversations();
     }
   }, [isAuthenticated, user]);
-
-  // Listen for conversation updates via socket
-  useEffect(() => {
-    if (!socket) return;
-
-    const handleConversationUpdate = (updatedConversation) => {
-      setConversations(prev => {
-        const existingIndex = prev.findIndex(conv => conv._id === updatedConversation._id);
-        
-        if (existingIndex >= 0) {
-          const updated = [...prev];
-          updated[existingIndex] = updatedConversation;
-          const [moved] = updated.splice(existingIndex, 1);
-          return [moved, ...updated];
-        } else {
-          return [updatedConversation, ...prev];
-        }
-      });
-
-      // Send notification for new conversations with unread messages
-      if (updatedConversation.unreadCount > 0) {
-        const otherParticipant = updatedConversation.participants.find(
-          participant => (participant._id || participant.id) !== getUserId()
-        );
-        
-        if (otherParticipant) {
-          console.log('🔔 New unread messages in conversation');
-          
-          // Use backend push service for true push notifications
-          notificationService.sendTestNotification(
-            `💬 ${otherParticipant.username}`,
-            'You have new unread messages'
-          ).catch(error => {
-            console.error('Failed to send conversation notification:', error);
-          });
-        }
-      }
-    };
-
-    socket.on('conversation_updated', handleConversationUpdate);
-
-    return () => {
-      socket.off('conversation_updated', handleConversationUpdate);
-    };
-  }, [socket]);
 
   // Load online users
   useEffect(() => {
@@ -378,6 +389,9 @@ const Chat = () => {
               <h2>Chat</h2>
               <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
                 {isConnected ? '🟢 Online' : '🔴 Offline'}
+              </div>
+              <div className="notification-status">
+                🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
               </div>
             </div>
 

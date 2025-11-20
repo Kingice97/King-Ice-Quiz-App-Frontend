@@ -87,7 +87,7 @@ class NotificationService {
     }
   }
 
-  // ✅ NEW: Send chat notification
+  // ✅ FIXED: Send chat notification - uses the correct endpoint
   async sendChatNotification(recipientId, senderName, message, roomId) {
     try {
       const response = await api.post('/notifications/send-chat-notification', {
@@ -99,6 +99,23 @@ class NotificationService {
       return response.data;
     } catch (error) {
       console.error('Error sending chat notification:', error);
+      throw error;
+    }
+  }
+
+  // ✅ NEW: Send direct push notification (for when app is closed)
+  async sendDirectNotification(userId, title, body, type = 'chat', url = '/chat') {
+    try {
+      const response = await api.post('/notifications/send-to-user', {
+        userId: userId,
+        title: title,
+        body: body,
+        type: type,
+        url: url
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error sending direct notification:', error);
       throw error;
     }
   }
@@ -114,7 +131,8 @@ export const sendQuizNotification = (quizTitle) => {
     new Notification('New Quiz Available!', {
       body: `Check out: ${quizTitle}`,
       icon: '/brain-icon.png',
-      badge: '/brain-icon.png'
+      badge: '/brain-icon.png',
+      vibrate: [200, 100, 200]
     });
   }
 };
@@ -122,10 +140,17 @@ export const sendQuizNotification = (quizTitle) => {
 export const sendChatNotification = (sender, message) => {
   const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
   if (settings.enabled && settings.chatAlerts && Notification.permission === 'granted') {
-    new Notification(`New message from ${sender}`, {
-      body: message.length > 50 ? message.substring(0, 50) + '...' : message,
+    new Notification(`💬 ${sender}`, {
+      body: message.length > 100 ? message.substring(0, 100) + '...' : message,
       icon: '/brain-icon.png',
-      badge: '/brain-icon.png'
+      badge: '/brain-icon.png',
+      vibrate: [200, 100, 200],
+      tag: `chat-${Date.now()}`,
+      data: {
+        url: '/chat',
+        type: 'chat',
+        sender: sender
+      }
     });
   }
 };
@@ -136,9 +161,30 @@ export const sendAnnouncementNotification = (title, message) => {
     new Notification(title, {
       body: message,
       icon: '/brain-icon.png',
-      badge: '/brain-icon.png'
+      badge: '/brain-icon.png',
+      vibrate: [200, 100, 200]
     });
   }
+};
+
+// ✅ NEW: Send immediate browser notification (fallback)
+export const sendImmediateNotification = (title, body, options = {}) => {
+  if (Notification.permission === 'granted') {
+    const defaultOptions = {
+      icon: '/brain-icon.png',
+      badge: '/brain-icon.png',
+      vibrate: [200, 100, 200],
+      tag: `notification-${Date.now()}`,
+      data: {
+        url: '/',
+        type: 'general'
+      }
+    };
+
+    new Notification(title, { ...defaultOptions, ...options, body });
+    return true;
+  }
+  return false;
 };
 
 // Check if push notifications are supported
@@ -163,6 +209,51 @@ export const requestPermission = async () => {
   }
   
   return await Notification.requestPermission();
+};
+
+// ✅ NEW: Check if user has enabled notifications
+export const areNotificationsEnabled = () => {
+  try {
+    const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+    return settings.enabled === true;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ✅ NEW: Check if chat notifications are enabled
+export const areChatNotificationsEnabled = () => {
+  try {
+    const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+    return settings.enabled === true && settings.chatAlerts !== false;
+  } catch (error) {
+    return false;
+  }
+};
+
+// ✅ NEW: Save notification settings
+export const saveNotificationSettings = (settings) => {
+  try {
+    localStorage.setItem('notificationSettings', JSON.stringify(settings));
+    return true;
+  } catch (error) {
+    console.error('Error saving notification settings:', error);
+    return false;
+  }
+};
+
+// ✅ NEW: Load notification settings
+export const loadNotificationSettings = () => {
+  try {
+    return JSON.parse(localStorage.getItem('notificationSettings') || '{}');
+  } catch (error) {
+    return {
+      enabled: false,
+      quizAlerts: true,
+      chatAlerts: true,
+      announcementAlerts: true
+    };
+  }
 };
 
 export default notificationService;
