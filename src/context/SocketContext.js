@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState, useCallback } from 'react';
+import React, { createContext, useContext, useEffect, useState, useCallback, useRef } from 'react';
 import { io } from 'socket.io-client';
 import { useAuth } from './AuthContext';
 
@@ -21,35 +21,29 @@ export const SocketProvider = ({ children }) => {
   const [conversations, setConversations] = useState([]);
   const [connectionAttempts, setConnectionAttempts] = useState(0);
   const { user, isAuthenticated, serverStatus } = useAuth();
+  
+  // ✅ FIXED: Use refs to prevent unnecessary re-renders
+  const connectionAttemptsRef = useRef(0);
+  const isMountedRef = useRef(true);
 
   // Get stable user ID - handles both id and _id formats
   const getUserId = useCallback(() => {
     if (!user) return null;
-    
-    // Try _id first, then id
-    const userId = user._id || user.id;
-    
-    console.log('🆔 User ID check:', {
-      user: user,
-      has_id: !!user._id,
-      hasId: !!user.id,
-      finalUserId: userId
-    });
-    
-    return userId;
+    return user._id || user.id;
   }, [user]);
 
-  // ✅ NEW: Improved socket connection with Render.com optimization
+  // ✅ FIXED: Stable socket connection function with minimal dependencies
   const connectSocket = useCallback(() => {
+    if (!isMountedRef.current) return;
+    
     const userId = getUserId();
     
     console.log('🔄 SocketProvider: Checking connection conditions', {
       isAuthenticated,
       hasUser: !!user,
       userId: userId,
-      userObject: user,
       serverStatus: serverStatus,
-      connectionAttempts: connectionAttempts
+      connectionAttempts: connectionAttemptsRef.current
     });
 
     if (!isAuthenticated || !userId) {
@@ -62,7 +56,7 @@ export const SocketProvider = ({ children }) => {
       return;
     }
 
-    // ✅ FIXED: Don't attempt connection if server is offline
+    // Don't attempt connection if server is offline
     if (serverStatus === 'offline') {
       console.log('🌐 Server is offline - delaying socket connection');
       return;
@@ -83,7 +77,7 @@ export const SocketProvider = ({ children }) => {
     const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
     console.log('🔗 Connecting to:', API_URL);
 
-    // ✅ FIXED: Better configuration for Render.com free tier
+    // Socket.io configuration for Render.com
     const newSocket = io(API_URL, {
       auth: {
         userId: userId,
@@ -91,101 +85,85 @@ export const SocketProvider = ({ children }) => {
       },
       transports: ['websocket', 'polling'],
       reconnection: true,
-      reconnectionAttempts: 3, // Reduced for Render.com
-      reconnectionDelay: 5000, // 5 seconds between attempts
-      reconnectionDelayMax: 15000, // Max 15 seconds
-      timeout: 45000, // Increased to 45 seconds for Render spin-up
+      reconnectionAttempts: 3,
+      reconnectionDelay: 5000,
+      reconnectionDelayMax: 15000,
+      timeout: 45000,
       forceNew: true,
       withCredentials: true
     });
 
     setSocket(newSocket);
-    setConnectionAttempts(prev => prev + 1);
+    connectionAttemptsRef.current += 1;
+    setConnectionAttempts(connectionAttemptsRef.current);
 
-    // Connection events with better Render.com handling
-    newSocket.on('connect', () => {
+    // Connection events
+    const handleConnect = () => {
+      if (!isMountedRef.current) return;
       console.log('✅ SOCKET CONNECTED! ID:', newSocket.id);
       setIsConnected(true);
-      setConnectionAttempts(0); // Reset attempts on successful connection
-    });
+      connectionAttemptsRef.current = 0;
+      setConnectionAttempts(0);
+    };
 
-    newSocket.on('disconnect', (reason) => {
+    const handleDisconnect = (reason) => {
+      if (!isMountedRef.current) return;
       console.log('🔴 Socket disconnected:', reason);
       setIsConnected(false);
       
-      // Handle Render.com specific disconnection reasons
       if (reason === 'transport close' || reason === 'ping timeout') {
         console.log('🔄 Render.com might be spinning down, waiting 10 seconds...');
         setTimeout(() => {
-          if (newSocket && !newSocket.connected) {
+          if (isMountedRef.current && newSocket && !newSocket.connected) {
             console.log('🔄 Attempting reconnection after Render.com delay...');
             newSocket.connect();
           }
         }, 10000);
       }
-    });
+    };
 
-    newSocket.on('connect_error', (error) => {
+    const handleConnectError = (error) => {
+      if (!isMountedRef.current) return;
       console.error('❌ Socket connection error:', error.message);
       setIsConnected(false);
       
-      // Handle Render.com spin-up delays specifically
       if (error.message.includes('timeout') || error.message.includes('xhr poll error')) {
         console.log('⏰ Render.com is spinning up, waiting longer before retry...');
         
-        // Progressive backoff based on connection attempts
-        const delay = Math.min(connectionAttempts * 5000, 30000); // Max 30 seconds
+        const delay = Math.min(connectionAttemptsRef.current * 5000, 30000);
         
         setTimeout(() => {
-          if (newSocket && !newSocket.connected && connectionAttempts < 3) {
-            console.log(`🔄 Retry attempt ${connectionAttempts + 1} after ${delay}ms delay`);
+          if (isMountedRef.current && newSocket && !newSocket.connected && connectionAttemptsRef.current < 3) {
+            console.log(`🔄 Retry attempt ${connectionAttemptsRef.current + 1} after ${delay}ms delay`);
             newSocket.connect();
-          } else if (connectionAttempts >= 3) {
+          } else if (connectionAttemptsRef.current >= 3) {
             console.log('🚫 Max connection attempts reached, giving up');
           }
         }, delay);
-      } else {
-        // Regular reconnection for other errors
-        setTimeout(() => {
-          if (newSocket && !newSocket.connected && connectionAttempts < 2) {
-            newSocket.connect();
-          }
-        }, 5000);
       }
-    });
+    };
 
-    newSocket.on('reconnect', (attemptNumber) => {
+    const handleReconnect = (attemptNumber) => {
+      if (!isMountedRef.current) return;
       console.log(`🔄 Reconnected after ${attemptNumber} attempts`);
       setIsConnected(true);
+      connectionAttemptsRef.current = 0;
       setConnectionAttempts(0);
-    });
+    };
 
-    newSocket.on('reconnect_attempt', (attemptNumber) => {
-      console.log(`🔄 Reconnection attempt ${attemptNumber}`);
-    });
-
-    newSocket.on('reconnect_error', (error) => {
-      console.error('❌ Reconnection error:', error);
-    });
-
-    newSocket.on('reconnect_failed', () => {
-      console.error('❌ Reconnection failed - giving up');
-      setConnectionAttempts(0);
-    });
-
-    newSocket.on('connection_success', (data) => {
+    const handleConnectionSuccess = (data) => {
+      if (!isMountedRef.current) return;
       console.log('✅ Server connection success:', data);
       setIsConnected(true);
-    });
+    };
 
-    // Message events
-    newSocket.on('receive_message', (messageData) => {
+    const handleReceiveMessage = (messageData) => {
+      if (!isMountedRef.current) return;
       console.log('📩 Received message:', messageData);
       setMessages(prev => {
         const roomId = messageData.quiz || messageData.quizId;
         const existing = prev[roomId] || [];
         
-        // Prevent duplicates
         if (existing.some(msg => msg._id === messageData._id)) {
           return prev;
         }
@@ -195,16 +173,15 @@ export const SocketProvider = ({ children }) => {
           [roomId]: [...existing, messageData]
         };
       });
-    });
+    };
 
-    // Handle private messages
-    newSocket.on('receive_private_message', (messageData) => {
+    const handleReceivePrivateMessage = (messageData) => {
+      if (!isMountedRef.current) return;
       console.log('📩 Received private message:', messageData);
       setMessages(prev => {
         const roomId = messageData.room;
         const existing = prev[roomId] || [];
         
-        // Prevent duplicates
         if (existing.some(msg => msg._id === messageData._id)) {
           return prev;
         }
@@ -214,36 +191,33 @@ export const SocketProvider = ({ children }) => {
           [roomId]: [...existing, messageData]
         };
       });
-    });
+    };
 
-    // Handle conversation updates
-    newSocket.on('conversation_updated', (conversationData) => {
+    const handleConversationUpdated = (conversationData) => {
+      if (!isMountedRef.current) return;
       console.log('💬 Conversation updated:', conversationData);
       setConversations(prev => {
         const existingIndex = prev.findIndex(conv => conv._id === conversationData._id);
         
         if (existingIndex >= 0) {
-          // Update existing conversation
           const updated = [...prev];
           updated[existingIndex] = conversationData;
-          // Move to top
           const [moved] = updated.splice(existingIndex, 1);
           return [moved, ...updated];
         } else {
-          // Add new conversation
           return [conversationData, ...prev];
         }
       });
-    });
+    };
 
-    // Online users
-    newSocket.on('online_users_update', (users) => {
+    const handleOnlineUsersUpdate = (users) => {
+      if (!isMountedRef.current) return;
       console.log('👥 Online users updated:', users.length);
       setOnlineUsers(users);
-    });
+    };
 
-    // Typing indicators
-    newSocket.on('user_typing', (data) => {
+    const handleUserTyping = (data) => {
+      if (!isMountedRef.current) return;
       console.log('⌨️ Typing:', data);
       setTypingUsers(prev => ({
         ...prev,
@@ -251,41 +225,76 @@ export const SocketProvider = ({ children }) => {
           ? [...new Set([...(prev[data.quizId] || []), data.username])]
           : (prev[data.quizId] || []).filter(u => u !== data.username)
       }));
-    });
+    };
 
-  }, [isAuthenticated, user, getUserId, socket, serverStatus, connectionAttempts]);
+    // Attach event listeners
+    newSocket.on('connect', handleConnect);
+    newSocket.on('disconnect', handleDisconnect);
+    newSocket.on('connect_error', handleConnectError);
+    newSocket.on('reconnect', handleReconnect);
+    newSocket.on('connection_success', handleConnectionSuccess);
+    newSocket.on('receive_message', handleReceiveMessage);
+    newSocket.on('receive_private_message', handleReceivePrivateMessage);
+    newSocket.on('conversation_updated', handleConversationUpdated);
+    newSocket.on('online_users_update', handleOnlineUsersUpdate);
+    newSocket.on('user_typing', handleUserTyping);
 
-  // Initialize socket connection with better timing
+    // Store cleanup function on socket instance
+    newSocket._cleanup = () => {
+      newSocket.off('connect', handleConnect);
+      newSocket.off('disconnect', handleDisconnect);
+      newSocket.off('connect_error', handleConnectError);
+      newSocket.off('reconnect', handleReconnect);
+      newSocket.off('connection_success', handleConnectionSuccess);
+      newSocket.off('receive_message', handleReceiveMessage);
+      newSocket.off('receive_private_message', handleReceivePrivateMessage);
+      newSocket.off('conversation_updated', handleConversationUpdated);
+      newSocket.off('online_users_update', handleOnlineUsersUpdate);
+      newSocket.off('user_typing', handleUserTyping);
+    };
+
+  }, [isAuthenticated, user, serverStatus]); // ✅ FIXED: Minimal dependencies
+
+  // ✅ FIXED: Single connection effect with proper cleanup
   useEffect(() => {
-    // Delay connection attempt to allow server to spin up
+    isMountedRef.current = true;
+    
+    // Delay connection to allow auth to settle
     const connectionTimer = setTimeout(() => {
-      connectSocket();
-    }, 2000); // Wait 2 seconds before attempting connection
+      if (isMountedRef.current) {
+        connectSocket();
+      }
+    }, 2000);
 
     return () => {
       clearTimeout(connectionTimer);
     };
   }, [connectSocket]);
 
-  // ✅ NEW: Reconnect when server status changes to online
+  // ✅ FIXED: Server status change handler
   useEffect(() => {
     if (serverStatus === 'online' && !isConnected && socket) {
       console.log('🌐 Server is back online, attempting socket reconnection...');
       const reconnectTimer = setTimeout(() => {
-        if (socket && !socket.connected) {
+        if (isMountedRef.current && socket && !socket.connected) {
           socket.connect();
         }
-      }, 3000); // Wait 3 seconds after server comes online
+      }, 3000);
       
       return () => clearTimeout(reconnectTimer);
     }
   }, [serverStatus, isConnected, socket]);
 
-  // Cleanup on unmount
+  // ✅ FIXED: Proper cleanup on unmount
   useEffect(() => {
     return () => {
       console.log('🧹 SocketProvider cleanup - disconnecting socket');
+      isMountedRef.current = false;
       if (socket) {
+        // Call stored cleanup function
+        if (socket._cleanup) {
+          socket._cleanup();
+        }
         socket.disconnect();
       }
     };
@@ -301,7 +310,6 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected]);
 
-  // Join private chat
   const joinPrivateChat = useCallback((recipientId) => {
     console.log(`🔐 Joining private chat with: ${recipientId}`);
     
@@ -312,7 +320,6 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected]);
 
-  // Send a message
   const sendMessage = useCallback(async (quizId, message) => {
     if (!socket || !isConnected) {
       throw new Error('Not connected to chat');
@@ -334,7 +341,7 @@ export const SocketProvider = ({ children }) => {
 
       const timeout = setTimeout(() => {
         reject(new Error('Message timeout - server may be spinning up'));
-      }, 15000); // 15 seconds for message sending
+      }, 15000);
 
       socket.emit('send_message', messageData, (response) => {
         clearTimeout(timeout);
@@ -347,7 +354,6 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
-  // Send private message
   const sendPrivateMessage = useCallback(async (recipientId, message) => {
     console.log(`📤 Sending private message to: ${recipientId}`);
 
@@ -392,10 +398,8 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
-  // Load private chat history with better error handling
   const loadPrivateMessages = useCallback(async (recipientId) => {
     if (!socket || !isConnected) {
-      // Try to use HTTP API as fallback when socket is not connected
       try {
         console.log('🔄 Socket not connected, trying HTTP API for messages...');
         const chatService = await import('../services/chatService');
@@ -409,7 +413,7 @@ export const SocketProvider = ({ children }) => {
     return new Promise((resolve, reject) => {
       const timeout = setTimeout(() => {
         reject(new Error('Load messages timeout - server may be spinning up'));
-      }, 20000); // 20 seconds for loading messages
+      }, 20000);
 
       socket.emit('load_private_messages', { recipientId }, (response) => {
         clearTimeout(timeout);
@@ -422,10 +426,8 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
-  // Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
-      // Try HTTP API fallback
       try {
         console.log('🔄 Socket not connected, trying HTTP API for conversations...');
         const chatService = await import('../services/chatService');
@@ -453,7 +455,6 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
-  // Start typing indicator
   const startTyping = useCallback((quizId) => {
     if (socket && isConnected && quizId) {
       socket.emit('typing_start', {
@@ -463,7 +464,6 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected, user]);
 
-  // Stop typing indicator
   const stopTyping = useCallback((quizId) => {
     if (socket && isConnected && quizId) {
       socket.emit('typing_stop', {
@@ -473,7 +473,6 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, isConnected, user]);
 
-  // Subscribe to new messages
   const subscribeToMessages = useCallback((callback) => {
     if (!socket) {
       console.warn('⚠️ Cannot subscribe: No socket available');
@@ -498,16 +497,15 @@ export const SocketProvider = ({ children }) => {
     socket.off('receive_private_message', callback);
   }, [socket]);
 
-  // Get messages for a quiz
   const getQuizMessages = useCallback((quizId) => {
     return messages[quizId] || [];
   }, [messages]);
 
-  // ✅ NEW: Manual reconnect function
   const reconnect = useCallback(() => {
     if (socket) {
       console.log('🔄 Manual reconnect triggered');
-      setConnectionAttempts(0); // Reset attempts
+      connectionAttemptsRef.current = 0;
+      setConnectionAttempts(0);
       socket.connect();
     } else {
       console.log('🔄 No socket instance, creating new connection');
@@ -515,16 +513,15 @@ export const SocketProvider = ({ children }) => {
     }
   }, [socket, connectSocket]);
 
-  // ✅ NEW: Get connection status with more details
   const getConnectionStatus = useCallback(() => {
     return {
       isConnected,
-      connectionAttempts,
+      connectionAttempts: connectionAttemptsRef.current,
       serverStatus,
       hasSocket: !!socket,
       socketId: socket?.id
     };
-  }, [isConnected, connectionAttempts, serverStatus, socket]);
+  }, [isConnected, serverStatus, socket]);
 
   const value = {
     socket,
@@ -543,9 +540,9 @@ export const SocketProvider = ({ children }) => {
     getQuizMessages,
     subscribeToMessages,
     unsubscribeFromMessages,
-    reconnect, // ✅ NEW: Manual reconnect
-    getConnectionStatus, // ✅ NEW: Detailed status
-    connectionAttempts // ✅ NEW: Connection attempts count
+    reconnect,
+    getConnectionStatus,
+    connectionAttempts: connectionAttemptsRef.current
   };
 
   console.log('🎯 SocketContext value:', { 
@@ -553,7 +550,7 @@ export const SocketProvider = ({ children }) => {
     onlineUsersCount: onlineUsers.length,
     conversationsCount: conversations.length,
     userId: getUserId(),
-    connectionAttempts,
+    connectionAttempts: connectionAttemptsRef.current,
     serverStatus
   });
 
