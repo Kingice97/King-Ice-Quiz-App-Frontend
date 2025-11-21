@@ -1,16 +1,16 @@
 import axios from 'axios';
 
-console.log('🔄 DEBUG: api.js LOADED - version 1.0.8 - OPTIMIZED FOR RENDER.COM');
+console.log('🔄 DEBUG: api.js LOADED - version 1.0.6 - FIXED AUTH REDIRECT');
 
 // ✅ FIXED: Use the correct Render URL
 const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
 
 console.log('🔄 DEBUG: API_URL:', API_URL);
 
-// Create axios instance with better configuration for Render.com
+// Create axios instance with better configuration
 const api = axios.create({
   baseURL: API_URL + '/api',
-  timeout: 30000, // ✅ INCREASED to 30 seconds for Render.com free tier
+  timeout: 15000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -26,11 +26,12 @@ api.interceptors.request.use(
     const token = localStorage.getItem('token');
     
     // Add debug logging for requests
-    console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
-      hasToken: !!token,
-      timeout: config.timeout,
-      endpoint: config.url
-    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`🚀 ${config.method?.toUpperCase()} ${config.url}`, {
+        hasToken: !!token,
+        endpoint: config.url
+      });
+    }
     
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -39,10 +40,12 @@ api.interceptors.request.use(
       console.log('⚠️ No token found for request');
     }
     
-    // Special handling for file uploads - longer timeout
+    // Special handling for file uploads
     if (config.data instanceof FormData) {
       config.headers['Content-Type'] = 'multipart/form-data';
-      config.timeout = 45000; // 45 seconds for uploads
+      if (config.url?.includes('/upload')) {
+        config.timeout = 30000;
+      }
     }
     
     return config;
@@ -56,8 +59,10 @@ api.interceptors.request.use(
 // Response interceptor - FIXED: Prevent automatic redirect on 401
 api.interceptors.response.use(
   (response) => {
-    // Log successful responses
-    console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    // Log successful responses in development
+    if (process.env.NODE_ENV === 'development') {
+      console.log(`✅ ${response.config.method?.toUpperCase()} ${response.config.url} - ${response.status}`);
+    }
     return response;
   },
   (error) => {
@@ -142,17 +147,14 @@ api.interceptors.response.use(
       console.error('🌐 Network error:', {
         url: originalRequest?.url,
         message: error.message,
-        code: error.code,
-        timeout: originalRequest?.timeout
+        code: error.code
       });
       
       // Differentiate between timeout and other network errors
       if (error.code === 'ECONNABORTED') {
-        error.userMessage = 'Server is taking too long to respond. This is normal on free hosting. Please wait and try again.';
-      } else if (error.message === 'Network Error') {
-        error.userMessage = 'Cannot connect to server. Please check your internet connection.';
+        error.userMessage = 'Request timeout. Please check your connection and try again.';
       } else {
-        error.userMessage = 'Network error. Please try again.';
+        error.userMessage = 'Network error. Please check your internet connection.';
       }
       
     } else {
@@ -164,55 +166,6 @@ api.interceptors.response.use(
     return Promise.reject(error);
   }
 );
-
-// ✅ NEW: Health check function for server status
-export const checkServerHealth = async () => {
-  try {
-    console.log('🏥 Checking server health...');
-    const response = await axios.get(API_URL + '/health', {
-      timeout: 10000
-    });
-    console.log('✅ Server health check passed');
-    return { healthy: true, response: response.data };
-  } catch (error) {
-    console.error('❌ Server health check failed:', error.message);
-    return { healthy: false, error: error.message };
-  }
-};
-
-// ✅ NEW: Check if server is reachable
-export const isServerReachable = async () => {
-  try {
-    const response = await axios.get(API_URL, {
-      timeout: 5000
-    });
-    return response.status === 200;
-  } catch (error) {
-    console.log('🌐 Server reachability check:', error.message);
-    return false;
-  }
-};
-
-// ✅ NEW: Keep Render.com awake by pinging health endpoint
-export const keepRenderAwake = async () => {
-  try {
-    const response = await axios.get(API_URL + '/health', {
-      timeout: 10000
-    });
-    console.log('✅ Render.com health ping successful');
-    return true;
-  } catch (error) {
-    console.log('⚠️ Render.com health ping failed (normal during spin-up)');
-    return false;
-  }
-};
-
-// Auto-ping every 10 minutes to keep Render awake
-setInterval(() => {
-  if (localStorage.getItem('token')) {
-    keepRenderAwake();
-  }
-}, 10 * 60 * 1000); // 10 minutes
 
 // Helper function to check if user is authenticated
 export const isAuthenticated = () => {

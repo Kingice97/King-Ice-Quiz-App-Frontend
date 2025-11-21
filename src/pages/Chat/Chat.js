@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
 import { userService } from '../../services/userService';
 import { chatService } from '../../services/chatService';
-import { notificationService } from '../../services/notificationService';
 import Loading from '../../components/common/Loading/Loading';
 import OnlineUsers from '../../components/Chat/OnlineUsers/OnlineUsers';
 import ChatRoom from '../../components/Chat/ChatRoom/ChatRoom';
@@ -24,169 +23,12 @@ const Chat = () => {
   const [loading, setLoading] = useState(false);
   const [conversationsLoading, setConversationsLoading] = useState(true);
   const [conversationsError, setConversationsError] = useState(null);
-  const lastNotificationRef = useRef({});
-  const notificationSettings = useRef(null);
 
   // Get consistent user ID
   const getUserId = () => {
     if (!user) return null;
     return user._id || user.id;
   };
-
-  // Load notification settings
-  useEffect(() => {
-    const loadSettings = () => {
-      try {
-        const settings = JSON.parse(localStorage.getItem('notificationSettings') || '{}');
-        notificationSettings.current = settings;
-        console.log('🔔 Notification settings loaded:', settings);
-      } catch (error) {
-        console.error('Error loading notification settings:', error);
-        notificationSettings.current = {
-          enabled: false,
-          chatAlerts: true,
-          quizAlerts: true,
-          announcementAlerts: true
-        };
-      }
-    };
-
-    loadSettings();
-    
-    // Listen for settings changes
-    const handleStorageChange = () => {
-      loadSettings();
-    };
-    
-    window.addEventListener('storage', handleStorageChange);
-    return () => window.removeEventListener('storage', handleStorageChange);
-  }, []);
-
-  // ✅ FIXED: True push notification handler - ALWAYS send notifications
-  const handlePushNotification = useCallback(async (message) => {
-    // Don't send notification if:
-    // 1. It's our own message
-    const isOwnMessage = message.user === getUserId();
-    // 2. Chat notifications are disabled
-    const chatAlertsEnabled = notificationSettings.current?.enabled && 
-                              notificationSettings.current?.chatAlerts;
-    // 3. We've already notified for this message
-    const isDuplicate = lastNotificationRef.current[message._id];
-
-    console.log('🔔 Push Notification Check:', {
-      isOwnMessage,
-      chatAlertsEnabled,
-      isDuplicate,
-      messageId: message._id,
-      settings: notificationSettings.current
-    });
-
-    if (!isOwnMessage && chatAlertsEnabled && !isDuplicate) {
-      console.log('📱 SENDING PUSH NOTIFICATION:', message);
-      lastNotificationRef.current[message._id] = true;
-      
-      // Limit the size of the ref to prevent memory leaks
-      if (Object.keys(lastNotificationRef.current).length > 100) {
-        lastNotificationRef.current = {};
-      }
-
-      try {
-        // ✅ FIXED: Use the correct chat notification endpoint
-        console.log('🔄 Sending chat notification via backend...');
-        await notificationService.sendChatNotification(
-          getUserId(), // Send to current user (recipient)
-          message.username, // Sender name
-          message.message, // Message content
-          message.room // Room ID
-        );
-        console.log('✅ Backend chat notification sent');
-      } catch (backendError) {
-        console.error('❌ Backend chat notification failed, trying service worker...', backendError);
-        
-        // Fallback to service worker notification
-        if ('serviceWorker' in navigator) {
-          try {
-            const registration = await navigator.serviceWorker.ready;
-            await registration.showNotification(`💬 ${message.username}`, {
-              body: message.message.length > 100 ? 
-                    message.message.substring(0, 100) + '...' : 
-                    message.message,
-              icon: '/brain-icon.png',
-              badge: '/brain-icon.png',
-              vibrate: [200, 100, 200],
-              tag: `chat-${message.room}-${Date.now()}`,
-              renotify: true,
-              data: {
-                url: `/chat`,
-                type: 'chat',
-                roomId: message.room,
-                sender: message.username,
-                timestamp: message.timestamp
-              },
-              actions: [
-                {
-                  action: 'open',
-                  title: '💬 Open Chat'
-                },
-                {
-                  action: 'dismiss',
-                  title: '❌ Dismiss'
-                }
-              ]
-            });
-            console.log('✅ Service worker notification sent');
-          } catch (swError) {
-            console.error('❌ Service worker notification failed:', swError);
-            
-            // Final fallback - browser notification
-            if (Notification.permission === 'granted') {
-              new Notification(`💬 ${message.username}`, {
-                body: message.message,
-                icon: '/brain-icon.png'
-              });
-              console.log('✅ Browser notification sent');
-            }
-          }
-        }
-      }
-    } else {
-      console.log('🔕 Notification skipped - conditions not met');
-    }
-  }, []);
-
-  // ✅ FIXED: Global message listener that works ALWAYS
-  useEffect(() => {
-    if (!socket || !isConnected) {
-      console.log('🚫 Socket not available for global listener');
-      return;
-    }
-
-    console.log('🎯 Setting up GLOBAL message listener for ALL incoming messages');
-
-    const handleIncomingMessage = (message) => {
-      console.log('📩 GLOBAL LISTENER: Message received:', {
-        type: message.type,
-        recipient: message.recipient,
-        currentUser: getUserId(),
-        isPrivate: message.type === 'private',
-        isForCurrentUser: message.recipient === getUserId()
-      });
-
-      // Handle private messages addressed to current user
-      if (message.type === 'private' && message.recipient === getUserId()) {
-        console.log('🔔 GLOBAL: Private message for current user - triggering notification');
-        handlePushNotification(message);
-      }
-    };
-
-    // Listen to ALL message events
-    socket.on('receive_private_message', handleIncomingMessage);
-    
-    return () => {
-      console.log('🔴 Removing GLOBAL message listeners');
-      socket.off('receive_private_message', handleIncomingMessage);
-    };
-  }, [socket, isConnected, handlePushNotification]);
 
   // Load conversations
   useEffect(() => {
@@ -224,6 +66,35 @@ const Chat = () => {
       loadUserConversations();
     }
   }, [isAuthenticated, user]);
+
+  // Listen for conversation updates via socket
+  useEffect(() => {
+    if (!socket) return;
+
+    const handleConversationUpdate = (updatedConversation) => {
+      setConversations(prev => {
+        const existingIndex = prev.findIndex(conv => conv._id === updatedConversation._id);
+        
+        if (existingIndex >= 0) {
+          // Update existing conversation
+          const updated = [...prev];
+          updated[existingIndex] = updatedConversation;
+          // Move to top
+          const [moved] = updated.splice(existingIndex, 1);
+          return [moved, ...updated];
+        } else {
+          // Add new conversation
+          return [updatedConversation, ...prev];
+        }
+      });
+    };
+
+    socket.on('conversation_updated', handleConversationUpdate);
+
+    return () => {
+      socket.off('conversation_updated', handleConversationUpdate);
+    };
+  }, [socket]);
 
   // Load online users
   useEffect(() => {
@@ -390,9 +261,6 @@ const Chat = () => {
               <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
                 {isConnected ? '🟢 Online' : '🔴 Offline'}
               </div>
-              <div className="notification-status">
-                🔔 Notifications: {notificationSettings.current?.enabled ? 'ON' : 'OFF'}
-              </div>
             </div>
 
             {/* Navigation Tabs */}
@@ -485,6 +353,7 @@ const Chat = () => {
                 <div className="user-avatar">
                   {user?.profile?.picture ? (
                     <img 
+                     // Replace with:
                       src={user.profile.picture}
                       alt={user.username}
                       className="avatar-image"

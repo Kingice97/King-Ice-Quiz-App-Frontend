@@ -3,7 +3,6 @@ import { Helmet } from 'react-helmet-async';
 import { Link } from 'react-router-dom';
 import { useApi } from '../../hooks/useApi';
 import { quizService } from '../../services/quizService';
-import { notificationService } from '../../services/notificationService';
 import Loading from '../../components/common/Loading/Loading';
 import Modal from '../../components/common/Modal/Modal';
 import QuizForm from '../../components/admin/QuizForm/QuizForm';
@@ -14,7 +13,6 @@ const QuizzesManagement = () => {
   const [editingQuiz, setEditingQuiz] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [categoryFilter, setCategoryFilter] = useState('');
-  const [sendingNotifications, setSendingNotifications] = useState({});
 
   const { data: quizzesData, loading: quizzesLoading, setData: setQuizzesData } = useApi(() =>
     quizService.getQuizzes({ limit: 100 })
@@ -36,35 +34,10 @@ const QuizzesManagement = () => {
   const handleCreateQuiz = async (quizData) => {
     try {
       const response = await quizService.createQuiz(quizData);
-      const newQuiz = response.data;
-      
       setQuizzesData(prev => ({
         ...prev,
-        data: [newQuiz, ...prev.data]
+        data: [response.data, ...prev.data]
       }));
-      
-      // ✅ NEW: Send push notification to all users about new quiz
-      try {
-        setSendingNotifications(prev => ({ ...prev, [newQuiz._id]: true }));
-        
-        const notificationResponse = await notificationService.sendQuizNotification(
-          newQuiz._id,
-          newQuiz.title,
-          newQuiz.description
-        );
-        
-        console.log('✅ Quiz notification sent:', notificationResponse);
-        
-        // Show success message
-        alert(`Quiz created successfully! Notification sent to ${notificationResponse.stats?.successful || 0} users.`);
-      } catch (notificationError) {
-        console.error('❌ Failed to send quiz notification:', notificationError);
-        // Still show success for quiz creation
-        alert('Quiz created successfully! (Notification failed)');
-      } finally {
-        setSendingNotifications(prev => ({ ...prev, [newQuiz._id]: false }));
-      }
-      
       setShowCreateModal(false);
     } catch (error) {
       console.error('Failed to create quiz:', error);
@@ -116,31 +89,6 @@ const QuizzesManagement = () => {
     } catch (error) {
       console.error('Failed to update quiz status:', error);
       alert('Failed to update quiz status. Please try again.');
-    }
-  };
-
-  // ✅ NEW: Send notification for existing quiz
-  const handleSendQuizNotification = async (quiz) => {
-    if (!window.confirm(`Send notification about "${quiz.title}" to all users?`)) {
-      return;
-    }
-
-    try {
-      setSendingNotifications(prev => ({ ...prev, [quiz._id]: true }));
-      
-      const response = await notificationService.sendQuizNotification(
-        quiz._id,
-        quiz.title,
-        quiz.description
-      );
-      
-      alert(`Notification sent successfully to ${response.stats?.successful || 0} users!`);
-      
-    } catch (error) {
-      console.error('Failed to send quiz notification:', error);
-      alert('Failed to send notification. Please try again.');
-    } finally {
-      setSendingNotifications(prev => ({ ...prev, [quiz._id]: false }));
     }
   };
 
@@ -275,16 +223,6 @@ const QuizzesManagement = () => {
                         className={`btn btn-sm ${quiz.isActive ? 'btn-warning' : 'btn-success'}`}
                       >
                         {quiz.isActive ? 'Deactivate' : 'Activate'}
-                      </button>
-                      
-                      {/* ✅ NEW: Send Notification Button */}
-                      <button
-                        onClick={() => handleSendQuizNotification(quiz)}
-                        className="btn btn-info btn-sm"
-                        disabled={sendingNotifications[quiz._id]}
-                        title="Send push notification to users"
-                      >
-                        {sendingNotifications[quiz._id] ? 'Sending...' : '📢 Notify'}
                       </button>
                       
                       {/* NEW: Admin quick actions */}

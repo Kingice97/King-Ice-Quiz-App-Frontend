@@ -10,7 +10,6 @@ import Loading from '../../components/common/Loading/Loading';
 import Modal from '../../components/common/Modal/Modal';
 import ProfilePictureUpload from '../../components/UserProfile/ProfilePictureUpload';
 import ChatPreferences from '../../components/UserProfile/ChatPreferences';
-import NotificationSettings from '../../components/Notifications/NotificationSettings';
 import './Profile.css';
 
 const Profile = () => {
@@ -372,13 +371,13 @@ const Profile = () => {
           >
             Chat Activity
           </button>
-          {/* 🔔 ADD THIS NEW TAB - Notifications */}
+          {/* 🔔 ADD THIS NEW TAB - Notifications
           <button
             className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
             onClick={() => setActiveTab('notifications')}
           >
             🔔 Notifications
-          </button>
+          </button> */}
           <button
             className={`tab ${activeTab === 'achievements' ? 'active' : ''}`}
             onClick={() => setActiveTab('achievements')}
@@ -517,13 +516,6 @@ const Profile = () => {
                   </div>
                 </div>
               </div>
-            </div>
-          )}
-
-          {/* 🔔 ADD THIS NEW TAB CONTENT - Notifications */}
-          {activeTab === 'notifications' && (
-            <div className="notifications-tab">
-              <NotificationSettings />
             </div>
           )}
 
