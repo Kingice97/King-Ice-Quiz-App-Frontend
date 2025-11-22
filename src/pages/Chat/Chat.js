@@ -122,6 +122,99 @@ const Chat = () => {
     }
   }, [onlineUsers]);
 
+  // ✅ FIXED: Handle user selection for private chat - use useCallback to prevent re-renders
+  const handleUserSelect = React.useCallback((selectedUser) => {
+    const currentUserId = getUserId();
+    const selectedUserId = selectedUser?._id || selectedUser?.id;
+    
+    if (!currentUserId || !selectedUserId) {
+      console.error('❌ Cannot create private chat: Missing user IDs');
+      return;
+    }
+
+    // Create consistent room ID by sorting user IDs alphabetically
+    const userIds = [currentUserId, selectedUserId].sort();
+    const roomId = `private_${userIds[0]}_${userIds[1]}`;
+    
+    setSelectedRoom({
+      type: 'private',
+      id: roomId,
+      name: selectedUser.username,
+      user: selectedUser,
+      isPrivate: true
+    });
+    setActiveTab('chat');
+  }, [user]);
+
+  // ✅ FIXED: Handle conversation selection - use useCallback to prevent re-renders
+  const handleConversationSelect = React.useCallback((conversation) => {
+    const currentUserId = getUserId();
+    const otherParticipant = conversation.participants.find(
+      participant => (participant._id || participant.id) !== currentUserId
+    );
+    
+    if (!otherParticipant) {
+      console.error('❌ No other participant found in conversation');
+      return;
+    }
+
+    setSelectedRoom({
+      type: 'private',
+      id: conversation._id,
+      name: otherParticipant.username,
+      user: otherParticipant,
+      conversation: conversation,
+      isPrivate: true
+    });
+    setActiveTab('chat');
+  }, [user]);
+
+  const handleGlobalChat = React.useCallback(() => {
+    setSelectedRoom({
+      type: 'global',
+      id: 'global_chat',
+      name: 'Global Chat',
+      isPrivate: false
+    });
+    setActiveTab('chat');
+    
+    // Join the global chat room via socket
+    if (isConnected) {
+      joinQuizRoom('global_chat');
+    }
+  }, [isConnected, joinQuizRoom]);
+
+  const handleSearchResults = (results) => {
+    setSearchResults(results);
+  };
+
+  // ✅ FIXED: Use useCallback for back navigation
+  const handleBackToChats = React.useCallback(() => {
+    setSelectedRoom(null);
+    setActiveTab('chats');
+  }, []);
+
+  // Refresh conversations
+  const handleRefreshConversations = async () => {
+    try {
+      setConversationsLoading(true);
+      setConversationsError(null);
+      
+      const response = await chatService.getUserConversations();
+      
+      if (response.success) {
+        setConversations(response.data || []);
+      } else {
+        setConversationsError(response.message || 'Failed to refresh conversations');
+      }
+    } catch (error) {
+      console.error('❌ Failed to refresh conversations:', error);
+      setConversationsError(error.message || 'Failed to refresh conversations');
+    } finally {
+      setConversationsLoading(false);
+    }
+  };
+
   // Show loading if auth is still loading
   if (authLoading) {
     return (
@@ -152,98 +245,6 @@ const Chat = () => {
       </div>
     );
   }
-
-  // Handle user selection for private chat
-  const handleUserSelect = (selectedUser) => {
-    const currentUserId = getUserId();
-    const selectedUserId = selectedUser?._id || selectedUser?.id;
-    
-    if (!currentUserId || !selectedUserId) {
-      console.error('❌ Cannot create private chat: Missing user IDs');
-      return;
-    }
-
-    // Create consistent room ID by sorting user IDs alphabetically
-    const userIds = [currentUserId, selectedUserId].sort();
-    const roomId = `private_${userIds[0]}_${userIds[1]}`;
-    
-    setSelectedRoom({
-      type: 'private',
-      id: roomId,
-      name: selectedUser.username,
-      user: selectedUser,
-      isPrivate: true
-    });
-    setActiveTab('chat');
-  };
-
-  // Handle conversation selection
-  const handleConversationSelect = (conversation) => {
-    const currentUserId = getUserId();
-    const otherParticipant = conversation.participants.find(
-      participant => (participant._id || participant.id) !== currentUserId
-    );
-    
-    if (!otherParticipant) {
-      console.error('❌ No other participant found in conversation');
-      return;
-    }
-
-    setSelectedRoom({
-      type: 'private',
-      id: conversation._id,
-      name: otherParticipant.username,
-      user: otherParticipant,
-      conversation: conversation,
-      isPrivate: true
-    });
-    setActiveTab('chat');
-  };
-
-  const handleGlobalChat = () => {
-    setSelectedRoom({
-      type: 'global',
-      id: 'global_chat',
-      name: 'Global Chat',
-      isPrivate: false
-    });
-    setActiveTab('chat');
-    
-    // Join the global chat room via socket
-    if (isConnected) {
-      joinQuizRoom('global_chat');
-    }
-  };
-
-  const handleSearchResults = (results) => {
-    setSearchResults(results);
-  };
-
-  const handleBackToChats = () => {
-    setSelectedRoom(null);
-    setActiveTab('chats');
-  };
-
-  // Refresh conversations
-  const handleRefreshConversations = async () => {
-    try {
-      setConversationsLoading(true);
-      setConversationsError(null);
-      
-      const response = await chatService.getUserConversations();
-      
-      if (response.success) {
-        setConversations(response.data || []);
-      } else {
-        setConversationsError(response.message || 'Failed to refresh conversations');
-      }
-    } catch (error) {
-      console.error('❌ Failed to refresh conversations:', error);
-      setConversationsError(error.message || 'Failed to refresh conversations');
-    } finally {
-      setConversationsLoading(false);
-    }
-  };
 
   return (
     <div className="chat-page">
@@ -353,7 +354,6 @@ const Chat = () => {
                 <div className="user-avatar">
                   {user?.profile?.picture ? (
                     <img 
-                     // Replace with:
                       src={user.profile.picture}
                       alt={user.username}
                       className="avatar-image"

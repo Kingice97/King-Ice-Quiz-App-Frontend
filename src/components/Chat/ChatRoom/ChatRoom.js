@@ -27,6 +27,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
+  const hasLoadedRef = useRef(false);
 
   // ✅ FIXED: Get consistent private room ID
   const getPrivateRoomId = useCallback(() => {
@@ -40,8 +41,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // ✅ FIXED: Load messages when room changes
+  // ✅ FIXED: Load messages when room changes - ONLY ONCE
   useEffect(() => {
+    if (hasLoadedRef.current) {
+      console.log('🔄 Already loaded messages for this room, skipping');
+      return;
+    }
+
     const loadMessages = async () => {
       try {
         setLoading(true);
@@ -51,10 +57,10 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         let loadedMessages = [];
         
         if (room.type === 'quiz') {
-          const response = await chatService.getQuizMessages(room.id, 50);
+          const response = await chatService.getQuizMessages(room.id, 100);
           loadedMessages = response.data || [];
         } else if (room.type === 'global') {
-          const response = await chatService.getGlobalMessages(50);
+          const response = await chatService.getGlobalMessages(100);
           loadedMessages = response.data || [];
         } else if (room.type === 'private') {
           // ✅ FIXED: Load private messages using consistent room ID
@@ -68,6 +74,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         
         console.log('📨 Total messages loaded:', loadedMessages.length);
         setMessages(loadedMessages);
+        hasLoadedRef.current = true;
         
       } catch (error) {
         console.error('❌ Failed to load messages:', error);
@@ -78,6 +85,11 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
 
     loadMessages();
+
+    // Reset when room changes
+    return () => {
+      hasLoadedRef.current = false;
+    };
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
   // ✅ FIXED: Subscribe to real-time messages with proper room matching
@@ -139,7 +151,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
 
-  // Auto-scroll to bottom when messages change
+  // ✅ FIXED: Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
