@@ -29,7 +29,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const messageListenerRef = useRef(null);
   const hasLoadedRef = useRef(false);
 
-  // ✅ FIXED: Get consistent private room ID
   const getPrivateRoomId = useCallback(() => {
     if (room.type !== 'private') return room.id;
     
@@ -40,7 +39,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // ✅ FIXED: Load messages when room changes
   useEffect(() => {
     if (hasLoadedRef.current) {
       console.log('🔄 Already loaded messages for this room, skipping');
@@ -62,16 +60,10 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           const response = await chatService.getGlobalMessages(200);
           loadedMessages = response.data || [];
         } else if (room.type === 'private') {
-          // ✅ Load private messages
           const response = await loadPrivateMessages(room.user._id);
           loadedMessages = response.messages || [];
-          
-          // ✅ FIXED: Reverse the messages to show oldest first (since backend sends newest first)
           loadedMessages = loadedMessages.reverse();
-          
           console.log(`🔐 Loaded ${loadedMessages.length} private messages for room: ${getPrivateRoomId()}`);
-          
-          // Join private chat room
           joinPrivateChat(room.user._id);
         }
         
@@ -94,7 +86,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
-  // ✅ FIXED: Subscribe to real-time messages
   useEffect(() => {
     if (!isConnected) {
       console.log('⚠️ Socket not connected, skipping message subscription');
@@ -145,7 +136,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
 
-  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -154,7 +144,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Handle sending messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -289,7 +278,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // ✅ NEW: WhatsApp-style message status icons
+  // WhatsApp-style message status
   const renderMessageStatus = (message) => {
     if (message.type !== 'private' || message.user !== currentUser._id) {
       return null;
@@ -310,30 +299,41 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   return (
     <div className="chat-room">
-      {/* ✅ FIXED: Sticky Header - Always visible */}
-      <div className="chat-room-header sticky-header">
-        <button onClick={onBack} className="btn-back">
-          ← Back
-        </button>
-        <div className="room-info">
-          <h3>{room.name}</h3>
-          <p className="room-description">
-            {room.type === 'private' 
-              ? `Private chat with ${room.user?.username} ${!room.user?.isOnline ? '(Offline)' : ''}` 
-              : room.type === 'global' 
-                ? 'Community chat room' 
-                : `Quiz: ${room.quizTitle || 'Discussion'}`
-            }
-            {!isConnected && ' (Connecting...)'}
-          </p>
-        </div>
-        <div className="room-stats">
-          <span className="message-count">{messages.length} messages</span>
-          {currentTypingUsers.length > 0 && (
-            <div className="typing-status">
-              {currentTypingUsers.join(', ')} {currentTypingUsers.length === 1 ? 'is' : 'are'} typing...
+      {/* WhatsApp-style Fixed Header */}
+      <div className="chat-header">
+        <div className="header-left">
+          <button onClick={onBack} className="back-button">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/>
+            </svg>
+          </button>
+          <div className="user-avatar">
+            {room.type === 'private' && room.user?.profile?.picture ? (
+              <img src={room.user.profile.picture} alt={room.user.username} />
+            ) : (
+              <div className="avatar-placeholder">
+                {room.type === 'private' ? room.user?.username?.charAt(0).toUpperCase() : 'G'}
+              </div>
+            )}
+          </div>
+          <div className="user-info">
+            <div className="user-name">{room.name}</div>
+            <div className="user-status">
+              {room.type === 'private' 
+                ? (room.user?.isOnline ? 'online' : 'offline')
+                : 'Community chat'
+              }
             </div>
-          )}
+          </div>
+        </div>
+        <div className="header-right">
+          <div className="header-actions">
+            <button className="action-button">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+              </svg>
+            </button>
+          </div>
         </div>
       </div>
 
@@ -343,7 +343,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         </div>
       )}
 
-      <div className="chat-room-messages">
+      <div className="messages-container">
         {loading ? (
           <Loading text="Loading messages..." />
         ) : messages.length === 0 ? (
@@ -372,37 +372,26 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                     <span>{formatDate(message.timestamp)}</span>
                   </div>
                 )}
-                <div
-                  className={`message ${isOwnMessage ? 'own-message' : 'other-message'}`}
-                >
-                  <div className="message-avatar">
-                    {message.profilePicture ? (
-                      <img 
-                        src={message.profilePicture}
-                        alt={message.username}
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div className={`avatar-placeholder ${message.profilePicture ? 'avatar-fallback' : ''}`}>
-                      {message.username?.charAt(0).toUpperCase()}
+                <div className={`message ${isOwnMessage ? 'message-sent' : 'message-received'}`}>
+                  {!isOwnMessage && (
+                    <div className="message-avatar">
+                      {message.profilePicture ? (
+                        <img src={message.profilePicture} alt={message.username} />
+                      ) : (
+                        <div className="avatar-placeholder">
+                          {message.username?.charAt(0).toUpperCase()}
+                        </div>
+                      )}
                     </div>
-                  </div>
-                  <div className="message-content">
-                    <div className="message-header">
-                      <span className="message-username">
-                        {isOwnMessage ? 'You' : message.username}
-                      </span>
-                      <span className="message-time">
-                        {formatTime(message.timestamp)}
-                        {/* ✅ NEW: WhatsApp-style message status */}
-                        {renderMessageStatus(message)}
-                      </span>
-                    </div>
-                    <div className="message-text">
-                      {message.message}
+                  )}
+                  <div className="message-bubble">
+                    {!isOwnMessage && (
+                      <div className="sender-name">{message.username}</div>
+                    )}
+                    <div className="message-text">{message.message}</div>
+                    <div className="message-time">
+                      {formatTime(message.timestamp)}
+                      {isOwnMessage && renderMessageStatus(message)}
                     </div>
                   </div>
                 </div>
@@ -419,7 +408,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
               <span></span>
             </div>
             <span className="typing-text">
-              {currentTypingUsers.join(', ')} {currentTypingUsers.length === 1 ? 'is' : 'are'} typing...
+              {currentTypingUsers.join(', ')} is typing...
             </span>
           </div>
         )}
@@ -427,39 +416,30 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      <form onSubmit={handleSendMessage} className="chat-room-input">
-        <div className="input-container">
+      <div className="input-container">
+        <div className="input-wrapper">
           <input
             type="text"
             value={newMessage}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
             onKeyPress={handleKeyPress}
-            placeholder={
-              room.type === 'private' 
-                ? `Message ${room.user?.username}...` 
-                : `Message ${room.name}...`
-            }
+            placeholder="Type a message"
             className="message-input"
             maxLength={500}
             disabled={sending || !isConnected}
           />
           <button 
-            type="submit" 
+            onClick={handleSendMessage}
             disabled={!newMessage.trim() || sending || !isConnected}
-            className={`btn-send ${sending ? 'sending' : ''}`}
+            className={`send-button ${sending ? 'sending' : ''}`}
           >
-            {sending ? 'Sending...' : 'Send'}
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+              <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
+            </svg>
           </button>
         </div>
-        <div className="input-info">
-          <span>
-            {!isConnected ? 'Connecting to chat...' : 'Press Enter to send'}
-            {room.type === 'private' && !room.user?.isOnline && ' • User is offline'}
-          </span>
-          <span>{newMessage.length}/500</span>
-        </div>
-      </form>
+      </div>
     </div>
   );
 };
