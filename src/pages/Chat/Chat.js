@@ -122,7 +122,6 @@ const Chat = () => {
     }
   }, [onlineUsers]);
 
-  // ✅ FIXED: Handle user selection for private chat - use useCallback to prevent re-renders
   const handleUserSelect = React.useCallback((selectedUser) => {
     const currentUserId = getUserId();
     const selectedUserId = selectedUser?._id || selectedUser?.id;
@@ -132,7 +131,6 @@ const Chat = () => {
       return;
     }
 
-    // Create consistent room ID by sorting user IDs alphabetically
     const userIds = [currentUserId, selectedUserId].sort();
     const roomId = `private_${userIds[0]}_${userIds[1]}`;
     
@@ -143,10 +141,8 @@ const Chat = () => {
       user: selectedUser,
       isPrivate: true
     });
-    setActiveTab('chat');
   }, [user]);
 
-  // ✅ FIXED: Handle conversation selection - use useCallback to prevent re-renders
   const handleConversationSelect = React.useCallback((conversation) => {
     const currentUserId = getUserId();
     const otherParticipant = conversation.participants.find(
@@ -166,7 +162,6 @@ const Chat = () => {
       conversation: conversation,
       isPrivate: true
     });
-    setActiveTab('chat');
   }, [user]);
 
   const handleGlobalChat = React.useCallback(() => {
@@ -176,9 +171,7 @@ const Chat = () => {
       name: 'Global Chat',
       isPrivate: false
     });
-    setActiveTab('chat');
     
-    // Join the global chat room via socket
     if (isConnected) {
       joinQuizRoom('global_chat');
     }
@@ -188,10 +181,8 @@ const Chat = () => {
     setSearchResults(results);
   };
 
-  // ✅ FIXED: Use useCallback for back navigation
   const handleBackToChats = React.useCallback(() => {
     setSelectedRoom(null);
-    setActiveTab('chats');
   }, []);
 
   // Refresh conversations
@@ -254,129 +245,121 @@ const Chat = () => {
       </Helmet>
 
       <div className="chat-container">
-        {/* Sidebar */}
-        {!selectedRoom && (
-          <div className="chat-sidebar">
-            <div className="sidebar-header">
-              <h2>Chat</h2>
-              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-                {isConnected ? '🟢 Online' : '🔴 Offline'}
+        {/* Sidebar - Always visible on desktop */}
+        <div className="chat-sidebar">
+          <div className="sidebar-header">
+            <h2>Chats</h2>
+            <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+              {isConnected ? '🟢 Online' : '🔴 Offline'}
+            </div>
+          </div>
+
+          {/* Navigation Tabs */}
+          <div className="chat-tabs">
+            <button
+              className={`tab ${activeTab === 'chats' ? 'active' : ''}`}
+              onClick={() => setActiveTab('chats')}
+            >
+              Chats
+              {conversations.length > 0 && (
+                <span className="tab-badge">{conversations.length}</span>
+              )}
+            </button>
+            <button
+              className={`tab ${activeTab === 'global' ? 'active' : ''}`}
+              onClick={() => setActiveTab('global')}
+            >
+              Global
+            </button>
+            <button
+              className={`tab ${activeTab === 'online' ? 'active' : ''}`}
+              onClick={() => setActiveTab('online')}
+            >
+              Online ({onlineUsersList.length})
+            </button>
+            <button
+              className={`tab ${activeTab === 'search' ? 'active' : ''}`}
+              onClick={() => setActiveTab('search')}
+            >
+              Find Users
+            </button>
+          </div>
+
+          {/* Tab Content */}
+          <div className="tab-content">
+            {activeTab === 'chats' && (
+              <ChatsList
+                conversations={conversations}
+                onConversationSelect={handleConversationSelect}
+                loading={conversationsLoading}
+                currentUser={user}
+                onRefresh={handleRefreshConversations}
+                error={conversationsError}
+              />
+            )}
+
+            {activeTab === 'global' && (
+              <div className="global-chat-section">
+                <div className="section-header">
+                  <h3>Global Chat</h3>
+                  <p>Chat with everyone</p>
+                </div>
+                <button
+                  onClick={handleGlobalChat}
+                  className="btn btn-primary btn-block"
+                  disabled={!isConnected}
+                >
+                  {isConnected ? 'Join Global Chat' : 'Connecting...'}
+                </button>
               </div>
-            </div>
+            )}
 
-            {/* Navigation Tabs */}
-            <div className="chat-tabs">
-              <button
-                className={`tab ${activeTab === 'chats' ? 'active' : ''}`}
-                onClick={() => setActiveTab('chats')}
-              >
-                Chats
-                {conversations.length > 0 && (
-                  <span className="tab-badge">{conversations.length}</span>
+            {activeTab === 'online' && (
+              <OnlineUsers
+                users={onlineUsersList}
+                onUserSelect={handleUserSelect}
+                loading={loading}
+                currentUserId={getUserId()}
+              />
+            )}
+
+            {activeTab === 'search' && (
+              <UserSearch
+                onUserSelect={handleUserSelect}
+                onSearchResults={handleSearchResults}
+                currentUserId={getUserId()}
+              />
+            )}
+          </div>
+
+          {/* User Info Footer */}
+          <div className="sidebar-footer">
+            <div className="user-info">
+              <div className="user-avatar">
+                {user?.profile?.picture ? (
+                  <img 
+                    src={user.profile.picture}
+                    alt={user.username}
+                    className="avatar-image"
+                  />
+                ) : (
+                  <div className="avatar-placeholder">
+                    {user?.username?.charAt(0).toUpperCase()}
+                  </div>
                 )}
-              </button>
-              <button
-                className={`tab ${activeTab === 'global' ? 'active' : ''}`}
-                onClick={() => setActiveTab('global')}
-              >
-                Global Chat
-              </button>
-              <button
-                className={`tab ${activeTab === 'online' ? 'active' : ''}`}
-                onClick={() => setActiveTab('online')}
-              >
-                Online Users ({onlineUsersList.length})
-              </button>
-              <button
-                className={`tab ${activeTab === 'search' ? 'active' : ''}`}
-                onClick={() => setActiveTab('search')}
-              >
-                Find Users
-              </button>
-            </div>
-
-            {/* Tab Content */}
-            <div className="tab-content">
-              {activeTab === 'chats' && (
-                <ChatsList
-                  conversations={conversations}
-                  onConversationSelect={handleConversationSelect}
-                  loading={conversationsLoading}
-                  currentUser={user}
-                  onRefresh={handleRefreshConversations}
-                  error={conversationsError}
-                />
-              )}
-
-              {activeTab === 'global' && (
-                <div className="global-chat-section">
-                  <div className="section-header">
-                    <h3>Global Chat</h3>
-                    <p>Chat with everyone in the community</p>
-                  </div>
-                  <button
-                    onClick={handleGlobalChat}
-                    className="btn btn-primary btn-block"
-                    disabled={!isConnected}
-                  >
-                    {isConnected ? 'Join Global Chat' : 'Connecting...'}
-                  </button>
-                  
-                  {!isConnected && (
-                    <div className="connection-help">
-                      <p>Having trouble connecting? Try refreshing the page.</p>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {activeTab === 'online' && (
-                <OnlineUsers
-                  users={onlineUsersList}
-                  onUserSelect={handleUserSelect}
-                  loading={loading}
-                  currentUserId={getUserId()}
-                />
-              )}
-
-              {activeTab === 'search' && (
-                <UserSearch
-                  onUserSelect={handleUserSelect}
-                  onSearchResults={handleSearchResults}
-                  currentUserId={getUserId()}
-                />
-              )}
-            </div>
-
-            {/* User Info Footer */}
-            <div className="sidebar-footer">
-              <div className="user-info">
-                <div className="user-avatar">
-                  {user?.profile?.picture ? (
-                    <img 
-                      src={user.profile.picture}
-                      alt={user.username}
-                      className="avatar-image"
-                    />
-                  ) : (
-                    <div className="avatar-placeholder">
-                      {user?.username?.charAt(0).toUpperCase()}
-                    </div>
-                  )}
-                </div>
-                <div className="user-details">
-                  <div className="username">@{user?.username}</div>
-                  <div className="user-status">
-                    {isConnected ? 'Online' : 'Offline'}
-                  </div>
+              </div>
+              <div className="user-details">
+                <div className="username">@{user?.username}</div>
+                <div className="user-status">
+                  {isConnected ? 'Online' : 'Offline'}
                 </div>
               </div>
             </div>
           </div>
-        )}
+        </div>
 
-        {/* Main Chat Area */}
-        <div className={`chat-main ${selectedRoom ? 'expanded' : ''}`}>
+        {/* Main Chat Area - Shows chat or empty state */}
+        <div className="chat-main">
           {selectedRoom ? (
             <ChatRoom
               room={selectedRoom}
@@ -384,55 +367,11 @@ const Chat = () => {
               onBack={handleBackToChats}
             />
           ) : (
-            <div className="chat-welcome">
-              <div className="welcome-content">
-                <h1>Welcome to Chat, {user?.username}!</h1>
-                <p>
-                  {isConnected 
-                    ? 'Select a conversation or start a new chat' 
-                    : 'Connecting to chat server...'
-                  }
-                </p>
-                <div className="chat-stats">
-                  <div className="stat-item">
-                    <div className="stat-value">{conversations.length}</div>
-                    <div className="stat-label">Conversations</div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-value">{onlineUsersList.length}</div>
-                    <div className="stat-label">Users Online</div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-value">
-                      {isConnected ? '🟢' : '🔴'}
-                    </div>
-                    <div className="stat-label">
-                      {isConnected ? 'Connected' : 'Connecting'}
-                    </div>
-                  </div>
-                  <div className="stat-item">
-                    <div className="stat-value">{user?.stats?.messagesSent || 0}</div>
-                    <div className="stat-label">Your Messages</div>
-                  </div>
-                </div>
-                
-                {/* Quick Actions */}
-                {isConnected && (
-                  <div className="quick-actions">
-                    <button
-                      onClick={() => setActiveTab('search')}
-                      className="btn btn-primary btn-large"
-                    >
-                      Start New Chat
-                    </button>
-                    <button
-                      onClick={handleGlobalChat}
-                      className="btn btn-outline btn-large"
-                    >
-                      Join Global Chat
-                    </button>
-                  </div>
-                )}
+            <div className="chat-empty-state">
+              <div className="empty-state-content">
+                <div className="empty-state-icon">💬</div>
+                <h3>Your messages</h3>
+                <p>Select a chat to start messaging</p>
               </div>
             </div>
           )}
