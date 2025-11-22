@@ -26,8 +26,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [error, setError] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
+  const messageListenerRef = useRef(null);
 
-  // ✅ FIXED: Get the actual private chat room ID
+  // ✅ FIXED: Get consistent private room ID
   const getPrivateRoomId = useCallback(() => {
     if (room.type !== 'private') return room.id;
     
@@ -39,16 +40,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // Debug logging
-  console.log('💬 ChatRoom Debug:', {
-    room,
-    currentUser: currentUser?.username,
-    messagesCount: messages.length,
-    isConnected,
-    privateRoomId: room.type === 'private' ? getPrivateRoomId() : null
-  });
-
-  // ✅ UPDATED: Load messages when room changes
+  // ✅ FIXED: Load messages when room changes
   useEffect(() => {
     const loadMessages = async () => {
       try {
@@ -56,27 +48,26 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         setError('');
         console.log(`📥 Loading messages for room: ${room.id} (${room.type})`);
         
-        let response;
+        let loadedMessages = [];
+        
         if (room.type === 'quiz') {
-          response = await chatService.getQuizMessages(room.id, 50);
+          const response = await chatService.getQuizMessages(room.id, 50);
+          loadedMessages = response.data || [];
         } else if (room.type === 'global') {
-          response = await chatService.getGlobalMessages(50);
+          const response = await chatService.getGlobalMessages(50);
+          loadedMessages = response.data || [];
         } else if (room.type === 'private') {
-          // ✅ Load private messages using the actual room ID
-          const privateRoomId = getPrivateRoomId();
-          console.log(`🔐 Loading private messages for room: ${privateRoomId}`);
-          response = await loadPrivateMessages(room.user._id);
+          // ✅ FIXED: Load private messages using consistent room ID
+          const response = await loadPrivateMessages(room.user._id);
+          loadedMessages = response.messages || [];
+          console.log(`🔐 Loaded ${loadedMessages.length} private messages for room: ${getPrivateRoomId()}`);
+          
           // Join private chat room
           joinPrivateChat(room.user._id);
         }
         
-        console.log('📨 Loaded messages:', response.messages?.length || response.data?.length || 0);
-        
-        if (room.type === 'private') {
-          setMessages(response.messages || []);
-        } else {
-          setMessages(response.data || []);
-        }
+        console.log('📨 Total messages loaded:', loadedMessages.length);
+        setMessages(loadedMessages);
         
       } catch (error) {
         console.error('❌ Failed to load messages:', error);
@@ -91,43 +82,60 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   // ✅ FIXED: Subscribe to real-time messages with proper room matching
   useEffect(() => {
-    if (!isConnected) return;
+    if (!isConnected) {
+      console.log('⚠️ Socket not connected, skipping message subscription');
+      return;
+    }
 
     console.log(`🔗 Subscribing to messages for room: ${room.id}`);
 
     const handleNewMessage = (message) => {
       console.log('📩 New message received:', message);
       
-      // ✅ FIXED: Proper room matching for private messages
+      // ✅ FIXED: Proper room matching for all message types
       let belongsToRoom = false;
       
       if (room.type === 'quiz') {
-        belongsToRoom = message.quiz === room.id;
+        belongsToRoom = message.quiz === room.id || message.room === `quiz_${room.id}`;
       } else if (room.type === 'global') {
-        belongsToRoom = message.room === 'global_chat';
+        belongsToRoom = message.room === 'global_chat' || message.type === 'global';
       } else if (room.type === 'private') {
         // For private messages, check if it matches the actual private room ID
         const privateRoomId = getPrivateRoomId();
-        belongsToRoom = message.room === privateRoomId;
+        belongsToRoom = message.room === privateRoomId || 
+                       (message.conversation && room.conversation && message.conversation === room.conversation._id);
       }
       
       if (belongsToRoom) {
+        console.log('✅ Message belongs to current room, adding to messages');
         setMessages(prev => {
           // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg._id === message._id);
-          if (exists) return prev;
+          if (exists) {
+            console.log('⚠️ Message already exists, skipping duplicate');
+            return prev;
+          }
           
-          return [...prev, message];
-          
+          const updatedMessages = [...prev, message];
+          console.log(`📊 Messages count: ${updatedMessages.length}`);
+          return updatedMessages;
         });
+      } else {
+        console.log('❌ Message does not belong to current room, ignoring');
       }
     };
 
+    // Store the listener reference for cleanup
+    messageListenerRef.current = handleNewMessage;
+
+    // Subscribe to messages
     subscribeToMessages(handleNewMessage);
 
     return () => {
       console.log(`🔴 Unsubscribing from messages for room: ${room.id}`);
-      unsubscribeFromMessages(handleNewMessage);
+      if (messageListenerRef.current) {
+        unsubscribeFromMessages(messageListenerRef.current);
+      }
     };
   }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
 
@@ -140,7 +148,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ✅ UPDATED: Handle sending messages for all room types
+  // ✅ FIXED: Handle sending messages for all room types
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -150,15 +158,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       setSending(true);
       setError('');
       
-      console.log('📤 Sending message:', newMessage.trim());
+      const messageText = newMessage.trim();
+      console.log('📤 Sending message:', messageText);
 
       if (room.type === 'private') {
-        // ✅ Handle private messages (works for offline users too)
-        await sendPrivateMessage(room.user._id, newMessage.trim());
+        // ✅ Handle private messages
+        await sendPrivateMessage(room.user._id, messageText);
       } else if (room.type === 'quiz') {
-        await sendMessage(room.id, newMessage.trim());
+        await sendMessage(room.id, messageText);
       } else if (room.type === 'global') {
-        await sendMessage('global_chat', newMessage.trim());
+        await sendMessage('global_chat', messageText);
       }
 
       // Clear input immediately for better UX
@@ -167,16 +176,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       // Stop typing
       if (isTyping) {
         setIsTyping(false);
-        // Use correct room ID for typing
-        let typingRoomId;
-        if (room.type === 'private') {
-          typingRoomId = room.user._id;
-        } else if (room.type === 'quiz') {
-          typingRoomId = room.id;
-        } else if (room.type === 'global') {
-          typingRoomId = 'global_chat';
-        }
-        stopTyping(typingRoomId);
+        handleStopTyping();
       }
 
       console.log('✅ Message sent successfully');
@@ -189,6 +189,44 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
+  const handleStartTyping = () => {
+    if (isTyping) return;
+    
+    setIsTyping(true);
+    
+    let roomId;
+    if (room.type === 'quiz') {
+      roomId = room.id;
+    } else if (room.type === 'global') {
+      roomId = 'global_chat';
+    } else if (room.type === 'private') {
+      roomId = room.user._id;
+    }
+    
+    if (roomId) {
+      startTyping(roomId);
+    }
+  };
+
+  const handleStopTyping = () => {
+    if (!isTyping) return;
+    
+    setIsTyping(false);
+    
+    let roomId;
+    if (room.type === 'quiz') {
+      roomId = room.id;
+    } else if (room.type === 'global') {
+      roomId = 'global_chat';
+    } else if (room.type === 'private') {
+      roomId = room.user._id;
+    }
+    
+    if (roomId) {
+      stopTyping(roomId);
+    }
+  };
+
   const handleInputChange = (e) => {
     const value = e.target.value;
     setNewMessage(value);
@@ -196,19 +234,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     // Handle typing indicators
     if (value.trim()) {
       if (!isTyping) {
-        setIsTyping(true);
-        
-        // ✅ Use correct room ID for typing
-        let roomId;
-        if (room.type === 'quiz') {
-          roomId = room.id;
-        } else if (room.type === 'global') {
-          roomId = 'global_chat';
-        } else if (room.type === 'private') {
-          roomId = room.user._id;
-        }
-        
-        startTyping(roomId);
+        handleStartTyping();
       }
       
       // Clear existing timeout
@@ -218,55 +244,19 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       
       // Set new timeout to stop typing
       typingTimeoutRef.current = setTimeout(() => {
-        setIsTyping(false);
-        
-        // ✅ Use correct room ID for typing
-        let roomId;
-        if (room.type === 'quiz') {
-          roomId = room.id;
-        } else if (room.type === 'global') {
-          roomId = 'global_chat';
-        } else if (room.type === 'private') {
-          roomId = room.user._id;
-        }
-        
-        stopTyping(roomId);
+        handleStopTyping();
       }, 1000);
       
     } else {
       if (isTyping) {
-        setIsTyping(false);
-        
-        // ✅ Use correct room ID for typing
-        let roomId;
-        if (room.type === 'quiz') {
-          roomId = room.id;
-        } else if (room.type === 'global') {
-          roomId = 'global_chat';
-        } else if (room.type === 'private') {
-          roomId = room.user._id;
-        }
-        
-        stopTyping(roomId);
+        handleStopTyping();
       }
     }
   };
 
   const handleInputBlur = () => {
     if (isTyping) {
-      setIsTyping(false);
-      
-      // ✅ Use correct room ID for typing
-      let roomId;
-      if (room.type === 'quiz') {
-        roomId = room.id;
-      } else if (room.type === 'global') {
-        roomId = 'global_chat';
-      } else if (room.type === 'private') {
-        roomId = room.user._id;
-      }
-      
-      stopTyping(roomId);
+      handleStopTyping();
     }
   };
 
@@ -373,7 +363,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   <div className="message-avatar">
                     {message.profilePicture ? (
                       <img 
-                       // Replace with:
                         src={message.profilePicture}
                         alt={message.username}
                         onError={(e) => {

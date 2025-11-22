@@ -146,7 +146,7 @@ export const SocketProvider = ({ children }) => {
       });
     });
 
-    // ✅ NEW: Handle conversation updates
+    // Handle conversation updates
     newSocket.on('conversation_updated', (conversationData) => {
       console.log('💬 Conversation updated:', conversationData);
       setConversations(prev => {
@@ -234,7 +234,7 @@ export const SocketProvider = ({ children }) => {
       };
 
       const timeout = setTimeout(() => {
-        reject(new Error('Message timeout'));
+        reject(new Error('Message sending timeout'));
       }, 5000);
 
       socket.emit('send_message', messageData, (response) => {
@@ -315,7 +315,7 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected]);
 
-  // ✅ NEW: Load user conversations
+  // Load user conversations
   const loadConversations = useCallback(async () => {
     if (!socket || !isConnected) {
       throw new Error('Not connected to chat server');
@@ -399,7 +399,7 @@ export const SocketProvider = ({ children }) => {
     sendMessage,
     sendPrivateMessage,
     loadPrivateMessages,
-    loadConversations, // ✅ NEW
+    loadConversations,
     startTyping,
     stopTyping,
     getQuizMessages,
