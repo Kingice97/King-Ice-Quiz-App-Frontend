@@ -11,6 +11,14 @@
   min-height: calc(100vh - 160px);
 }
 
+/* Full screen chat styles - ADDED */
+.main-content.full-screen-chat {
+  height: 100vh;
+  margin: 0;
+  padding: 0;
+  padding-top: 0 !important; /* Remove padding for chat */
+}
+
 /* Global Variables */
 :root {
   /* Colors */
@@ -431,39 +439,6 @@ a:hover {
 .w-100 { width: 100%; }
 .h-100 { height: 100%; }
 
-/* Responsive */
-@media (max-width: 768px) {
-  .main-content {
-    padding-top: 70px;
-  }
-  
-  .container {
-    padding: 0 var(--spacing-sm);
-  }
-  
-  .grid-2,
-  .grid-3,
-  .grid-4 {
-    grid-template-columns: 1fr;
-  }
-  
-  h1 { font-size: var(--font-size-3xl); }
-  h2 { font-size: var(--font-size-2xl); }
-  h3 { font-size: var(--font-size-xl); }
-}
-
-@media (max-width: 480px) {
-  .main-content {
-    padding-top: 60px;
-  }
-  
-  h1 { font-size: var(--font-size-2xl); }
-  h2 { font-size: var(--font-size-xl); }
-  h3 { font-size: var(--font-size-lg); }
-}
-
-/* Add these to your existing App.css */
-
 /* Loading Spinner */
 .loading-container {
   display: flex;
@@ -582,6 +557,24 @@ a:hover {
 
 /* Responsive improvements */
 @media (max-width: 768px) {
+  .main-content {
+    padding-top: 70px;
+  }
+  
+  .container {
+    padding: 0 var(--spacing-sm);
+  }
+  
+  .grid-2,
+  .grid-3,
+  .grid-4 {
+    grid-template-columns: 1fr;
+  }
+  
+  h1 { font-size: var(--font-size-3xl); }
+  h2 { font-size: var(--font-size-2xl); }
+  h3 { font-size: var(--font-size-xl); }
+  
   .auth-card {
     padding: var(--spacing-xl);
     margin: var(--spacing-md);
@@ -594,6 +587,16 @@ a:hover {
   .form-actions .btn {
     width: 100%;
   }
+}
+
+@media (max-width: 480px) {
+  .main-content {
+    padding-top: 60px;
+  }
+  
+  h1 { font-size: var(--font-size-2xl); }
+  h2 { font-size: var(--font-size-xl); }
+  h3 { font-size: var(--font-size-lg); }
 }
 
 /* Print styles */
@@ -636,4 +639,18 @@ a:hover {
 /* Apply pulse animation to install prompt */
 .install-prompt {
   animation: slideInUp 0.5s ease-out, pulse 2s infinite;
+}
+
+/* Offline Indicator - ADDED */
+.offline-indicator {
+  background: #ff6b6b;
+  color: white;
+  text-align: center;
+  padding: 10px;
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 10001;
+  font-weight: bold;
 }
