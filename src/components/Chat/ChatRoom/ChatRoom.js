@@ -36,12 +36,11 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     const currentUserId = currentUser._id || currentUser.id;
     const otherUserId = room.user._id || room.user.id;
     
-    // Create consistent room ID by sorting user IDs alphabetically
     const userIds = [currentUserId, otherUserId].sort();
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // ✅ FIXED: Load messages when room changes - ONLY ONCE
+  // ✅ FIXED: Load messages when room changes
   useEffect(() => {
     if (hasLoadedRef.current) {
       console.log('🔄 Already loaded messages for this room, skipping');
@@ -57,15 +56,19 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         let loadedMessages = [];
         
         if (room.type === 'quiz') {
-          const response = await chatService.getQuizMessages(room.id, 100);
+          const response = await chatService.getQuizMessages(room.id, 200);
           loadedMessages = response.data || [];
         } else if (room.type === 'global') {
-          const response = await chatService.getGlobalMessages(100);
+          const response = await chatService.getGlobalMessages(200);
           loadedMessages = response.data || [];
         } else if (room.type === 'private') {
-          // ✅ FIXED: Load private messages using consistent room ID
+          // ✅ Load private messages
           const response = await loadPrivateMessages(room.user._id);
           loadedMessages = response.messages || [];
+          
+          // ✅ FIXED: Reverse the messages to show oldest first (since backend sends newest first)
+          loadedMessages = loadedMessages.reverse();
+          
           console.log(`🔐 Loaded ${loadedMessages.length} private messages for room: ${getPrivateRoomId()}`);
           
           // Join private chat room
@@ -86,13 +89,12 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
     loadMessages();
 
-    // Reset when room changes
     return () => {
       hasLoadedRef.current = false;
     };
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
-  // ✅ FIXED: Subscribe to real-time messages with proper room matching
+  // ✅ FIXED: Subscribe to real-time messages
   useEffect(() => {
     if (!isConnected) {
       console.log('⚠️ Socket not connected, skipping message subscription');
@@ -104,7 +106,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     const handleNewMessage = (message) => {
       console.log('📩 New message received:', message);
       
-      // ✅ FIXED: Proper room matching for all message types
       let belongsToRoom = false;
       
       if (room.type === 'quiz') {
@@ -112,7 +113,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       } else if (room.type === 'global') {
         belongsToRoom = message.room === 'global_chat' || message.type === 'global';
       } else if (room.type === 'private') {
-        // For private messages, check if it matches the actual private room ID
         const privateRoomId = getPrivateRoomId();
         belongsToRoom = message.room === privateRoomId || 
                        (message.conversation && room.conversation && message.conversation === room.conversation._id);
@@ -121,7 +121,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       if (belongsToRoom) {
         console.log('✅ Message belongs to current room, adding to messages');
         setMessages(prev => {
-          // Check if message already exists to prevent duplicates
           const exists = prev.some(msg => msg._id === message._id);
           if (exists) {
             console.log('⚠️ Message already exists, skipping duplicate');
@@ -132,15 +131,10 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           console.log(`📊 Messages count: ${updatedMessages.length}`);
           return updatedMessages;
         });
-      } else {
-        console.log('❌ Message does not belong to current room, ignoring');
       }
     };
 
-    // Store the listener reference for cleanup
     messageListenerRef.current = handleNewMessage;
-
-    // Subscribe to messages
     subscribeToMessages(handleNewMessage);
 
     return () => {
@@ -151,7 +145,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
 
-  // ✅ FIXED: Auto-scroll to bottom when messages change
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -160,7 +154,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // ✅ FIXED: Handle sending messages for all room types
+  // Handle sending messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -174,7 +168,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       console.log('📤 Sending message:', messageText);
 
       if (room.type === 'private') {
-        // ✅ Handle private messages
         await sendPrivateMessage(room.user._id, messageText);
       } else if (room.type === 'quiz') {
         await sendMessage(room.id, messageText);
@@ -182,10 +175,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         await sendMessage('global_chat', messageText);
       }
 
-      // Clear input immediately for better UX
       setNewMessage('');
       
-      // Stop typing
       if (isTyping) {
         setIsTyping(false);
         handleStopTyping();
@@ -243,18 +234,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     const value = e.target.value;
     setNewMessage(value);
     
-    // Handle typing indicators
     if (value.trim()) {
       if (!isTyping) {
         handleStartTyping();
       }
       
-      // Clear existing timeout
       if (typingTimeoutRef.current) {
         clearTimeout(typingTimeoutRef.current);
       }
       
-      // Set new timeout to stop typing
       typingTimeoutRef.current = setTimeout(() => {
         handleStopTyping();
       }, 1000);
@@ -305,7 +293,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   return (
     <div className="chat-room">
-      {/* Chat Header */}
       <div className="chat-room-header">
         <button onClick={onBack} className="btn-back">
           ← Back
@@ -332,14 +319,12 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         </div>
       </div>
 
-      {/* Error Message */}
       {error && (
         <div className="chat-error">
           {error}
         </div>
       )}
 
-      {/* Chat Messages */}
       <div className="chat-room-messages">
         {loading ? (
           <Loading text="Loading messages..." />
@@ -415,7 +400,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           })
         )}
         
-        {/* Typing Indicator */}
         {currentTypingUsers.length > 0 && (
           <div className="typing-indicator">
             <div className="typing-dots">
@@ -432,7 +416,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Chat Input */}
       <form onSubmit={handleSendMessage} className="chat-room-input">
         <div className="input-container">
           <input
