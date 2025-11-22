@@ -424,7 +424,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             onChange={handleInputChange}
             onBlur={handleInputBlur}
             onKeyPress={handleKeyPress}
-            placeholder="Type a message"
             className="message-input"
             maxLength={500}
             disabled={sending || !isConnected}

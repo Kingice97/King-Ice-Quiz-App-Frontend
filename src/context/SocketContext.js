@@ -302,7 +302,7 @@ const loadPrivateMessages = useCallback(async (recipientId) => {
   return new Promise((resolve, reject) => {
     const timeout = setTimeout(() => {
       reject(new Error('Load messages timeout'));
-    }, 10000); // ✅ CHANGED: Increased from 5000 to 10000ms
+    }, 15000); // ✅ CHANGED: Increased to 15 seconds
 
     socket.emit('load_private_messages', { recipientId }, (response) => {
       clearTimeout(timeout);
