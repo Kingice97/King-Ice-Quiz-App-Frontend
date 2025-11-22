@@ -293,27 +293,27 @@ export const SocketProvider = ({ children }) => {
     });
   }, [socket, isConnected, user, getUserId]);
 
-  // Load private chat history
-  const loadPrivateMessages = useCallback(async (recipientId) => {
-    if (!socket || !isConnected) {
-      throw new Error('Not connected to chat server');
-    }
+// Load private chat history
+const loadPrivateMessages = useCallback(async (recipientId) => {
+  if (!socket || !isConnected) {
+    throw new Error('Not connected to chat server');
+  }
 
-    return new Promise((resolve, reject) => {
-      const timeout = setTimeout(() => {
-        reject(new Error('Load messages timeout'));
-      }, 5000);
+  return new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => {
+      reject(new Error('Load messages timeout'));
+    }, 10000); // ✅ CHANGED: Increased from 5000 to 10000ms
 
-      socket.emit('load_private_messages', { recipientId }, (response) => {
-        clearTimeout(timeout);
-        if (response?.success) {
-          resolve(response);
-        } else {
-          reject(new Error(response?.error || 'Failed to load messages'));
-        }
-      });
+    socket.emit('load_private_messages', { recipientId }, (response) => {
+      clearTimeout(timeout);
+      if (response?.success) {
+        resolve(response);
+      } else {
+        reject(new Error(response?.error || 'Failed to load messages'));
+      }
     });
-  }, [socket, isConnected]);
+  });
+}, [socket, isConnected]);
 
   // Load user conversations
   const loadConversations = useCallback(async () => {
