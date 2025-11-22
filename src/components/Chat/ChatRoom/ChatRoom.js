@@ -289,11 +289,29 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
+  // ✅ NEW: WhatsApp-style message status icons
+  const renderMessageStatus = (message) => {
+    if (message.type !== 'private' || message.user !== currentUser._id) {
+      return null;
+    }
+
+    if (!message.isDelivered) {
+      return <span className="message-status single-tick" title="Sent">✓</span>;
+    } else if (message.isDelivered && !message.isRead) {
+      return <span className="message-status double-tick" title="Delivered">✓✓</span>;
+    } else if (message.isRead) {
+      return <span className="message-status double-tick read" title="Read">✓✓</span>;
+    }
+    
+    return null;
+  };
+
   const currentTypingUsers = typingUsers[room.id] || [];
 
   return (
     <div className="chat-room">
-      <div className="chat-room-header">
+      {/* ✅ FIXED: Sticky Header - Always visible */}
+      <div className="chat-room-header sticky-header">
         <button onClick={onBack} className="btn-back">
           ← Back
         </button>
@@ -379,15 +397,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                       </span>
                       <span className="message-time">
                         {formatTime(message.timestamp)}
-                        {message.type === 'private' && !message.isDelivered && isOwnMessage && (
-                          <span title="Not delivered yet"> • ⏳</span>
-                        )}
-                        {message.type === 'private' && message.isDelivered && !message.isRead && isOwnMessage && (
-                          <span title="Delivered"> • ✅</span>
-                        )}
-                        {message.type === 'private' && message.isRead && isOwnMessage && (
-                          <span title="Read"> • 👁️</span>
-                        )}
+                        {/* ✅ NEW: WhatsApp-style message status */}
+                        {renderMessageStatus(message)}
                       </span>
                     </div>
                     <div className="message-text">
