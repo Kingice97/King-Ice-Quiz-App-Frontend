@@ -32,88 +32,84 @@ export const userService = {
     }
   },
 
-  // Add this to your existing userService.js functions:
-
-// Get user stats
-getUserStats: async () => {
-  try {
-    console.log('📊 Fetching user stats');
-    const token = localStorage.getItem('token');
-    const response = await api.get('/users/stats', {
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    console.log('✅ User stats fetched successfully:', response.data);
-    return response.data;
-  } catch (error) {
-    console.error('❌ Failed to fetch user stats:', error);
-    // Return default stats if API fails
-    return { 
-      success: true, 
-      data: { 
-        overall: {
-          totalQuizzesTaken: 0,
-          averageScore: 0,
-          bestScore: 0,
-          successRate: 0,
-          messagesSent: 0,
-          chatParticipation: 0
-        }
-      } 
-    };
-  }
-},
-
-
-// Enhanced getLeaderboard with detailed debugging
-getLeaderboard: async (params = {}) => {
-  try {
-    console.log('🏆 Fetching leaderboard with params:', params);
-    const token = localStorage.getItem('token');
-    const response = await api.get('/users/leaderboard', {
-      params,
-      headers: { Authorization: `Bearer ${token}` }
-    });
-    
-    // FIXED: More detailed logging
-    console.log('✅ Leaderboard API FULL response object:', response);
-    console.log('✅ Leaderboard API response.data:', response.data);
-    console.log('✅ Leaderboard API response.status:', response.status);
-    
-    // Log the actual data structure in detail
-    if (response.data && response.data.data) {
-      console.log('📊 Leaderboard data array length:', response.data.data.length);
-      console.log('📊 Leaderboard data array:', response.data.data);
-      
-      // Log each user's data structure
-      response.data.data.forEach((user, index) => {
-        console.log(`👤 User ${index + 1} full data:`, JSON.stringify(user, null, 2));
-        console.log(`📈 User ${index + 1} stats:`, {
-          username: user.username,
-          bestScore: user.bestScore,
-          averageScore: user.averageScore,
-          quizzesTaken: user.quizzesTaken,
-          totalPoints: user.totalPoints,
-          userObject: user.user // Check if user data is nested
-        });
+  // Get user stats
+  getUserStats: async () => {
+    try {
+      console.log('📊 Fetching user stats');
+      const token = localStorage.getItem('token');
+      const response = await api.get('/users/stats', {
+        headers: { Authorization: `Bearer ${token}` }
       });
-    } else {
-      console.warn('⚠️ No data array found in response:', response.data);
+      console.log('✅ User stats fetched successfully:', response.data);
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to fetch user stats:', error);
+      // Return default stats if API fails
+      return { 
+        success: true, 
+        data: { 
+          overall: {
+            totalQuizzesTaken: 0,
+            averageScore: 0,
+            bestScore: 0,
+            successRate: 0,
+            messagesSent: 0,
+            chatParticipation: 0
+          }
+        } 
+      };
     }
-    
-    return response.data;
-  } catch (error) {
-    console.error('❌ Leaderboard API error:', error);
-    console.error('❌ Error response:', error.response);
-    console.error('❌ Error details:', error.response?.data);
-    // Return empty data structure instead of throwing error
-    return { 
-      success: false, 
-      message: 'Failed to fetch leaderboard',
-      data: [] 
-    };
-  }
-},
+  },
 
+  // Enhanced getLeaderboard with detailed debugging
+  getLeaderboard: async (params = {}) => {
+    try {
+      console.log('🏆 Fetching leaderboard with params:', params);
+      const token = localStorage.getItem('token');
+      const response = await api.get('/users/leaderboard', {
+        params,
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      // FIXED: More detailed logging
+      console.log('✅ Leaderboard API FULL response object:', response);
+      console.log('✅ Leaderboard API response.data:', response.data);
+      console.log('✅ Leaderboard API response.status:', response.status);
+      
+      // Log the actual data structure in detail
+      if (response.data && response.data.data) {
+        console.log('📊 Leaderboard data array length:', response.data.data.length);
+        console.log('📊 Leaderboard data array:', response.data.data);
+        
+        // Log each user's data structure
+        response.data.data.forEach((user, index) => {
+          console.log(`👤 User ${index + 1} full data:`, JSON.stringify(user, null, 2));
+          console.log(`📈 User ${index + 1} stats:`, {
+            username: user.username,
+            bestScore: user.bestScore,
+            averageScore: user.averageScore,
+            quizzesTaken: user.quizzesTaken,
+            totalPoints: user.totalPoints,
+            userObject: user.user // Check if user data is nested
+          });
+        });
+      } else {
+        console.warn('⚠️ No data array found in response:', response.data);
+      }
+      
+      return response.data;
+    } catch (error) {
+      console.error('❌ Leaderboard API error:', error);
+      console.error('❌ Error response:', error.response);
+      console.error('❌ Error details:', error.response?.data);
+      // Return empty data structure instead of throwing error
+      return { 
+        success: false, 
+        message: 'Failed to fetch leaderboard',
+        data: [] 
+      };
+    }
+  },
 
   // Profile picture upload
   uploadProfilePicture: async (formData) => {
@@ -338,6 +334,37 @@ getLeaderboard: async (params = {}) => {
       console.error('❌ Failed to fetch system stats:', error);
       throw error;
     }
+  },
+
+  // Block user
+  blockUser: async (userId) => {
+    try {
+      console.log(`🚫 Blocking user: ${userId}`);
+      const token = localStorage.getItem('token');
+      const response = await api.post(`/users/${userId}/block`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('✅ User blocked successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to block user:', error);
+      throw error;
+    }
+  },
+
+  // Unblock user
+  unblockUser: async (userId) => {
+    try {
+      console.log(`✅ Unblocking user: ${userId}`);
+      const token = localStorage.getItem('token');
+      const response = await api.post(`/users/${userId}/unblock`, {}, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('✅ User unblocked successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to unblock user:', error);
+      throw error;
+    }
   }
 };
-

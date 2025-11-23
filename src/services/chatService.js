@@ -155,5 +155,46 @@ export const chatService = {
       console.error('Failed to mark conversation as read:', error);
       throw error;
     }
+  },
+
+  // Clear conversation history
+  clearConversation: async (otherUserId) => {
+    try {
+      const response = await api.delete(`/chat/conversation/${otherUserId}`);
+      return response.data;
+    } catch (error) {
+      console.error('Failed to clear conversation:', error);
+      throw error;
+    }
+  },
+
+  // Report chat or user
+  reportChat: async (chatId, reason) => {
+    try {
+      const response = await api.post('/chat/report', {
+        chatId,
+        reason,
+        type: 'chat'
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to report chat:', error);
+      throw error;
+    }
+  },
+
+  // Mute chat notifications
+  muteChat: async (chatId, duration) => {
+    try {
+      const response = await api.post('/chat/mute', {
+        chatId,
+        duration
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Failed to mute chat:', error);
+      throw error;
+    }
   }
+
 };

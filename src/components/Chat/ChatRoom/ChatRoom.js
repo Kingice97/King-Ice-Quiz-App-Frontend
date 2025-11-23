@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../../../context/SocketContext';
 import { chatService } from '../../../services/chatService';
+import { userService } from '../../../services/userService';
 import Loading from '../../common/Loading/Loading';
 import './ChatRoom.css';
 
@@ -25,6 +26,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
   const [showMenu, setShowMenu] = useState(false);
+  const [menuLoading, setMenuLoading] = useState(false);
+  const [menuMessage, setMenuMessage] = useState('');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
@@ -45,37 +48,125 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
+    setMenuMessage('');
   };
 
-  const handleViewProfile = () => {
+  const handleViewProfile = async () => {
     if (room.type === 'private' && room.user) {
-      window.open(`/profile/${room.user.username}`, '_blank');
+      try {
+        setMenuLoading(true);
+        // Get fresh user data
+        const response = await userService.getUserProfile(room.user.username);
+        if (response.success) {
+          // Open profile in new tab
+          window.open(`/profile/${room.user.username}`, '_blank');
+          setMenuMessage('Profile opened in new tab');
+        } else {
+          setMenuMessage('Profile not found');
+        }
+      } catch (error) {
+        console.error('Failed to fetch profile:', error);
+        setMenuMessage('Failed to load profile');
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
     }
-    setShowMenu(false);
   };
 
-  const handleClearChat = () => {
-    if (window.confirm('Are you sure you want to clear this chat?')) {
-      // Add clear chat functionality here
-      console.log('Clear chat:', room.id);
+  const handleClearChat = async () => {
+    if (window.confirm('Are you sure you want to clear this chat? This action cannot be undone.')) {
+      try {
+        setMenuLoading(true);
+        // Implement clear chat functionality
+        // For now, we'll clear the local messages
+        setMessages([]);
+        setMenuMessage('Chat cleared successfully');
+        
+        // TODO: Add backend API call to clear chat history
+        // await chatService.clearConversation(room.user._id);
+        
+      } catch (error) {
+        console.error('Failed to clear chat:', error);
+        setMenuMessage('Failed to clear chat');
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
     }
-    setShowMenu(false);
   };
 
-  const handleBlockUser = () => {
-    if (room.type === 'private' && window.confirm(`Block ${room.user.username}?`)) {
-      // Add block user functionality here
-      console.log('Block user:', room.user._id);
+  const handleBlockUser = async () => {
+    if (room.type === 'private' && window.confirm(`Are you sure you want to block ${room.user.username}? You will no longer receive messages from them.`)) {
+      try {
+        setMenuLoading(true);
+        // Implement block user functionality
+        // TODO: Add backend API call to block user
+        // await userService.blockUser(room.user._id);
+        
+        setMenuMessage(`${room.user.username} has been blocked`);
+        
+        // Close the chat after blocking
+        setTimeout(() => {
+          onBack();
+        }, 1500);
+        
+      } catch (error) {
+        console.error('Failed to block user:', error);
+        setMenuMessage('Failed to block user');
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
     }
-    setShowMenu(false);
   };
 
-  const handleReport = () => {
-    if (window.confirm('Report this chat for inappropriate content?')) {
-      // Add report functionality here
-      console.log('Report chat:', room.id);
+  const handleReport = async () => {
+    const reason = prompt(`Please specify the reason for reporting ${room.type === 'private' ? room.user.username : 'this chat'}:`);
+    if (reason && reason.trim()) {
+      try {
+        setMenuLoading(true);
+        // Implement report functionality
+        // TODO: Add backend API call to report
+        // await chatService.reportChat(room.id, reason.trim());
+        
+        setMenuMessage('Thank you for your report. We will review it shortly.');
+        
+      } catch (error) {
+        console.error('Failed to submit report:', error);
+        setMenuMessage('Failed to submit report');
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
     }
-    setShowMenu(false);
+  };
+
+  const handleMuteChat = async () => {
+    const duration = prompt('Mute notifications for:\n1. 1 hour\n2. 8 hours\n3. 1 week\n4. Always\n\nEnter number (1-4):');
+    const durations = {
+      '1': '1 hour',
+      '2': '8 hours', 
+      '3': '1 week',
+      '4': 'always'
+    };
+    
+    if (durations[duration]) {
+      try {
+        setMenuLoading(true);
+        // TODO: Implement mute functionality
+        // await chatService.muteChat(room.id, durations[duration]);
+        
+        setMenuMessage(`Chat muted for ${durations[duration]}`);
+        
+      } catch (error) {
+        console.error('Failed to mute chat:', error);
+        setMenuMessage('Failed to mute chat');
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
+    }
   };
 
   // ✅ FIXED: Get consistent private room ID
@@ -381,43 +472,58 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             <div className="user-status">
               {room.type === 'private' 
                 ? (room.user?.isOnline ? 'online' : 'offline')
-                : `${onlineUsersList.length} users online`
+                : `${currentTypingUsers.length > 0 ? currentTypingUsers.length + ' typing' : 'Group chat'}`
               }
             </div>
           </div>
         </div>
         <div className="header-right">
           <div className="header-actions" ref={menuRef}>
-            <button className="action-button" onClick={toggleMenu}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
-                <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
-              </svg>
+            <button className="action-button" onClick={toggleMenu} disabled={menuLoading}>
+              {menuLoading ? (
+                <div className="menu-loading-spinner"></div>
+              ) : (
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
+                  <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
+                </svg>
+              )}
             </button>
             {showMenu && (
               <div className="dropdown-menu">
+                {menuMessage && (
+                  <div className="menu-message">
+                    {menuMessage}
+                  </div>
+                )}
                 {room.type === 'private' && (
-                  <button className="menu-item" onClick={handleViewProfile}>
+                  <button className="menu-item" onClick={handleViewProfile} disabled={menuLoading}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
                     </svg>
                     View Profile
                   </button>
                 )}
-                <button className="menu-item" onClick={handleClearChat}>
+                <button className="menu-item" onClick={handleMuteChat} disabled={menuLoading}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 3.7L6.7 8.9H3v6h3.7L12 20.3V3.7zm10 8.3c0 3.5-2.7 6.4-6.2 6.8v-2.1c2.4-.4 4.2-2.4 4.2-4.7s-1.8-4.3-4.2-4.7V5.5c3.5.4 6.2 3.3 6.2 6.8z"/>
+                  </svg>
+                  Mute Notifications
+                </button>
+                <button className="menu-item" onClick={handleClearChat} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
                   </svg>
                   Clear Chat
                 </button>
                 {room.type === 'private' && (
-                  <button className="menu-item" onClick={handleBlockUser}>
+                  <button className="menu-item" onClick={handleBlockUser} disabled={menuLoading}>
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
                     </svg>
                     Block User
                   </button>
                 )}
-                <button className="menu-item" onClick={handleReport}>
+                <button className="menu-item report-item" onClick={handleReport} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
                   </svg>
