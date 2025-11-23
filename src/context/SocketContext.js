@@ -441,39 +441,39 @@ export const SocketProvider = ({ children }) => {
     return messages[quizId] || [];
   }, [messages]);
 
-  // NEW: Block user via socket
-  const blockUser = useCallback(async (userId) => {
-    if (!socket || !isConnected) {
-      throw new Error('Not connected to chat server');
-    }
+// NEW: Block user via socket
+const blockUser = useCallback(async (userId) => {
+  if (!socket || !isConnected) {
+    throw new Error('Not connected to chat server');
+  }
 
-    return new Promise((resolve, reject) => {
-      socket.emit('block_user', { userId }, (response) => {
-        if (response?.success) {
-          resolve(response);
-        } else {
-          reject(new Error(response?.error || 'Failed to block user'));
-        }
-      });
+  return new Promise((resolve, reject) => {
+    socket.emit('block_user', { userId }, (response) => {
+      if (response?.success) {
+        resolve(response);
+      } else {
+        reject(new Error(response?.error || 'Failed to block user'));
+      }
     });
-  }, [socket, isConnected]);
+  });
+}, [socket, isConnected]);
 
-  // NEW: Unblock user via socket
-  const unblockUser = useCallback(async (userId) => {
-    if (!socket || !isConnected) {
-      throw new Error('Not connected to chat server');
-    }
+// NEW: Unblock user via socket
+const unblockUser = useCallback(async (userId) => {
+  if (!socket || !isConnected) {
+    throw new Error('Not connected to chat server');
+  }
 
-    return new Promise((resolve, reject) => {
-      socket.emit('unblock_user', { userId }, (response) => {
-        if (response?.success) {
-          resolve(response);
-        } else {
-          reject(new Error(response?.error || 'Failed to unblock user'));
-        }
-      });
+  return new Promise((resolve, reject) => {
+    socket.emit('unblock_user', { userId }, (response) => {
+      if (response?.success) {
+        resolve(response);
+      } else {
+        reject(new Error(response?.error || 'Failed to unblock user'));
+      }
     });
-  }, [socket, isConnected]);
+  });
+}, [socket, isConnected]);
 
   const value = {
     socket,

@@ -16,7 +16,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     typingUsers,
     isConnected,
     subscribeToMessages,
-    unsubscribeFromMessages
+    unsubscribeFromMessages,
+    blockUser, // NEW: Add blockUser from socket context
+    unblockUser // NEW: Add unblockUser from socket context
   } = useSocket();
   
   const [messages, setMessages] = useState([]);
@@ -28,7 +30,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [menuLoading, setMenuLoading] = useState(false);
   const [menuMessage, setMenuMessage] = useState('');
-  const [isBlocked, setIsBlocked] = useState(false);
+  const [isBlocked, setIsBlocked] = useState(false); // NEW: Track blocked state
+  const [blockLoading, setBlockLoading] = useState(false); // NEW: Track block loading
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
@@ -47,13 +50,23 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Check if user is blocked
+  // Check if user is blocked - UPDATED
   useEffect(() => {
-    if (room.type === 'private' && room.user) {
-      // Check if user is in blocked list (you might want to fetch this from user context)
-      const blockedUsers = currentUser?.blockedUsers || [];
-      setIsBlocked(blockedUsers.includes(room.user._id));
-    }
+    const checkBlockStatus = async () => {
+      if (room.type === 'private' && room.user && currentUser) {
+        try {
+          // Check if current user has blocked this user
+          const hasBlocked = currentUser.blockedUsers && 
+                            currentUser.blockedUsers.includes(room.user._id);
+          setIsBlocked(hasBlocked);
+          console.log(`🔍 Block status: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+        } catch (error) {
+          console.error('Error checking block status:', error);
+        }
+      }
+    };
+
+    checkBlockStatus();
   }, [room, currentUser]);
 
   const toggleMenu = () => {
@@ -109,38 +122,47 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
+  // UPDATED: Block/Unblock user function
   const handleBlockUser = async () => {
-    if (room.type === 'private' && window.confirm(`Are you sure you want to block ${room.user.username}? You will no longer receive messages from them.`)) {
+    if (room.type === 'private' && room.user) {
       try {
-        setMenuLoading(true);
+        setBlockLoading(true);
         
         if (isBlocked) {
-          // Unblock user
+          // Unblock user using both API and socket
           await userService.unblockUser(room.user._id);
+          await unblockUser(room.user._id);
           setIsBlocked(false);
           setMenuMessage(`${room.user.username} has been unblocked`);
         } else {
-          // Block user
-          await userService.blockUser(room.user._id);
-          setIsBlocked(true);
-          setMenuMessage(`${room.user.username} has been blocked`);
-          
-          // Close the chat after blocking
-          setTimeout(() => {
-            onBack();
-          }, 1500);
+          // Block user using both API and socket
+          if (window.confirm(`Are you sure you want to block ${room.user.username}? You will no longer receive messages from them.`)) {
+            await userService.blockUser(room.user._id);
+            await blockUser(room.user._id);
+            setIsBlocked(true);
+            setMenuMessage(`${room.user.username} has been blocked`);
+            
+            // Close the chat after blocking
+            setTimeout(() => {
+              onBack();
+            }, 1500);
+          } else {
+            setBlockLoading(false);
+            return;
+          }
         }
         
       } catch (error) {
         console.error('Failed to block/unblock user:', error);
-        setMenuMessage('Failed to block user');
+        setMenuMessage('Failed to block user: ' + error.message);
       } finally {
-        setMenuLoading(false);
+        setBlockLoading(false);
         setTimeout(() => setShowMenu(false), 2000);
       }
     }
   };
 
+  // UPDATED: Report function with better error handling
   const handleReport = async () => {
     const reason = prompt(`Please specify the reason for reporting ${room.type === 'private' ? room.user.username : 'this chat'}:\n\nExamples:\n- Inappropriate messages\n- Harassment\n- Spam\n- Fake profile\n- Other violations`);
     
@@ -149,7 +171,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         setMenuLoading(true);
         
         if (room.type === 'private') {
-          // Report user to backend (this will send email to developer)
+          // Report user to backend
           await userService.reportUser(room.user._id, reason.trim());
           setMenuMessage('Thank you for your report. We will review it shortly and contact you if needed.');
         } else {
@@ -160,7 +182,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         
       } catch (error) {
         console.error('Failed to submit report:', error);
-        setMenuMessage('Failed to submit report');
+        setMenuMessage('Failed to submit report: ' + error.message);
       } finally {
         setMenuLoading(false);
         setTimeout(() => setShowMenu(false), 2000);
@@ -318,7 +340,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Handle sending messages
+  // UPDATED: Handle sending messages with better error handling
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -350,7 +372,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
     } catch (error) {
       console.error('❌ Failed to send message:', error);
-      setError('Failed to send message. Please try again.');
+      setError(error.message || 'Failed to send message. Please try again.');
     } finally {
       setSending(false);
     }
@@ -492,7 +514,10 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             )}
           </div>
           <div className="user-info">
-            <div className="user-name">{room.name}</div>
+            <div className="user-name">
+              {room.name}
+              {isBlocked && <span className="blocked-badge">🚫 Blocked</span>}
+            </div>
             <div className="user-status">
               {room.type === 'private' 
                 ? (room.user?.isOnline ? 'online' : 'offline')
@@ -543,12 +568,18 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   <button 
                     className={`menu-item ${isBlocked ? 'unblock-item' : 'block-item'}`} 
                     onClick={handleBlockUser} 
-                    disabled={menuLoading}
+                    disabled={blockLoading || menuLoading}
                   >
-                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
-                    </svg>
-                    {isBlocked ? 'Unblock User' : 'Block User'}
+                    {blockLoading ? (
+                      <div className="menu-loading-spinner small"></div>
+                    ) : (
+                      <>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
+                        </svg>
+                        {isBlocked ? 'Unblock User' : 'Block User'}
+                      </>
+                    )}
                   </button>
                 )}
                 <button className="menu-item report-item" onClick={handleReport} disabled={menuLoading}>
@@ -651,15 +682,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             onChange={handleInputChange}
             onBlur={handleInputBlur}
             onKeyPress={handleKeyPress}
-            placeholder="Type a message"
+            placeholder={isBlocked ? "You have blocked this user" : "Type a message"}
             className="message-input"
             maxLength={500}
-            disabled={sending || !isConnected}
+            disabled={sending || !isConnected || isBlocked}
           />
           <button 
             onClick={handleSendMessage}
-            disabled={!newMessage.trim() || sending || !isConnected}
-            className={`send-button ${sending ? 'sending' : ''}`}
+            disabled={!newMessage.trim() || sending || !isConnected || isBlocked}
+            className={`send-button ${sending ? 'sending' : ''} ${isBlocked ? 'blocked' : ''}`}
           >
             <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
               <path d="M2.01 21L23 12 2.01 3 2 10l15 2-15 2z"/>
