@@ -38,6 +38,27 @@ export const SocketProvider = ({ children }) => {
     return userId;
   }, [user]);
 
+  // Check if user is blocked
+  const checkIfBlocked = useCallback(async (otherUserId) => {
+    try {
+      const userId = getUserId();
+      if (!userId || !otherUserId) return false;
+
+      // Check if current user blocked the other user
+      if (user.blockedUsers && user.blockedUsers.includes(otherUserId)) {
+        console.log(`🚫 You have blocked user: ${otherUserId}`);
+        return true;
+      }
+
+      // In a real app, you'd check if the other user blocked you via API
+      // For now, we'll rely on the backend to handle this
+      return false;
+    } catch (error) {
+      console.error('Error checking block status:', error);
+      return false;
+    }
+  }, [user, getUserId]);
+
   // Initialize socket connection
   useEffect(() => {
     const userId = getUserId();
@@ -128,8 +149,16 @@ export const SocketProvider = ({ children }) => {
     });
 
     // Handle private messages
-    newSocket.on('receive_private_message', (messageData) => {
+    newSocket.on('receive_private_message', async (messageData) => {
       console.log('📩 Received private message:', messageData);
+      
+      // Check if sender is blocked
+      const isBlocked = await checkIfBlocked(messageData.user);
+      if (isBlocked) {
+        console.log('🚫 Ignoring message from blocked user:', messageData.user);
+        return;
+      }
+      
       setMessages(prev => {
         const roomId = messageData.room;
         const existing = prev[roomId] || [];
@@ -183,6 +212,24 @@ export const SocketProvider = ({ children }) => {
       }));
     });
 
+    // NEW: Handle block-related events
+    newSocket.on('user_blocked', (data) => {
+      console.log('🚫 User blocked event:', data);
+      // You can update UI or show notification
+    });
+
+    newSocket.on('user_unblocked', (data) => {
+      console.log('✅ User unblocked event:', data);
+      // You can update UI or show notification
+    });
+
+    // NEW: Handle message sending errors
+    newSocket.on('message_blocked', (data) => {
+      console.log('🚫 Message blocked:', data);
+      // Show error to user
+      alert('Message not sent: You are blocked by this user or have blocked them.');
+    });
+
     // Cleanup
     return () => {
       console.log('🧹 SocketProvider cleanup');
@@ -190,7 +237,7 @@ export const SocketProvider = ({ children }) => {
         newSocket.disconnect();
       }
     };
-  }, [isAuthenticated, user, getUserId]);
+  }, [isAuthenticated, user, getUserId, checkIfBlocked]);
 
   // Socket methods
   const joinQuizRoom = useCallback((quizId) => {
@@ -269,6 +316,12 @@ export const SocketProvider = ({ children }) => {
       throw new Error('User not authenticated');
     }
 
+    // Check if recipient is blocked
+    const isBlocked = await checkIfBlocked(recipientId);
+    if (isBlocked) {
+      throw new Error('You have blocked this user. Unblock them to send messages.');
+    }
+
     return new Promise((resolve, reject) => {
       const messageData = {
         recipientId: recipientId,
@@ -291,29 +344,29 @@ export const SocketProvider = ({ children }) => {
         }
       });
     });
-  }, [socket, isConnected, user, getUserId]);
+  }, [socket, isConnected, user, getUserId, checkIfBlocked]);
 
-// Load private chat history
-const loadPrivateMessages = useCallback(async (recipientId) => {
-  if (!socket || !isConnected) {
-    throw new Error('Not connected to chat server');
-  }
+  // Load private chat history
+  const loadPrivateMessages = useCallback(async (recipientId) => {
+    if (!socket || !isConnected) {
+      throw new Error('Not connected to chat server');
+    }
 
-  return new Promise((resolve, reject) => {
-    const timeout = setTimeout(() => {
-      reject(new Error('Load messages timeout'));
-    }, 15000); // ✅ CHANGED: Increased to 15 seconds
+    return new Promise((resolve, reject) => {
+      const timeout = setTimeout(() => {
+        reject(new Error('Load messages timeout'));
+      }, 15000); // ✅ CHANGED: Increased to 15 seconds
 
-    socket.emit('load_private_messages', { recipientId }, (response) => {
-      clearTimeout(timeout);
-      if (response?.success) {
-        resolve(response);
-      } else {
-        reject(new Error(response?.error || 'Failed to load messages'));
-      }
+      socket.emit('load_private_messages', { recipientId }, (response) => {
+        clearTimeout(timeout);
+        if (response?.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response?.error || 'Failed to load messages'));
+        }
+      });
     });
-  });
-}, [socket, isConnected]);
+  }, [socket, isConnected]);
 
   // Load user conversations
   const loadConversations = useCallback(async () => {
@@ -388,6 +441,40 @@ const loadPrivateMessages = useCallback(async (recipientId) => {
     return messages[quizId] || [];
   }, [messages]);
 
+  // NEW: Block user via socket
+  const blockUser = useCallback(async (userId) => {
+    if (!socket || !isConnected) {
+      throw new Error('Not connected to chat server');
+    }
+
+    return new Promise((resolve, reject) => {
+      socket.emit('block_user', { userId }, (response) => {
+        if (response?.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response?.error || 'Failed to block user'));
+        }
+      });
+    });
+  }, [socket, isConnected]);
+
+  // NEW: Unblock user via socket
+  const unblockUser = useCallback(async (userId) => {
+    if (!socket || !isConnected) {
+      throw new Error('Not connected to chat server');
+    }
+
+    return new Promise((resolve, reject) => {
+      socket.emit('unblock_user', { userId }, (response) => {
+        if (response?.success) {
+          resolve(response);
+        } else {
+          reject(new Error(response?.error || 'Failed to unblock user'));
+        }
+      });
+    });
+  }, [socket, isConnected]);
+
   const value = {
     socket,
     isConnected,
@@ -404,7 +491,11 @@ const loadPrivateMessages = useCallback(async (recipientId) => {
     stopTyping,
     getQuizMessages,
     subscribeToMessages,
-    unsubscribeFromMessages
+    unsubscribeFromMessages,
+    // NEW: Blocking functions
+    blockUser,
+    unblockUser,
+    checkIfBlocked
   };
 
   console.log('🎯 SocketContext value:', { 
