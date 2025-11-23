@@ -28,6 +28,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [showMenu, setShowMenu] = useState(false);
   const [menuLoading, setMenuLoading] = useState(false);
   const [menuMessage, setMenuMessage] = useState('');
+  const [isBlocked, setIsBlocked] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
@@ -46,6 +47,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
+  // Check if user is blocked
+  useEffect(() => {
+    if (room.type === 'private' && room.user) {
+      // Check if user is in blocked list (you might want to fetch this from user context)
+      const blockedUsers = currentUser?.blockedUsers || [];
+      setIsBlocked(blockedUsers.includes(room.user._id));
+    }
+  }, [room, currentUser]);
+
   const toggleMenu = () => {
     setShowMenu(!showMenu);
     setMenuMessage('');
@@ -58,8 +68,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         // Get fresh user data
         const response = await userService.getUserProfile(room.user.username);
         if (response.success) {
-          // Open profile in new tab
-          window.open(`/profile/${room.user.username}`, '_blank');
+          // Open profile in new tab with correct URL
+          const profileUrl = `/profile/${room.user.username}`;
+          window.open(profileUrl, '_blank');
           setMenuMessage('Profile opened in new tab');
         } else {
           setMenuMessage('Profile not found');
@@ -78,13 +89,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     if (window.confirm('Are you sure you want to clear this chat? This action cannot be undone.')) {
       try {
         setMenuLoading(true);
-        // Implement clear chat functionality
-        // For now, we'll clear the local messages
+        
+        if (room.type === 'private') {
+          // Clear conversation from backend
+          await chatService.clearConversation(room.user._id);
+        }
+        
+        // Clear local messages
         setMessages([]);
         setMenuMessage('Chat cleared successfully');
-        
-        // TODO: Add backend API call to clear chat history
-        // await chatService.clearConversation(room.user._id);
         
       } catch (error) {
         console.error('Failed to clear chat:', error);
@@ -100,19 +113,26 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     if (room.type === 'private' && window.confirm(`Are you sure you want to block ${room.user.username}? You will no longer receive messages from them.`)) {
       try {
         setMenuLoading(true);
-        // Implement block user functionality
-        // TODO: Add backend API call to block user
-        // await userService.blockUser(room.user._id);
         
-        setMenuMessage(`${room.user.username} has been blocked`);
-        
-        // Close the chat after blocking
-        setTimeout(() => {
-          onBack();
-        }, 1500);
+        if (isBlocked) {
+          // Unblock user
+          await userService.unblockUser(room.user._id);
+          setIsBlocked(false);
+          setMenuMessage(`${room.user.username} has been unblocked`);
+        } else {
+          // Block user
+          await userService.blockUser(room.user._id);
+          setIsBlocked(true);
+          setMenuMessage(`${room.user.username} has been blocked`);
+          
+          // Close the chat after blocking
+          setTimeout(() => {
+            onBack();
+          }, 1500);
+        }
         
       } catch (error) {
-        console.error('Failed to block user:', error);
+        console.error('Failed to block/unblock user:', error);
         setMenuMessage('Failed to block user');
       } finally {
         setMenuLoading(false);
@@ -122,15 +142,21 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   };
 
   const handleReport = async () => {
-    const reason = prompt(`Please specify the reason for reporting ${room.type === 'private' ? room.user.username : 'this chat'}:`);
+    const reason = prompt(`Please specify the reason for reporting ${room.type === 'private' ? room.user.username : 'this chat'}:\n\nExamples:\n- Inappropriate messages\n- Harassment\n- Spam\n- Fake profile\n- Other violations`);
+    
     if (reason && reason.trim()) {
       try {
         setMenuLoading(true);
-        // Implement report functionality
-        // TODO: Add backend API call to report
-        // await chatService.reportChat(room.id, reason.trim());
         
-        setMenuMessage('Thank you for your report. We will review it shortly.');
+        if (room.type === 'private') {
+          // Report user to backend (this will send email to developer)
+          await userService.reportUser(room.user._id, reason.trim());
+          setMenuMessage('Thank you for your report. We will review it shortly and contact you if needed.');
+        } else {
+          // Report chat
+          await chatService.reportChat(room.id, reason.trim());
+          setMenuMessage('Thank you for reporting this chat. Our team will review it.');
+        }
         
       } catch (error) {
         console.error('Failed to submit report:', error);
@@ -154,9 +180,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     if (durations[duration]) {
       try {
         setMenuLoading(true);
-        // TODO: Implement mute functionality
-        // await chatService.muteChat(room.id, durations[duration]);
-        
+        await chatService.muteChat(room.id, durations[duration]);
         setMenuMessage(`Chat muted for ${durations[duration]}`);
         
       } catch (error) {
@@ -516,11 +540,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   Clear Chat
                 </button>
                 {room.type === 'private' && (
-                  <button className="menu-item" onClick={handleBlockUser} disabled={menuLoading}>
+                  <button 
+                    className={`menu-item ${isBlocked ? 'unblock-item' : 'block-item'}`} 
+                    onClick={handleBlockUser} 
+                    disabled={menuLoading}
+                  >
                     <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                       <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
                     </svg>
-                    Block User
+                    {isBlocked ? 'Unblock User' : 'Block User'}
                   </button>
                 )}
                 <button className="menu-item report-item" onClick={handleReport} disabled={menuLoading}>

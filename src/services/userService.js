@@ -366,5 +366,22 @@ export const userService = {
       console.error('❌ Failed to unblock user:', error);
       throw error;
     }
+  },
+
+  // Report user
+  reportUser: async (userId, reason) => {
+    try {
+      console.log(`🚨 Reporting user: ${userId}`, reason);
+      const token = localStorage.getItem('token');
+      const response = await api.post(`/users/${userId}/report`, { reason }, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      console.log('✅ User reported successfully');
+      return response.data;
+    } catch (error) {
+      console.error('❌ Failed to report user:', error);
+      throw error;
+    }
   }
+
 };
