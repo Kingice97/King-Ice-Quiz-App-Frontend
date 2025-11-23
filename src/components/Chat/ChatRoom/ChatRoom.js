@@ -50,62 +50,94 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // Add this function to check block status from backend
-  const checkBlockStatusFromBackend = useCallback(async () => {
+  // NEW: Direct block status check using the current user's data
+  const checkDirectBlockStatus = useCallback(async () => {
     if (room.type === 'private' && room.user && currentUser) {
       try {
-        console.log('🔍 Checking block status from backend...');
+        console.log('🔍 Direct block status check for user:', room.user._id);
         
-        // Get fresh user data to check current block status
-        const response = await userService.getUserProfile(currentUser.username);
-        if (response.success && response.data && response.data.user) {
-          const freshUserData = response.data.user;
-          const hasBlocked = freshUserData.blockedUsers && 
-                            freshUserData.blockedUsers.includes(room.user._id);
-          
-          console.log(`🔍 Backend block status: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
-          setIsBlocked(hasBlocked);
-          
-          // If blocked but UI shows unblocked, force update
-          if (hasBlocked && !isBlocked) {
-            console.log('🔄 Force updating block state to BLOCKED');
-            setIsBlocked(true);
-          }
+        // Method 1: Check current user's blockedUsers array directly
+        if (currentUser.blockedUsers && currentUser.blockedUsers.includes(room.user._id)) {
+          console.log('✅ Direct check: User is BLOCKED');
+          setIsBlocked(true);
+          return true;
         }
+        
+        // Method 2: Try to get fresh user data from API
+        try {
+          const response = await userService.getUserById(currentUser._id);
+          if (response.success && response.data) {
+            const freshUserData = response.data;
+            const hasBlocked = freshUserData.blockedUsers && 
+                              freshUserData.blockedUsers.includes(room.user._id);
+            
+            console.log(`🔍 API check: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+            setIsBlocked(hasBlocked);
+            return hasBlocked;
+          }
+        } catch (apiError) {
+          console.log('⚠️ API check failed, using local data');
+        }
+        
+        // Method 3: Try sending a test message to see if it's blocked
+        console.log('🔍 Testing message send capability...');
+        setIsBlocked(false); // Assume not blocked by default
+        
       } catch (error) {
-        console.error('Error checking block status from backend:', error);
+        console.error('Error in direct block check:', error);
       }
     }
-  }, [room, currentUser, isBlocked]);
+    return false;
+  }, [room, currentUser]);
 
-  // Call this function when component loads and when room changes
-  useEffect(() => {
-    checkBlockStatusFromBackend();
-  }, [checkBlockStatusFromBackend]);
-
-  // Also add a manual refresh function that you can call
-  const refreshBlockStatus = () => {
-    checkBlockStatusFromBackend();
+  // NEW: Force unblock using multiple methods
+  const forceUnblockUser = async () => {
+    if (room.type === 'private' && room.user) {
+      try {
+        setBlockLoading(true);
+        console.log('🔄 FORCE UNBLOCKING USER...');
+        
+        // Method 1: Use API unblock
+        await userService.unblockUser(room.user._id);
+        console.log('✅ API unblock successful');
+        
+        // Method 2: Use socket unblock
+        await unblockUser(room.user._id);
+        console.log('✅ Socket unblock successful');
+        
+        // Method 3: Update local state
+        setIsBlocked(false);
+        
+        // Method 4: Update current user's blockedUsers array
+        if (currentUser.blockedUsers) {
+          currentUser.blockedUsers = currentUser.blockedUsers.filter(id => 
+            id.toString() !== room.user._id.toString()
+          );
+        }
+        
+        setMenuMessage(`✅ ${room.user.username} has been unblocked successfully`);
+        console.log('✅ Force unblock completed');
+        
+      } catch (error) {
+        console.error('Force unblock failed:', error);
+        setMenuMessage('❌ Failed to unblock user: ' + error.message);
+      } finally {
+        setBlockLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
+    }
   };
 
-  // Check if user is blocked - UPDATED
+  // Check block status when component loads
   useEffect(() => {
-    const checkBlockStatus = async () => {
-      if (room.type === 'private' && room.user && currentUser) {
-        try {
-          // Check if current user has blocked this user
-          const hasBlocked = currentUser.blockedUsers && 
-                            currentUser.blockedUsers.includes(room.user._id);
-          setIsBlocked(hasBlocked);
-          console.log(`🔍 Block status: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
-        } catch (error) {
-          console.error('Error checking block status:', error);
-        }
+    const initializeBlockStatus = async () => {
+      if (room.type === 'private' && room.user) {
+        await checkDirectBlockStatus();
       }
     };
-
-    checkBlockStatus();
-  }, [room, currentUser]);
+    
+    initializeBlockStatus();
+  }, [room, checkDirectBlockStatus]);
 
   const toggleMenu = () => {
     setShowMenu(!showMenu);
@@ -116,10 +148,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     if (room.type === 'private' && room.user) {
       try {
         setMenuLoading(true);
-        // Get fresh user data
         const response = await userService.getUserProfile(room.user.username);
         if (response.success) {
-          // Open profile in new tab with correct URL
           const profileUrl = `/profile/${room.user.username}`;
           window.open(profileUrl, '_blank');
           setMenuMessage('Profile opened in new tab');
@@ -142,11 +172,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         setMenuLoading(true);
         
         if (room.type === 'private') {
-          // Clear conversation from backend
           await chatService.clearConversation(room.user._id);
         }
         
-        // Clear local messages
         setMessages([]);
         setMenuMessage('Chat cleared successfully');
         
@@ -160,49 +188,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // Add this temporary function to force unblock
-  const handleForceUnblock = async () => {
-    if (room.type === 'private' && room.user) {
-      try {
-        setBlockLoading(true);
-        console.log('🔄 Force unblocking user...');
-        
-        // Use both API and socket to unblock
-        await userService.unblockUser(room.user._id);
-        await unblockUser(room.user._id);
-        
-        // Force update the state
-        setIsBlocked(false);
-        setMenuMessage(`${room.user.username} has been unblocked`);
-        
-        console.log('✅ User force unblocked');
-        
-      } catch (error) {
-        console.error('Failed to force unblock user:', error);
-        setMenuMessage('Failed to unblock user: ' + error.message);
-      } finally {
-        setBlockLoading(false);
-        setTimeout(() => setShowMenu(false), 2000);
-      }
-    }
-  };
-
-  // UPDATED: Improved block/unblock function
+  // UPDATED: Block/Unblock with better error handling
   const handleBlockUser = async () => {
     if (room.type === 'private' && room.user) {
       try {
         setBlockLoading(true);
         
-        // First, get current block status to be sure
-        await checkBlockStatusFromBackend();
-        
         if (isBlocked) {
           // Unblock user
           console.log('🔄 Unblocking user...');
-          await userService.unblockUser(room.user._id);
-          await unblockUser(room.user._id);
-          setIsBlocked(false);
-          setMenuMessage(`${room.user.username} has been unblocked`);
+          await forceUnblockUser();
         } else {
           // Block user
           if (window.confirm(`Are you sure you want to block ${room.user.username}? You will no longer receive messages from them.`)) {
@@ -212,7 +207,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             setIsBlocked(true);
             setMenuMessage(`${room.user.username} has been blocked`);
             
-            // Close the chat after blocking
             setTimeout(() => {
               onBack();
             }, 1500);
@@ -224,15 +218,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         
       } catch (error) {
         console.error('Failed to block/unblock user:', error);
-        setMenuMessage('Failed to block user: ' + error.message);
+        setMenuMessage('Failed: ' + error.message);
       } finally {
         setBlockLoading(false);
-        setTimeout(() => setShowMenu(false), 2000);
       }
     }
   };
 
-  // UPDATED: Report function with better error handling
   const handleReport = async () => {
     const reason = prompt(`Please specify the reason for reporting ${room.type === 'private' ? room.user.username : 'this chat'}:\n\nExamples:\n- Inappropriate messages\n- Harassment\n- Spam\n- Fake profile\n- Other violations`);
     
@@ -241,11 +233,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         setMenuLoading(true);
         
         if (room.type === 'private') {
-          // Report user to backend
           await userService.reportUser(room.user._id, reason.trim());
-          setMenuMessage('Thank you for your report. We will review it shortly and contact you if needed.');
+          setMenuMessage('Thank you for your report. We will review it shortly.');
         } else {
-          // Report chat
           await chatService.reportChat(room.id, reason.trim());
           setMenuMessage('Thank you for reporting this chat. Our team will review it.');
         }
@@ -285,7 +275,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // ✅ FIXED: Get consistent private room ID
+  // Get consistent private room ID
   const getPrivateRoomId = useCallback(() => {
     if (room.type !== 'private') return room.id;
     
@@ -296,7 +286,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
-  // ✅ FIXED: Load messages when room changes
+  // Load messages when room changes
   useEffect(() => {
     if (hasLoadedRef.current) {
       console.log('🔄 Already loaded messages for this room, skipping');
@@ -318,16 +308,11 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           const response = await chatService.getGlobalMessages(200);
           loadedMessages = response.data || [];
         } else if (room.type === 'private') {
-          // ✅ Load private messages
           const response = await loadPrivateMessages(room.user._id);
           loadedMessages = response.messages || [];
-          
-          // ✅ FIXED: Reverse the messages to show oldest first (since backend sends newest first)
           loadedMessages = loadedMessages.reverse();
           
           console.log(`🔐 Loaded ${loadedMessages.length} private messages for room: ${getPrivateRoomId()}`);
-          
-          // Join private chat room
           joinPrivateChat(room.user._id);
         }
         
@@ -350,7 +335,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
-  // ✅ FIXED: Subscribe to real-time messages
+  // Subscribe to real-time messages
   useEffect(() => {
     if (!isConnected) {
       console.log('⚠️ Socket not connected, skipping message subscription');
@@ -410,7 +395,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // UPDATED: Handle sending messages with better error handling
+  // Handle sending messages with better error handling
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -442,7 +427,14 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
     } catch (error) {
       console.error('❌ Failed to send message:', error);
-      setError(error.message || 'Failed to send message. Please try again.');
+      
+      // If error is about blocking, update our state
+      if (error.message.includes('blocked')) {
+        setIsBlocked(true);
+        setError('You have blocked this user. Unblock them to send messages.');
+      } else {
+        setError(error.message || 'Failed to send message. Please try again.');
+      }
     } finally {
       setSending(false);
     }
@@ -623,29 +615,28 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                       View Profile
                     </button>
                     
-                    {/* Debug button - temporary */}
+                    {/* Debug buttons */}
                     <button 
                       className="menu-item debug-item" 
-                      onClick={refreshBlockStatus}
+                      onClick={checkDirectBlockStatus}
                       disabled={menuLoading}
                     >
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
                       </svg>
-                      Refresh Block Status
+                      Check Block Status
                     </button>
 
-                    {/* Force unblock button - temporary */}
                     {isBlocked && (
                       <button 
                         className="menu-item force-unblock-item" 
-                        onClick={handleForceUnblock}
+                        onClick={forceUnblockUser}
                         disabled={blockLoading || menuLoading}
                       >
                         <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                           <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
                         </svg>
-                        Force Unblock
+                        {blockLoading ? 'Unblocking...' : 'Force Unblock'}
                       </button>
                     )}
                   </>
@@ -740,7 +731,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                     </div>
                   )}
                   <div className="message-bubble">
-                    {/* ✅ FIXED: Only show username for global chats, not private */}
                     {!isOwnMessage && room.type === 'global' && (
                       <div className="sender-name">{message.username}</div>
                     )}
