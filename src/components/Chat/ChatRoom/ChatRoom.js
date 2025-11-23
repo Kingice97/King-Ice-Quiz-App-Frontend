@@ -24,11 +24,61 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [error, setError] = useState('');
+  const [showMenu, setShowMenu] = useState(false);
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
   const hasLoadedRef = useRef(false);
+  const menuRef = useRef(null);
 
+  // Close menu when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (menuRef.current && !menuRef.current.contains(event.target)) {
+        setShowMenu(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
+  const toggleMenu = () => {
+    setShowMenu(!showMenu);
+  };
+
+  const handleViewProfile = () => {
+    if (room.type === 'private' && room.user) {
+      window.open(`/profile/${room.user.username}`, '_blank');
+    }
+    setShowMenu(false);
+  };
+
+  const handleClearChat = () => {
+    if (window.confirm('Are you sure you want to clear this chat?')) {
+      // Add clear chat functionality here
+      console.log('Clear chat:', room.id);
+    }
+    setShowMenu(false);
+  };
+
+  const handleBlockUser = () => {
+    if (room.type === 'private' && window.confirm(`Block ${room.user.username}?`)) {
+      // Add block user functionality here
+      console.log('Block user:', room.user._id);
+    }
+    setShowMenu(false);
+  };
+
+  const handleReport = () => {
+    if (window.confirm('Report this chat for inappropriate content?')) {
+      // Add report functionality here
+      console.log('Report chat:', room.id);
+    }
+    setShowMenu(false);
+  };
+
+  // ✅ FIXED: Get consistent private room ID
   const getPrivateRoomId = useCallback(() => {
     if (room.type !== 'private') return room.id;
     
@@ -39,6 +89,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return `private_${userIds[0]}_${userIds[1]}`;
   }, [room, currentUser]);
 
+  // ✅ FIXED: Load messages when room changes
   useEffect(() => {
     if (hasLoadedRef.current) {
       console.log('🔄 Already loaded messages for this room, skipping');
@@ -60,10 +111,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           const response = await chatService.getGlobalMessages(200);
           loadedMessages = response.data || [];
         } else if (room.type === 'private') {
+          // ✅ Load private messages
           const response = await loadPrivateMessages(room.user._id);
           loadedMessages = response.messages || [];
+          
+          // ✅ FIXED: Reverse the messages to show oldest first (since backend sends newest first)
           loadedMessages = loadedMessages.reverse();
+          
           console.log(`🔐 Loaded ${loadedMessages.length} private messages for room: ${getPrivateRoomId()}`);
+          
+          // Join private chat room
           joinPrivateChat(room.user._id);
         }
         
@@ -86,6 +143,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [room, loadPrivateMessages, joinPrivateChat, getPrivateRoomId]);
 
+  // ✅ FIXED: Subscribe to real-time messages
   useEffect(() => {
     if (!isConnected) {
       console.log('⚠️ Socket not connected, skipping message subscription');
@@ -136,6 +194,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     };
   }, [isConnected, room, subscribeToMessages, unsubscribeFromMessages, getPrivateRoomId]);
 
+  // Auto-scroll to bottom when messages change
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
@@ -144,6 +203,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Handle sending messages
   const handleSendMessage = async (e) => {
     e.preventDefault();
     
@@ -321,18 +381,50 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             <div className="user-status">
               {room.type === 'private' 
                 ? (room.user?.isOnline ? 'online' : 'offline')
-                : 'Community chat'
+                : `${onlineUsersList.length} users online`
               }
             </div>
           </div>
         </div>
         <div className="header-right">
-          <div className="header-actions">
-            <button className="action-button">
+          <div className="header-actions" ref={menuRef}>
+            <button className="action-button" onClick={toggleMenu}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="currentColor">
                 <path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/>
               </svg>
             </button>
+            {showMenu && (
+              <div className="dropdown-menu">
+                {room.type === 'private' && (
+                  <button className="menu-item" onClick={handleViewProfile}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 12c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm0 2c-2.67 0-8 1.34-8 4v2h16v-2c0-2.66-5.33-4-8-4z"/>
+                    </svg>
+                    View Profile
+                  </button>
+                )}
+                <button className="menu-item" onClick={handleClearChat}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
+                  </svg>
+                  Clear Chat
+                </button>
+                {room.type === 'private' && (
+                  <button className="menu-item" onClick={handleBlockUser}>
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                      <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zM4 12c0-4.42 3.58-8 8-8 1.85 0 3.55.63 4.9 1.69L5.69 16.9C4.63 15.55 4 13.85 4 12zm8 8c-1.85 0-3.55-.63-4.9-1.69L18.31 7.1C19.37 8.45 20 10.15 20 12c0 4.42-3.58 8-8 8z"/>
+                    </svg>
+                    Block User
+                  </button>
+                )}
+                <button className="menu-item" onClick={handleReport}>
+                  <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
+                    <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm1 15h-2v-2h2v2zm0-4h-2V7h2v6z"/>
+                  </svg>
+                  Report
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -373,7 +465,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   </div>
                 )}
                 <div className={`message ${isOwnMessage ? 'message-sent' : 'message-received'}`}>
-                  {!isOwnMessage && (
+                  {!isOwnMessage && room.type === 'global' && (
                     <div className="message-avatar">
                       {message.profilePicture ? (
                         <img src={message.profilePicture} alt={message.username} />
@@ -385,7 +477,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                     </div>
                   )}
                   <div className="message-bubble">
-                    {!isOwnMessage && (
+                    {/* ✅ FIXED: Only show username for global chats, not private */}
+                    {!isOwnMessage && room.type === 'global' && (
                       <div className="sender-name">{message.username}</div>
                     )}
                     <div className="message-text">{message.message}</div>
