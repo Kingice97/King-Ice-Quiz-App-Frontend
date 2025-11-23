@@ -144,27 +144,36 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     setMenuMessage('');
   };
 
-  const handleViewProfile = async () => {
-    if (room.type === 'private' && room.user) {
-      try {
-        setMenuLoading(true);
-        const response = await userService.getUserProfile(room.user.username);
-        if (response.success) {
-          const profileUrl = `/profile/${room.user.username}`;
-          window.open(profileUrl, '_blank');
-          setMenuMessage('Profile opened in new tab');
-        } else {
-          setMenuMessage('Profile not found');
-        }
-      } catch (error) {
-        console.error('Failed to fetch profile:', error);
-        setMenuMessage('Failed to load profile');
-      } finally {
-        setMenuLoading(false);
-        setTimeout(() => setShowMenu(false), 2000);
-      }
+const handleViewProfile = async () => {
+  if (room.type === 'private' && room.user) {
+    try {
+      setMenuLoading(true);
+      setMenuMessage('Loading profile...');
+      
+      console.log(`👤 Attempting to view profile for: ${room.user.username}`);
+      
+      // Directly navigate to the profile page
+      const profileUrl = `/profile/${room.user.username}`;
+      console.log(`🔗 Opening profile URL: ${profileUrl}`);
+      
+      // Use window.location for reliable navigation
+      window.location.href = profileUrl;
+      
+    } catch (error) {
+      console.error('❌ Failed to open profile:', error);
+      setMenuMessage('Failed to open profile');
+      
+      // Fallback: Try to open in new tab after a delay
+      setTimeout(() => {
+        const profileUrl = `/profile/${room.user.username}`;
+        window.open(profileUrl, '_blank');
+      }, 1000);
+    } finally {
+      setMenuLoading(false);
+      setTimeout(() => setShowMenu(false), 2000);
     }
-  };
+  }
+};
 
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this chat? This action cannot be undone.')) {

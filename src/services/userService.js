@@ -229,20 +229,30 @@ export const userService = {
     }
   },
 
-  getUserProfile: async (username) => {
-    try {
-      console.log(`👤 Fetching profile for: ${username}`);
-      const token = localStorage.getItem('token');
-      const response = await api.get(`/users/profile/${username}`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      console.log('✅ User profile fetched successfully');
-      return response.data;
-    } catch (error) {
-      console.error('❌ Failed to fetch user profile:', error);
-      throw error;
+getUserProfile: async (username) => {
+  try {
+    console.log(`👤 Fetching profile for: ${username}`);
+    const token = localStorage.getItem('token');
+    const response = await api.get(`/users/profile/${username}`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    
+    console.log('✅ User profile fetched successfully:', response.data);
+    return response.data;
+    
+  } catch (error) {
+    console.error('❌ Failed to fetch user profile:', error);
+    
+    // Enhanced error handling
+    if (error.response?.status === 404) {
+      throw new Error('User profile not found');
+    } else if (error.response?.status === 403) {
+      throw new Error('Profile is not available');
+    } else {
+      throw new Error('Failed to load user profile');
     }
-  },
+  }
+},
 
   getUserById: async (userId) => {
     try {

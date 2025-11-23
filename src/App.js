@@ -21,6 +21,7 @@ import Admin from './pages/Admin/Admin';
 import Dashboard from './pages/Dashboard/Dashboard';
 import QuizResults from './pages/QuizResults/QuizResults';
 import NotFound from './pages/NotFound/NotFound';
+import UserProfile from './pages/UserProfile/UserProfile';
 
 // Chat Pages
 import Chat from './pages/Chat/Chat';
@@ -313,6 +314,14 @@ function App() {
                     </ProtectedRoute>
                   } 
                 />
+                <Route 
+  path="/profile/:username" 
+  element={
+    <ProtectedRoute>
+      <Layout><UserProfile /></Layout>
+    </ProtectedRoute>
+  } 
+/>
                 
                 {/* Admin Routes - protected and admin only */}
                 <Route 
