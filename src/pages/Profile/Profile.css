@@ -38,20 +38,21 @@
   position: relative;
 }
 
-/* FIXED: Profile picture fills entire circle with no spaces */
+/* FIXED: WhatsApp-style profile picture - fills entire circle */
 .avatar-container {
   position: relative;
   width: 120px;
   height: 120px;
   border-radius: 50%;
   overflow: hidden;
-  border: 4px solid rgba(102, 126, 234, 0.2);
   transition: all var(--transition-fast);
   cursor: pointer;
+  /* Remove border and background to fill circle completely */
+  border: none;
+  background: none;
 }
 
 .avatar-container:hover {
-  border-color: var(--primary-color);
   transform: scale(1.05);
 }
 
@@ -59,12 +60,16 @@
   opacity: 1;
 }
 
-/* FIXED: Profile picture fills entire circle */
+/* FIXED: Profile picture fills entire circle with no spaces */
 .profile-picture {
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
+  /* Ensure no borders or spaces */
+  border: none;
+  margin: 0;
+  padding: 0;
 }
 
 .avatar-overlay {
@@ -84,6 +89,7 @@
   font-weight: 500;
 }
 
+/* FIXED: Avatar placeholder fills entire circle */
 .avatar-placeholder {
   width: 100%;
   height: 100%;
@@ -95,6 +101,8 @@
   font-size: var(--font-size-2xl);
   font-weight: 700;
   color: var(--white);
+  /* Remove border to fill circle completely */
+  border: none;
 }
 
 /* FIXED: Online status that doesn't cover profile picture */
