@@ -5,10 +5,18 @@
   flex-direction: column;
 }
 
+/* Sidebar Layout Adjustments */
 .main-content {
   flex: 1;
-  padding-top: 80px; /* Account for fixed navbar */
+  margin-left: 280px; /* Default sidebar width */
+  transition: margin-left 0.3s ease;
   min-height: calc(100vh - 160px);
+  padding-top: 0; /* Remove top padding since navbar is now sidebar */
+}
+
+/* Adjust main content when sidebar is collapsed */
+.main-content.sidebar-collapsed {
+  margin-left: 70px;
 }
 
 /* Full screen chat styles - ADDED */
@@ -16,7 +24,21 @@
   height: 100vh;
   margin: 0;
   padding: 0;
-  padding-top: 0 !important; /* Remove padding for chat */
+  padding-top: 0 !important;
+  margin-left: 0 !important;
+}
+
+/* Mobile adjustments */
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    margin-top: 60px; /* Account for mobile navbar */
+    padding-top: 0;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
 }
 
 /* Global Variables */
@@ -160,6 +182,20 @@ a:hover {
 
 .container-lg {
   max-width: 1024px;
+}
+
+/* Page content container */
+.page-container {
+  padding: 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .page-container {
+    padding: 1rem;
+  }
 }
 
 /* Buttons */
@@ -555,10 +591,27 @@ a:hover {
   max-width: 440px;
 }
 
+/* Ensure proper spacing for all pages */
+.home-page,
+.quizzes-page,
+.dashboard-page,
+.profile-page,
+.admin-page,
+.chat-page {
+  min-height: calc(100vh - 120px);
+}
+
+/* Chat page specific adjustments */
+.chat-page {
+  height: calc(100vh - 120px);
+  display: flex;
+  flex-direction: column;
+}
+
 /* Responsive improvements */
 @media (max-width: 768px) {
   .main-content {
-    padding-top: 70px;
+    padding-top: 0;
   }
   
   .container {
@@ -591,7 +644,7 @@ a:hover {
 
 @media (max-width: 480px) {
   .main-content {
-    padding-top: 60px;
+    padding-top: 0;
   }
   
   h1 { font-size: var(--font-size-2xl); }
@@ -609,6 +662,7 @@ a:hover {
   
   .main-content {
     padding-top: 0;
+    margin-left: 0 !important;
   }
 }
 
@@ -653,4 +707,109 @@ a:hover {
   right: 0;
   z-index: 10001;
   font-weight: bold;
+}
+
+/* Dark Mode Support */
+.dark {
+  --bg-primary: var(--gray-900);
+  --bg-secondary: var(--gray-800);
+  --bg-tertiary: var(--gray-700);
+  --text-primary: var(--gray-100);
+  --text-secondary: var(--gray-300);
+  --text-tertiary: var(--gray-400);
+  --border-primary: var(--gray-600);
+  --border-secondary: var(--gray-700);
+}
+
+.dark body {
+  background-color: var(--gray-900);
+  color: var(--gray-100);
+}
+
+.dark .card {
+  background: var(--gray-800);
+}
+
+.dark .card-header {
+  background-color: var(--gray-700);
+  border-bottom-color: var(--gray-600);
+}
+
+.dark .card-footer {
+  background-color: var(--gray-700);
+  border-top-color: var(--gray-600);
+}
+
+.dark .form-control {
+  background-color: var(--gray-800);
+  border-color: var(--gray-600);
+  color: var(--gray-100);
+}
+
+.dark .form-control:focus {
+  border-color: var(--primary-color);
+  box-shadow: 0 0 0 3px rgba(52, 152, 219, 0.2);
+}
+
+.dark .form-label {
+  color: var(--gray-300);
+}
+
+.dark .alert-success {
+  background-color: rgba(39, 174, 96, 0.2);
+  color: #d4edda;
+}
+
+.dark .alert-error {
+  background-color: rgba(231, 76, 60, 0.2);
+  color: #f8d7da;
+}
+
+.dark .alert-warning {
+  background-color: rgba(243, 156, 18, 0.2);
+  color: #fff3cd;
+}
+
+.dark .alert-info {
+  background-color: rgba(52, 152, 219, 0.2);
+  color: #d1ecf1;
+}
+
+/* Additional responsive adjustments for sidebar layout */
+@media (max-width: 1024px) {
+  .main-content {
+    margin-left: 280px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 70px;
+  }
+}
+
+@media (max-width: 768px) {
+  .main-content {
+    margin-left: 0;
+    margin-top: 60px;
+  }
+  
+  .main-content.sidebar-collapsed {
+    margin-left: 0;
+  }
+}
+
+/* Ensure content is properly spaced */
+.content-area {
+  padding: var(--spacing-xl);
+  min-height: calc(100vh - 120px);
+}
+
+@media (max-width: 768px) {
+  .content-area {
+    padding: var(--spacing-md);
+  }
+}
+
+/* Smooth transitions for theme changes */
+* {
+  transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
 }
