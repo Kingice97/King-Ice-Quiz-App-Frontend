@@ -5,39 +5,35 @@
   flex-direction: column;
 }
 
-/* Sidebar Layout Adjustments - FIXED: Remove top padding */
+/* Sidebar Layout Adjustments - FIXED: Remove all top spacing */
 .main-content {
   flex: 1;
-  margin-left: 280px; /* Default sidebar width */
-  transition: margin-left 0.3s ease;
-  min-height: 100vh; /* FIXED: Remove extra padding */
-  padding-top: 0; /* FIXED: Remove top padding */
+  margin-left: 280px; /* Sidebar width - always expanded */
+  min-height: 100vh;
+  padding: 0; /* FIXED: Remove all padding */
+  margin-top: 0; /* FIXED: Remove top margin */
 }
 
-/* Adjust main content when sidebar is collapsed - FIXED: Proper alignment */
+/* Remove collapsed state since we're keeping sidebar always expanded */
 .main-content.sidebar-collapsed {
-  margin-left: 70px;
+  margin-left: 280px; /* Keep same width */
 }
 
-/* Full screen chat styles - FIXED: Full width */
+/* Full screen chat styles */
 .main-content.full-screen-chat {
   height: 100vh;
-  margin: 0 !important; /* FIXED: Remove all margins */
+  margin: 0 !important;
   padding: 0 !important;
   width: 100vw;
 }
 
-/* Mobile adjustments - FIXED: Remove top margin */
+/* Mobile adjustments */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
-    margin-top: 0; /* FIXED: Remove top margin */
-    padding-top: 0;
+    margin-top: 0;
+    padding: 0;
     width: 100%;
-  }
-  
-  .main-content.sidebar-collapsed {
-    margin-left: 0;
   }
 }
 
@@ -184,7 +180,7 @@ a:hover {
   max-width: 1024px;
 }
 
-/* Page content container - FIXED: Remove top padding */
+/* Page content container - FIXED: Start from top */
 .page-container {
   padding: var(--spacing-xl);
   max-width: 1200px;
@@ -592,7 +588,7 @@ a:hover {
   max-width: 440px;
 }
 
-/* Ensure proper spacing for all pages - FIXED: Remove extra height */
+/* Ensure proper spacing for all pages */
 .home-page,
 .quizzes-page,
 .dashboard-page,
@@ -602,7 +598,7 @@ a:hover {
   min-height: 100vh;
 }
 
-/* Chat page specific adjustments - FIXED: Full height */
+/* Chat page specific adjustments */
 .chat-page {
   height: 100vh;
   display: flex;
@@ -697,7 +693,7 @@ a:hover {
   animation: slideInUp 0.5s ease-out, pulse 2s infinite;
 }
 
-/* Offline Indicator - ADDED */
+/* Offline Indicator */
 .offline-indicator {
   background: #ff6b6b;
   color: white;
@@ -777,14 +773,10 @@ a:hover {
   color: #d1ecf1;
 }
 
-/* Additional responsive adjustments for sidebar layout */
+/* Additional responsive adjustments */
 @media (max-width: 1024px) {
   .main-content {
     margin-left: 280px;
-  }
-  
-  .main-content.sidebar-collapsed {
-    margin-left: 70px;
   }
 }
 
@@ -792,10 +784,6 @@ a:hover {
   .main-content {
     margin-left: 0;
     margin-top: 0;
-  }
-  
-  .main-content.sidebar-collapsed {
-    margin-left: 0;
   }
 }
 
