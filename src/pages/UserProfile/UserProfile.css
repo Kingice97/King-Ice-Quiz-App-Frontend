@@ -2,19 +2,27 @@
   min-height: 100vh;
   background: #f8fafc;
   padding: 20px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  width: 100%;
+}
+
+.dark .user-profile-page {
+  background: #1a202c;
 }
 
 .profile-container {
   width: 100%;
-  max-width: 600px;
+  max-width: 1200px;
+  margin: 0 auto;
   background: white;
   border-radius: 16px;
   box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
   overflow: hidden;
   border: 1px solid #e2e8f0;
+}
+
+.dark .profile-container {
+  background: #2d3748;
+  border-color: #4a5568;
 }
 
 .profile-header {
@@ -24,6 +32,11 @@
   background: white;
   gap: 30px;
   border-bottom: 1px solid #e2e8f0;
+}
+
+.dark .profile-header {
+  background: #2d3748;
+  border-bottom-color: #4a5568;
 }
 
 .profile-avatar {
@@ -40,6 +53,11 @@
   background: #f8fafc;
 }
 
+.dark .profile-picture {
+  border-color: #4a5568;
+  background: #4a5568;
+}
+
 .avatar-placeholder {
   width: 120px;
   height: 120px;
@@ -52,6 +70,10 @@
   font-weight: bold;
   color: white;
   border: 4px solid #e2e8f0;
+}
+
+.dark .avatar-placeholder {
+  border-color: #4a5568;
 }
 
 .avatar-placeholder.fallback {
@@ -69,6 +91,10 @@
   color: #1e293b;
 }
 
+.dark .profile-info h1 {
+  color: #f7fafc;
+}
+
 .username {
   margin: 0 0 8px 0;
   font-size: 18px;
@@ -80,6 +106,10 @@
   margin: 0 0 12px 0;
   font-size: 16px;
   color: #64748b;
+}
+
+.dark .user-email {
+  color: #a0aec0;
 }
 
 .member-since {
@@ -129,11 +159,19 @@
   font-weight: 600;
 }
 
+.dark .bio-section h3 {
+  color: #f7fafc;
+}
+
 .bio-section p {
   margin: 0;
   line-height: 1.6;
   color: #475569;
   font-size: 16px;
+}
+
+.dark .bio-section p {
+  color: #a0aec0;
 }
 
 .bio-section .no-bio {
@@ -148,6 +186,11 @@
   padding: 30px 40px;
   background: #f8fafc;
   border-top: 1px solid #e2e8f0;
+}
+
+.dark .profile-actions {
+  background: #1a202c;
+  border-top-color: #4a5568;
 }
 
 .profile-error {
@@ -167,11 +210,19 @@
   font-size: 24px;
 }
 
+.dark .profile-error h2 {
+  color: #f7fafc;
+}
+
 .profile-error p {
   margin: 0 0 25px 0;
   color: #64748b;
   font-size: 16px;
   line-height: 1.5;
+}
+
+.dark .profile-error p {
+  color: #a0aec0;
 }
 
 .error-actions {
@@ -184,7 +235,6 @@
 @media (max-width: 768px) {
   .user-profile-page {
     padding: 10px;
-    align-items: flex-start;
   }
 
   .profile-container {
@@ -296,9 +346,19 @@
   border: 1px solid #cbd5e1;
 }
 
+.dark .btn-outline {
+  color: #a0aec0;
+  border-color: #4a5568;
+}
+
 .btn-outline:hover {
   background: #f8fafc;
   border-color: #94a3b8;
+}
+
+.dark .btn-outline:hover {
+  background: #2d3748;
+  border-color: #718096;
 }
 
 .btn-primary {
