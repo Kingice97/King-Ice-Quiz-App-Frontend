@@ -31,6 +31,7 @@ import UserSearch from './pages/UserSearch/UserSearch';
 import QuizzesManagement from './pages/Admin/QuizzesManagement';
 import QuestionsManagement from './pages/Admin/QuestionsManagement';
 import UsersManagement from './pages/Admin/UsersManagement';
+import Analytics from './pages/Analytics/Analytics';
 import ResultsManagement from './pages/Admin/ResultsManagement';
 import LeaderboardPage from './pages/Admin/LeaderboardPage';
 
@@ -352,6 +353,14 @@ function App() {
                   element={
                     <ProtectedRoute adminOnly={true}>
                       <Layout><UsersManagement /></Layout>
+                    </ProtectedRoute>
+                  } 
+                />
+                <Route 
+                  path="/admin/analytics" 
+                  element={
+                    <ProtectedRoute adminOnly={true}>
+                      <Layout><Analytics /></Layout>
                     </ProtectedRoute>
                   } 
                 />

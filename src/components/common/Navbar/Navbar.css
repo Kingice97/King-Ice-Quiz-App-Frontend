@@ -37,6 +37,7 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  z-index: 1002; /* FIXED: Ensure toggle is clickable */
 }
 
 .sidebar-toggle.mobile-only .bar {
@@ -59,6 +60,7 @@
   color: var(--primary-color);
   font-weight: bold;
   font-size: 1.1rem;
+  z-index: 1002; /* FIXED: Ensure logo is clickable */
 }
 
 .logo-icon {
@@ -73,6 +75,7 @@
   font-size: 1.2rem;
   border-radius: 0.5rem;
   transition: background-color 0.2s ease;
+  z-index: 1002; /* FIXED: Ensure theme toggle is clickable */
 }
 
 .theme-toggle.mobile-theme:hover {
@@ -83,7 +86,7 @@
   background-color: var(--gray-700);
 }
 
-/* Mobile Menu */
+/* Mobile Menu - FIXED: Improved clickability */
 .mobile-menu {
   position: fixed;
   top: 60px;
@@ -93,7 +96,7 @@
   background: var(--white);
   border-right: 1px solid var(--gray-200);
   transition: left 0.3s ease;
-  z-index: 999;
+  z-index: 1001;
 }
 
 .dark .mobile-menu {
@@ -120,6 +123,39 @@
   gap: 0.5rem;
 }
 
+/* FIXED: Ensure nav links are clickable */
+.mobile-nav .nav-link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 1rem;
+  text-decoration: none;
+  color: var(--gray-700);
+  border-radius: 0.5rem;
+  transition: all 0.2s ease;
+  font-weight: 500;
+  cursor: pointer; /* FIXED: Explicit cursor */
+}
+
+.dark .mobile-nav .nav-link {
+  color: var(--gray-300);
+}
+
+.mobile-nav .nav-link:hover {
+  background: var(--gray-50);
+  color: var(--primary-color);
+}
+
+.dark .mobile-nav .nav-link:hover {
+  background: var(--gray-700);
+  color: var(--primary-light);
+}
+
+.mobile-nav .nav-link.active {
+  background: var(--primary-color);
+  color: white;
+}
+
 .mobile-menu-overlay {
   position: fixed;
   top: 60px;
@@ -127,7 +163,7 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 998;
+  z-index: 999;
 }
 
 /* Desktop Sidebar Styles */
@@ -229,6 +265,7 @@
   transition: all 0.2s ease;
   white-space: nowrap;
   font-weight: 500;
+  cursor: pointer; /* FIXED: Explicit cursor */
 }
 
 .dark .nav-link {
@@ -435,6 +472,7 @@
   border-radius: 0.5rem;
   transition: all 0.2s ease;
   white-space: nowrap;
+  cursor: pointer; /* FIXED: Explicit cursor */
 }
 
 .dark .social-link {

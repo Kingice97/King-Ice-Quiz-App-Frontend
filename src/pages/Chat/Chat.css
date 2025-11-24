@@ -1,15 +1,17 @@
 .chat-page {
   height: 100vh;
   background: #f0f0f0;
+  width: 100vw; /* FIXED: Full viewport width */
+  margin: 0; /* FIXED: Remove any margins */
+  padding: 0; /* FIXED: Remove any padding */
 }
 
 .chat-container {
   display: flex;
   height: 100vh;
-  max-width: 1400px;
-  margin: 0 auto;
+  width: 100vw; /* FIXED: Full viewport width */
   background: white;
-  box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+  margin: 0; /* FIXED: Remove auto margins */
 }
 
 /* Sidebar - Always visible */
@@ -175,12 +177,13 @@
   color: #666;
 }
 
-/* Main Chat Area */
+/* Main Chat Area - FIXED: Full width */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #f8f9fa;
+  width: 100%; /* FIXED: Full width */
 }
 
 /* Empty State */
@@ -190,6 +193,7 @@
   align-items: center;
   justify-content: center;
   background: #f8f9fa;
+  width: 100%; /* FIXED: Full width */
 }
 
 .empty-state-content {
@@ -214,14 +218,20 @@
   font-size: 16px;
 }
 
-/* Responsive Design */
+/* Responsive Design - FIXED: Better mobile support */
 @media (max-width: 768px) {
+  .chat-page {
+    height: 100vh;
+    width: 100vw;
+  }
+  
   .chat-container {
     flex-direction: column;
+    width: 100vw;
   }
   
   .chat-sidebar {
-    width: 100%;
+    width: 100vw; /* FIXED: Full viewport width */
     min-width: auto;
     border-right: none;
     border-bottom: 1px solid #e0e0e0;
@@ -229,6 +239,7 @@
   
   .chat-main {
     flex: 1;
+    width: 100vw; /* FIXED: Full viewport width */
   }
   
   /* Hide sidebar when chat is open on mobile */
@@ -238,6 +249,19 @@
   
   .chat-container.mobile-chat-open .chat-main {
     display: flex;
+  }
+  
+  /* Adjust padding for mobile */
+  .sidebar-header {
+    padding: 16px;
+  }
+  
+  .chat-tabs {
+    padding: 0 16px;
+  }
+  
+  .global-chat-section {
+    padding: 16px;
   }
 }
 
@@ -272,4 +296,32 @@
 .auth-error p {
   color: #666;
   margin-bottom: 24px;
+}
+
+/* FIXED: Ensure no overflow on mobile */
+@media (max-width: 480px) {
+  .chat-sidebar {
+    width: 100vw;
+  }
+  
+  .sidebar-header {
+    padding: 12px;
+  }
+  
+  .sidebar-header h2 {
+    font-size: 18px;
+  }
+  
+  .chat-tabs {
+    padding: 0 12px;
+  }
+  
+  .tab {
+    padding: 10px 6px;
+    font-size: 13px;
+  }
+  
+  .global-chat-section {
+    padding: 12px;
+  }
 }

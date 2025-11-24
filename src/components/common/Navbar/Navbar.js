@@ -162,6 +162,7 @@ const Navbar = () => {
             <button 
               className="sidebar-toggle mobile-only"
               onClick={toggleMobileMenu}
+              aria-label="Toggle menu"
             >
               <span className="bar"></span>
               <span className="bar"></span>
