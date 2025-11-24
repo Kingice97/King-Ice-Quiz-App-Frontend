@@ -8,11 +8,12 @@
   background: var(--gray-900);
 }
 
-/* RESTORED: Proper container for centering */
+/* FIXED: Ensure proper desktop width */
 .profile-container {
   max-width: 1200px;
   margin: 0 auto;
   padding: 0 var(--spacing-md);
+  width: 100%;
 }
 
 .profile-header {
@@ -36,7 +37,6 @@
   position: relative;
 }
 
-/* FIXED: Clean avatar container - no background layers */
 .avatar-container {
   position: relative;
   width: 120px;
@@ -57,7 +57,6 @@
   opacity: 1;
 }
 
-/* FIXED: Profile picture fills the circle completely */
 .profile-picture {
   width: 100%;
   height: 100%;
@@ -95,19 +94,21 @@
   color: var(--white);
 }
 
-/* FIXED: Better online status positioning */
+/* FIXED: Better online status that doesn't cover the picture */
 .online-status {
   position: absolute;
-  bottom: 8px;
-  right: 8px;
-  background: rgba(0, 0, 0, 0.9);
+  bottom: 5px;
+  right: 5px;
+  background: rgba(0, 0, 0, 0.85);
   color: white;
-  padding: 4px 8px;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 500;
+  padding: 3px 8px;
+  border-radius: 10px;
+  font-size: 0.65rem;
+  font-weight: 600;
   z-index: 2;
   border: 2px solid var(--white);
+  min-width: auto;
+  line-height: 1;
 }
 
 .online-status.online {
@@ -150,7 +151,6 @@
   flex-wrap: wrap;
 }
 
-/* Admin Badge */
 .admin-badge {
   position: absolute;
   top: -5px;
@@ -167,7 +167,6 @@
   z-index: 2;
 }
 
-/* Profile Stats */
 .profile-stats {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -214,7 +213,6 @@
   color: var(--gray-400);
 }
 
-/* Admin Stats Message */
 .admin-stats-message {
   margin-bottom: var(--spacing-2xl);
 }
@@ -295,7 +293,6 @@
   opacity: 0.9;
 }
 
-/* Profile Tabs */
 .profile-tabs {
   display: flex;
   background: var(--white);
@@ -350,7 +347,6 @@
   background: var(--gray-700);
 }
 
-/* Tab Content */
 .tab-content {
   background: var(--white);
   border-radius: var(--border-radius-xl);
@@ -363,7 +359,6 @@
   background: var(--gray-800);
 }
 
-/* Info Section */
 .info-section {
   margin-bottom: var(--spacing-2xl);
 }
@@ -437,7 +432,6 @@
   color: var(--danger-color);
 }
 
-/* Chat Status */
 .chat-status.connected {
   color: var(--success-color);
   font-weight: 600;
@@ -448,7 +442,6 @@
   font-weight: 600;
 }
 
-/* Admin Message */
 .admin-message {
   background: linear-gradient(135deg, rgba(102, 126, 234, 0.05) 0%, rgba(118, 75, 162, 0.05) 100%);
   padding: var(--spacing-xl);
@@ -483,7 +476,10 @@
   color: var(--gray-400);
 }
 
-/* Bio Section */
+.bio-section {
+  margin-bottom: var(--spacing-2xl);
+}
+
 .bio-section h3 {
   color: var(--gray-900);
   margin-bottom: var(--spacing-lg);
@@ -507,7 +503,6 @@
   color: var(--gray-400);
 }
 
-/* Results List */
 .results-list {
   display: flex;
   flex-direction: column;
@@ -591,7 +586,10 @@
   color: var(--gray-400);
 }
 
-/* Admin Management */
+.admin-management {
+  margin-bottom: var(--spacing-2xl);
+}
+
 .admin-management h3 {
   color: var(--gray-900);
   margin-bottom: var(--spacing-xl);
@@ -657,7 +655,6 @@
   word-wrap: break-word;
 }
 
-/* Empty State */
 .empty-state {
   text-align: center;
   padding: var(--spacing-2xl);
@@ -668,7 +665,6 @@
   color: var(--gray-400);
 }
 
-/* Stats Loading */
 .stats-loading {
   display: flex;
   justify-content: center;
@@ -677,7 +673,6 @@
   margin-bottom: var(--spacing-2xl);
 }
 
-/* Forms */
 .profile-form,
 .password-form {
   display: flex;
@@ -693,7 +688,6 @@
   flex-wrap: wrap;
 }
 
-/* Message Styles */
 .message {
   padding: 12px 16px;
   border-radius: 8px;
@@ -713,20 +707,18 @@
   border: 1px solid #f5c6cb;
 }
 
-/* Loading states for buttons */
 .btn:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-/* Small text for additional info */
 .small-text {
   font-size: var(--font-size-sm);
   opacity: 0.8;
   margin-top: var(--spacing-sm);
 }
 
-/* Mobile Styles */
+/* FIXED: Mobile styles - only apply below 768px */
 @media (max-width: 768px) {
   .profile-page {
     padding: var(--spacing-lg) 0;
@@ -741,6 +733,27 @@
     text-align: center;
     gap: var(--spacing-lg);
     padding: var(--spacing-xl);
+  }
+  
+  /* FIXED: Mobile avatar with proper online status */
+  .profile-avatar {
+    position: relative;
+    margin-bottom: 15px;
+  }
+  
+  .avatar-container {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+  }
+  
+  /* FIXED: Mobile online status - smaller and better positioned */
+  .online-status {
+    bottom: 2px;
+    right: 2px;
+    font-size: 0.6rem;
+    padding: 2px 6px;
+    border-width: 1px;
   }
   
   .profile-stats {
@@ -790,16 +803,11 @@
     padding: var(--spacing-lg);
   }
   
-  .avatar-container {
-    width: 100px;
-    height: 100px;
-  }
-  
   .avatar-placeholder {
     font-size: var(--font-size-xl);
   }
   
-  /* FIXED: Mobile profile picture upload indication */
+  /* Show upload hint on mobile */
   .avatar-container .avatar-overlay {
     opacity: 0.8;
     background: rgba(0, 0, 0, 0.6);
@@ -844,5 +852,13 @@
   
   .admin-message-card h3 {
     font-size: var(--font-size-xl);
+  }
+  
+  /* Extra small mobile online status */
+  .online-status {
+    bottom: 1px;
+    right: 1px;
+    font-size: 0.55rem;
+    padding: 1px 4px;
   }
 }
