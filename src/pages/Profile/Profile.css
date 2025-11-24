@@ -2,15 +2,15 @@
   min-height: 100vh;
   padding: var(--spacing-xl) 0;
   background: var(--gray-50);
+  width: 100%;
 }
 
 .dark .profile-page {
   background: var(--gray-900);
 }
 
-/* FIXED: Ensure proper desktop width */
 .profile-container {
-  max-width: 1200px;
+  max-width: var(--container-xl);
   margin: 0 auto;
   padding: 0 var(--spacing-md);
   width: 100%;
@@ -94,20 +94,19 @@
   color: var(--white);
 }
 
-/* FIXED: Better online status that doesn't cover the picture */
+/* FIXED: Online status that doesn't cover profile picture */
 .online-status {
   position: absolute;
-  bottom: 5px;
-  right: 5px;
-  background: rgba(0, 0, 0, 0.85);
+  bottom: 8px;
+  right: 8px;
+  background: rgba(0, 0, 0, 0.9);
   color: white;
-  padding: 3px 8px;
-  border-radius: 10px;
-  font-size: 0.65rem;
+  padding: 4px 8px;
+  border-radius: 12px;
+  font-size: 0.7rem;
   font-weight: 600;
   z-index: 2;
   border: 2px solid var(--white);
-  min-width: auto;
   line-height: 1;
 }
 
@@ -718,7 +717,7 @@
   margin-top: var(--spacing-sm);
 }
 
-/* FIXED: Mobile styles - only apply below 768px */
+/* FIXED: Mobile styles with proper online status positioning */
 @media (max-width: 768px) {
   .profile-page {
     padding: var(--spacing-lg) 0;
@@ -735,10 +734,10 @@
     padding: var(--spacing-xl);
   }
   
-  /* FIXED: Mobile avatar with proper online status */
+  /* FIXED: Mobile avatar with online status that doesn't cover */
   .profile-avatar {
     position: relative;
-    margin-bottom: 15px;
+    margin-bottom: 10px;
   }
   
   .avatar-container {
@@ -747,7 +746,7 @@
     margin: 0 auto;
   }
   
-  /* FIXED: Mobile online status - smaller and better positioned */
+  /* FIXED: Mobile online status - much smaller and better positioned */
   .online-status {
     bottom: 2px;
     right: 2px;
@@ -760,14 +759,6 @@
     grid-template-columns: 1fr 1fr;
   }
   
-  .admin-message-card {
-    padding: var(--spacing-xl);
-  }
-  
-  .admin-quick-stats {
-    grid-template-columns: 1fr 1fr;
-  }
-  
   .profile-tabs {
     flex-direction: column;
   }
@@ -775,36 +766,6 @@
   .tab-content {
     padding: var(--spacing-xl);
     min-height: 300px;
-  }
-  
-  .info-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .result-item {
-    flex-direction: column;
-    align-items: stretch;
-    gap: var(--spacing-md);
-  }
-  
-  .result-info {
-    align-items: flex-start;
-  }
-  
-  .form-actions {
-    flex-direction: column;
-  }
-  
-  .admin-actions-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .admin-action-btn {
-    padding: var(--spacing-lg);
-  }
-  
-  .avatar-placeholder {
-    font-size: var(--font-size-xl);
   }
   
   /* Show upload hint on mobile */
@@ -820,38 +781,14 @@
     grid-template-columns: 1fr;
   }
   
-  .admin-quick-stats {
-    grid-template-columns: 1fr;
-  }
-  
   .profile-actions {
     flex-direction: column;
     align-items: stretch;
   }
   
-  .admin-actions-grid {
-    grid-template-columns: 1fr;
-  }
-  
-  .action-icon {
-    font-size: 2rem;
-  }
-  
-  .profile-header {
-    padding: var(--spacing-lg);
-  }
-  
-  .tab-content {
-    padding: var(--spacing-lg);
-  }
-  
   .avatar-container {
     width: 80px;
     height: 80px;
-  }
-  
-  .admin-message-card h3 {
-    font-size: var(--font-size-xl);
   }
   
   /* Extra small mobile online status */
