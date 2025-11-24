@@ -30,38 +30,56 @@ const Chat = () => {
     return user._id || user.id;
   };
 
-  // Load conversations
-  useEffect(() => {
-    const loadUserConversations = async () => {
-      const userId = getUserId();
-      if (!userId) {
-        console.error('❌ Cannot load conversations: No user ID found');
-        setConversationsError('User not properly authenticated');
-        setConversationsLoading(false);
+  // Load conversations with retry logic for rate limiting
+  const loadUserConversations = async (retryCount = 0) => {
+    const userId = getUserId();
+    if (!userId) {
+      console.error('❌ Cannot load conversations: No user ID found');
+      setConversationsError('User not properly authenticated');
+      setConversationsLoading(false);
+      return;
+    }
+    
+    try {
+      setConversationsLoading(true);
+      setConversationsError(null);
+      
+      console.log(`💬 Loading conversations for user: ${userId}`);
+      const response = await chatService.getUserConversations();
+      
+      if (response.success) {
+        setConversations(response.data || []);
+        console.log(`✅ Loaded ${response.data?.length || 0} conversations`);
+      } else {
+        setConversations([]);
+        setConversationsError(response.message || 'Failed to load conversations');
+      }
+    } catch (error) {
+      console.error('❌ Failed to load conversations:', error);
+      
+      // Handle rate limiting with retry
+      if (error.response?.status === 429 && retryCount < 3) {
+        const delay = Math.pow(2, retryCount) * 1000; // Exponential backoff
+        console.log(`🔄 Rate limited (429), retrying in ${delay}ms... (Attempt ${retryCount + 1}/3)`);
+        
+        setTimeout(() => {
+          loadUserConversations(retryCount + 1);
+        }, delay);
         return;
       }
       
-      try {
-        setConversationsLoading(true);
-        setConversationsError(null);
-        
-        const response = await chatService.getUserConversations();
-        
-        if (response.success) {
-          setConversations(response.data || []);
-        } else {
-          setConversations([]);
-          setConversationsError(response.message || 'Failed to load conversations');
-        }
-      } catch (error) {
-        console.error('❌ Failed to load conversations:', error);
-        setConversations([]);
+      setConversations([]);
+      if (error.response?.status === 429) {
+        setConversationsError('Too many requests. Please wait a moment and try again.');
+      } else {
         setConversationsError(error.message || 'Failed to load conversations');
-      } finally {
-        setConversationsLoading(false);
       }
-    };
+    } finally {
+      setConversationsLoading(false);
+    }
+  };
 
+  useEffect(() => {
     if (isAuthenticated && user) {
       loadUserConversations();
     }
@@ -185,25 +203,9 @@ const Chat = () => {
     setSelectedRoom(null);
   }, []);
 
-  // Refresh conversations
+  // Refresh conversations with retry
   const handleRefreshConversations = async () => {
-    try {
-      setConversationsLoading(true);
-      setConversationsError(null);
-      
-      const response = await chatService.getUserConversations();
-      
-      if (response.success) {
-        setConversations(response.data || []);
-      } else {
-        setConversationsError(response.message || 'Failed to refresh conversations');
-      }
-    } catch (error) {
-      console.error('❌ Failed to refresh conversations:', error);
-      setConversationsError(error.message || 'Failed to refresh conversations');
-    } finally {
-      setConversationsLoading(false);
-    }
+    await loadUserConversations();
   };
 
   // Show loading if auth is still loading

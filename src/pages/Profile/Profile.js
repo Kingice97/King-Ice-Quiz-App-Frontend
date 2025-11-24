@@ -68,9 +68,7 @@ const Profile = () => {
     quizzesTaken: user?.role !== 'admin' ? (stats.totalQuizzesTaken || stats.quizzesTaken || user?.stats?.quizzesTaken || 0) : 0,
     averageScore: user?.role !== 'admin' ? (stats.averageScore || user?.stats?.averageScore || 0) : 0,
     bestScore: user?.role !== 'admin' ? (stats.bestScore || user?.stats?.bestScore || 0) : 0,
-    successRate: user?.role !== 'admin' ? (stats.successRate || user?.stats?.successRate || 0) : 0,
-    messagesSent: stats.messagesSent || user?.stats?.messagesSent || 0,
-    chatParticipation: stats.chatParticipation || user?.stats?.chatParticipation || 0
+    successRate: user?.role !== 'admin' ? (stats.successRate || user?.stats?.successRate || 0) : 0
   };
 
   const recentResults = resultsData?.data || [];
@@ -313,15 +311,6 @@ const Profile = () => {
                 <div className="stat-value">{Math.round(finalStats.successRate)}%</div>
                 <div className="stat-label">Success Rate</div>
               </div>
-              {/* Chat stats - show for all users */}
-              <div className="stat-card">
-                <div className="stat-value">{finalStats.messagesSent}</div>
-                <div className="stat-label">Messages Sent</div>
-              </div>
-              <div className="stat-card">
-                <div className="stat-value">{finalStats.chatParticipation}</div>
-                <div className="stat-label">Chat Rooms</div>
-              </div>
             </div>
           )
         ) : (
@@ -348,7 +337,7 @@ const Profile = () => {
           </div>
         )}
 
-               {/* Tabs - Updated with proper admin/user differentiation */}
+        {/* Tabs - Updated with proper admin/user differentiation */}
         <div className="profile-tabs">
           <button
             className={`tab ${activeTab === 'overview' ? 'active' : ''}`}
@@ -365,19 +354,6 @@ const Profile = () => {
               Quiz History
             </button>
           )}
-          <button
-            className={`tab ${activeTab === 'chat' ? 'active' : ''}`}
-            onClick={() => setActiveTab('chat')}
-          >
-            Chat Activity
-          </button>
-          {/* 🔔 ADD THIS NEW TAB - Notifications
-          <button
-            className={`tab ${activeTab === 'notifications' ? 'active' : ''}`}
-            onClick={() => setActiveTab('notifications')}
-          >
-            🔔 Notifications
-          </button> */}
           <button
             className={`tab ${activeTab === 'achievements' ? 'active' : ''}`}
             onClick={() => setActiveTab('achievements')}
@@ -485,37 +461,6 @@ const Profile = () => {
                   </Link>
                 </div>
               )}
-            </div>
-          )}
-
-          {/* Chat Activity Tab - Show for all users */}
-          {activeTab === 'chat' && (
-            <div className="chat-tab">
-              <div className="chat-stats">
-                <h3>Chat Statistics</h3>
-                <div className="chat-stats-grid">
-                  <div className="chat-stat-card">
-                    <div className="chat-stat-value">{finalStats.messagesSent}</div>
-                    <div className="chat-stat-label">Total Messages</div>
-                  </div>
-                  <div className="chat-stat-card">
-                    <div className="chat-stat-value">{finalStats.chatParticipation}</div>
-                    <div className="chat-stat-label">Active Chat Rooms</div>
-                  </div>
-                  <div className="chat-stat-card">
-                    <div className="chat-stat-value">
-                      {isConnected ? '🟢 Online' : '🔴 Offline'}
-                    </div>
-                    <div className="chat-stat-label">Current Status</div>
-                  </div>
-                  <div className="chat-stat-card">
-                    <div className="chat-stat-value">
-                      {user?.preferences?.chatNotifications ? '🔔 On' : '🔕 Off'}
-                    </div>
-                    <div className="chat-stat-label">Notifications</div>
-                  </div>
-                </div>
-              </div>
             </div>
           )}
 
