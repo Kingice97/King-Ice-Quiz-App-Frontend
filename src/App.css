@@ -816,3 +816,16 @@ a:hover {
   margin-top: 0;
   padding-top: 0;
 }
+
+/* FIXED: Footer alignment with sidebar */
+.footer {
+  margin-left: 280px; /* Match sidebar width */
+  transition: margin-left 0.3s ease;
+}
+
+/* Mobile footer adjustment */
+@media (max-width: 768px) {
+  .footer {
+    margin-left: 0;
+  }
+}

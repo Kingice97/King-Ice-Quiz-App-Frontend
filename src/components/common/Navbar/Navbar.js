@@ -29,6 +29,12 @@ const Navbar = () => {
     setIsMobileMenuOpen(false);
   };
 
+  // FIXED: Proper click handler for mobile links
+  const handleMobileLinkClick = (e) => {
+    e.stopPropagation(); // Prevent event bubbling
+    closeMobileMenu();
+  };
+
   const isActiveLink = (path) => {
     return location.pathname === path;
   };
@@ -45,7 +51,7 @@ const Navbar = () => {
       <Link 
         to="/" 
         className={`nav-link ${isActiveLink('/') ? 'active' : ''}`}
-        onClick={closeMobileMenu}
+        onClick={mobile ? handleMobileLinkClick : undefined}
       >
         <span className="nav-icon">🏠</span>
         <span className="nav-text">Home</span>
@@ -55,7 +61,7 @@ const Navbar = () => {
         <Link 
           to="/quizzes" 
           className={`nav-link ${isActiveLink('/quizzes') ? 'active' : ''}`}
-          onClick={closeMobileMenu}
+          onClick={mobile ? handleMobileLinkClick : undefined}
         >
           <span className="nav-icon">📚</span>
           <span className="nav-text">Quizzes</span>
@@ -66,7 +72,7 @@ const Navbar = () => {
       <Link 
         to="/chat" 
         className={`nav-link ${isActiveLink('/chat') ? 'active' : ''}`}
-        onClick={closeMobileMenu}
+        onClick={mobile ? handleMobileLinkClick : undefined}
       >
         <span className="nav-icon">💬</span>
         <span className="nav-text">Chat</span>
@@ -78,7 +84,7 @@ const Navbar = () => {
             <Link 
               to="/dashboard" 
               className={`nav-link ${isActiveLink('/dashboard') ? 'active' : ''}`}
-              onClick={closeMobileMenu}
+              onClick={mobile ? handleMobileLinkClick : undefined}
             >
               <span className="nav-icon">📊</span>
               <span className="nav-text">Dashboard</span>
@@ -89,7 +95,7 @@ const Navbar = () => {
             <Link 
               to="/admin" 
               className={`nav-link ${isActiveLink('/admin') ? 'active' : ''}`}
-              onClick={closeMobileMenu}
+              onClick={mobile ? handleMobileLinkClick : undefined}
             >
               <span className="nav-icon">⚙️</span>
               <span className="nav-text">Admin</span>
@@ -99,13 +105,32 @@ const Navbar = () => {
           <Link 
             to="/profile" 
             className={`nav-link ${isActiveLink('/profile') ? 'active' : ''}`}
-            onClick={closeMobileMenu}
+            onClick={mobile ? handleMobileLinkClick : undefined}
           >
             <span className="nav-icon">👤</span>
             <span className="nav-text">Profile</span>
           </Link>
         </>
-      ) : null}
+      ) : (
+        <>
+          <Link 
+            to="/login" 
+            className={`nav-link ${isActiveLink('/login') ? 'active' : ''}`}
+            onClick={mobile ? handleMobileLinkClick : undefined}
+          >
+            <span className="nav-icon">🔐</span>
+            <span className="nav-text">Login</span>
+          </Link>
+          <Link 
+            to="/register" 
+            className={`nav-link ${isActiveLink('/register') ? 'active' : ''}`}
+            onClick={mobile ? handleMobileLinkClick : undefined}
+          >
+            <span className="nav-icon">📝</span>
+            <span className="nav-text">Sign Up</span>
+          </Link>
+        </>
+      )}
     </div>
   );
 
@@ -120,6 +145,7 @@ const Navbar = () => {
           rel="noopener noreferrer"
           className="social-link whatsapp"
           title="Chat with us on WhatsApp"
+          onClick={mobile ? handleMobileLinkClick : undefined}
         >
           {/* WhatsApp SVG */}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="social-icon whatsapp">
@@ -134,6 +160,7 @@ const Navbar = () => {
           rel="noopener noreferrer"
           className="social-link twitter"
           title="Follow us on Twitter"
+          onClick={mobile ? handleMobileLinkClick : undefined}
         >
           {/* Twitter (X) SVG */}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="social-icon twitter">
@@ -146,6 +173,7 @@ const Navbar = () => {
           aria-label="Email" 
           className="social-link email"
           title="Send us an email"
+          onClick={mobile ? handleMobileLinkClick : undefined}
         >
           {/* Email SVG */}
           <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor" className="social-icon email">
@@ -201,7 +229,11 @@ const Navbar = () => {
                     </div>
                     <button 
                       className="btn btn-outline btn-sm logout-btn"
-                      onClick={handleLogout}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleLogout();
+                        closeMobileMenu();
+                      }}
                     >
                       Logout
                     </button>
@@ -211,14 +243,14 @@ const Navbar = () => {
                     <Link 
                       to="/login" 
                       className="btn btn-outline btn-sm"
-                      onClick={closeMobileMenu}
+                      onClick={handleMobileLinkClick}
                     >
                       Login
                     </Link>
                     <Link 
                       to="/register" 
                       className="btn btn-primary btn-sm"
-                      onClick={closeMobileMenu}
+                      onClick={handleMobileLinkClick}
                     >
                       Sign Up
                     </Link>
@@ -239,7 +271,7 @@ const Navbar = () => {
         </div>
       </nav>
 
-      {/* Desktop Sidebar - FIXED: Always expanded, no collapse */}
+      {/* Desktop Sidebar - Always expanded */}
       <aside className="sidebar">
         <div className="sidebar-header">
           <Link to="/" className="sidebar-logo">
