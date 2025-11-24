@@ -86,7 +86,7 @@
   background-color: var(--gray-700);
 }
 
-/* Mobile Menu - FIXED: Better click handling */
+/* FIXED: Mobile Menu - Critical z-index fix */
 .mobile-menu {
   position: fixed;
   top: 60px;
@@ -96,7 +96,9 @@
   background: var(--white);
   border-right: 1px solid var(--gray-200);
   transition: left 0.3s ease;
-  z-index: 1001;
+  z-index: 1002; /* FIXED: Higher than overlay */
+  display: flex;
+  flex-direction: column;
 }
 
 .dark .mobile-menu {
@@ -115,16 +117,20 @@
   flex-direction: column;
   gap: 1.5rem;
   overflow-y: auto;
+  position: relative; /* FIXED: Ensure content is above */
+  z-index: 1003; /* FIXED: Higher than menu container */
 }
 
+/* FIXED: Mobile Navigation Links */
 .mobile-nav {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  position: relative;
+  z-index: 1004; /* FIXED: Highest priority */
 }
 
-/* FIXED: Mobile nav links with proper click handling */
-.mobile-nav .nav-link {
+.mobile-nav-link {
   display: flex;
   align-items: center;
   gap: 0.75rem;
@@ -140,27 +146,44 @@
   width: 100%;
   text-align: left;
   font-size: 1rem;
+  position: relative;
+  z-index: 1005; /* FIXED: Highest priority for links */
 }
 
-.dark .mobile-nav .nav-link {
+.dark .mobile-nav-link {
   color: var(--gray-300);
 }
 
-.mobile-nav .nav-link:hover {
+.mobile-nav-link:hover {
   background: var(--gray-50);
   color: var(--primary-color);
 }
 
-.dark .mobile-nav .nav-link:hover {
+.dark .mobile-nav-link:hover {
   background: var(--gray-700);
   color: var(--primary-light);
 }
 
-.mobile-nav .nav-link.active {
+.mobile-nav-link.active {
   background: var(--primary-color);
   color: white;
 }
 
+.mobile-nav-link.logout-btn {
+  color: #e74c3c;
+  margin-top: 1rem;
+}
+
+.mobile-nav-link.logout-btn:hover {
+  background: #ffebee;
+  color: #c0392b;
+}
+
+.dark .mobile-nav-link.logout-btn:hover {
+  background: rgba(231, 76, 60, 0.2);
+}
+
+/* FIXED: Overlay - Lower z-index than menu */
 .mobile-menu-overlay {
   position: fixed;
   top: 60px;
@@ -168,11 +191,11 @@
   right: 0;
   bottom: 0;
   background: rgba(0, 0, 0, 0.5);
-  z-index: 999;
+  z-index: 1001; /* FIXED: Lower than menu */
   cursor: pointer;
 }
 
-/* Desktop Sidebar Styles - FIXED: Show all content */
+/* Desktop Sidebar Styles */
 .sidebar {
   position: fixed;
   top: 0;
@@ -219,7 +242,7 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  min-height: 0; /* FIXED: Allow proper flex sizing */
+  min-height: 0;
 }
 
 /* Navigation Links */
@@ -229,7 +252,7 @@
   gap: 0.25rem;
   padding: 0.5rem 0.75rem;
   flex: 1;
-  overflow-y: auto; /* FIXED: Allow scrolling if needed */
+  overflow-y: auto;
 }
 
 .nav-link {
@@ -461,7 +484,7 @@
   color: var(--gray-100);
 }
 
-/* Social icons with proper colors */
+/* Social icons */
 .social-icon {
   width: 20px;
   height: 20px;
