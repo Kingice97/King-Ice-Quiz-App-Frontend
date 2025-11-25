@@ -130,8 +130,30 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   useEffect(() => {
     const savedTheme = localStorage.getItem('chatTheme') || 'default';
     setSelectedTheme(savedTheme);
-    applyChatTheme(savedTheme, document.body.classList.contains('dark'));
+    
+    // Check if we're in dark mode
+    const isDarkMode = document.body.classList.contains('dark');
+    console.log('🌙 Dark mode detected:', isDarkMode);
+    
+    applyChatTheme(savedTheme, isDarkMode);
   }, []);
+
+  // Also listen for dark mode changes
+  useEffect(() => {
+    const observer = new MutationObserver((mutations) => {
+      mutations.forEach((mutation) => {
+        if (mutation.attributeName === 'class') {
+          const isDarkMode = document.body.classList.contains('dark');
+          console.log('🌙 Dark mode changed:', isDarkMode);
+          applyChatTheme(selectedTheme, isDarkMode);
+        }
+      });
+    });
+
+    observer.observe(document.body, { attributes: true });
+    
+    return () => observer.disconnect();
+  }, [selectedTheme]);
 
   // Force unblock using multiple methods
   const forceUnblockUser = async () => {
@@ -237,7 +259,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   const selectTheme = (themeId) => {
     setSelectedTheme(themeId);
-    applyChatTheme(themeId, document.body.classList.contains('dark'));
+    const isDarkMode = document.body.classList.contains('dark');
+    applyChatTheme(themeId, isDarkMode);
     localStorage.setItem('chatTheme', themeId);
     setShowThemeSelector(false);
     setMenuMessage(`Theme changed to ${getThemeById(themeId).name}`);

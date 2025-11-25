@@ -20,12 +20,7 @@
 
 /* FIXED: Enhanced dark mode support for chat room */
 .dark .chat-room {
-  --chat-primary: #1f2b32;
-  --chat-sent-bubble: #056162;
-  --chat-received-bubble: #2d3b44;
-  --chat-background: #0d1418;
-  --chat-text: #ffffff;
-  --chat-text-light: #a8b5c1;
+  background: var(--chat-background, #0d1418);
 }
 
 /* WhatsApp Header */
@@ -228,14 +223,37 @@
   font-weight: 700;
 }
 
-/* CRITICAL FIX: Message text visibility with theme support */
+/* CRITICAL FIX: Message text visibility with theme support - IMPROVED CONTRAST */
 .message-text {
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
   margin-bottom: 4px;
   font-weight: 500;
-  color: var(--chat-text, #1a1a1a);
+  color: var(--chat-text, #1a1a1a) !important;
+}
+
+/* Ensure text is always visible in dark mode */
+.dark .message-text {
+  color: var(--chat-text, #ffffff) !important;
+  font-weight: 500;
+}
+
+/* Force text color for both sent and received messages */
+.message-sent .message-text {
+  color: var(--chat-text, #1a1a1a) !important;
+}
+
+.message-received .message-text {
+  color: var(--chat-text, #1a1a1a) !important;
+}
+
+.dark .message-sent .message-text {
+  color: var(--chat-text, #ffffff) !important;
+}
+
+.dark .message-received .message-text {
+  color: var(--chat-text, #ffffff) !important;
 }
 
 .message-time {

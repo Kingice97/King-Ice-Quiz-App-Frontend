@@ -35,7 +35,7 @@ export const chatThemes = [
       textLight: '#6b7280'
     },
     dark: {
-      sentBubble: '#1e3a8a',
+      sentBubble: '#1e40af',
       receivedBubble: '#374151',
       background: '#111827',
       text: '#ffffff',
@@ -56,7 +56,7 @@ export const chatThemes = [
       textLight: '#7e22ce'
     },
     dark: {
-      sentBubble: '#6b21a8',
+      sentBubble: '#7c3aed',
       receivedBubble: '#3f3f46',
       background: '#1f1f23',
       text: '#ffffff',
@@ -133,6 +133,8 @@ export const applyChatTheme = (themeId, isDarkMode = false) => {
   
   const root = document.documentElement;
   
+  console.log(`🎨 Applying theme: ${themeId} (${isDarkMode ? 'dark' : 'light'})`, colors);
+  
   // Set CSS variables for the theme
   root.style.setProperty('--chat-primary', colors.primary);
   root.style.setProperty('--chat-secondary', colors.secondary);
@@ -141,4 +143,13 @@ export const applyChatTheme = (themeId, isDarkMode = false) => {
   root.style.setProperty('--chat-background', colors.background);
   root.style.setProperty('--chat-text', colors.text);
   root.style.setProperty('--chat-text-light', colors.textLight);
+  
+  // Also apply to body for better coverage
+  document.body.style.setProperty('--chat-primary', colors.primary);
+  document.body.style.setProperty('--chat-secondary', colors.secondary);
+  document.body.style.setProperty('--chat-sent-bubble', colors.sentBubble);
+  document.body.style.setProperty('--chat-received-bubble', colors.receivedBubble);
+  document.body.style.setProperty('--chat-background', colors.background);
+  document.body.style.setProperty('--chat-text', colors.text);
+  document.body.style.setProperty('--chat-text-light', colors.textLight);
 };
