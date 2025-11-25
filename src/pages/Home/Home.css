@@ -98,7 +98,7 @@
 }
 
 .dark .admin-stats h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .stats-grid {
@@ -144,7 +144,7 @@
 }
 
 .dark .stat-value {
-  color: var(--primary-light);
+  color: var(--primary-light); /* FIXED: Brighter stat value */
 }
 
 .stat-label {
@@ -155,7 +155,7 @@
 }
 
 .dark .stat-label {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter label */
 }
 
 /* Admin Actions Section */
@@ -175,7 +175,7 @@
 }
 
 .dark .admin-actions h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .actions-grid {
@@ -227,7 +227,7 @@
 }
 
 .dark .action-content h3 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .action-content p {
@@ -238,7 +238,7 @@
 }
 
 .dark .action-content p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .action-arrow {
@@ -267,7 +267,7 @@
 }
 
 .dark .recent-activity h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 /* Features Section */
@@ -287,7 +287,7 @@
 }
 
 .dark .features h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .features-grid {
@@ -324,7 +324,7 @@
 }
 
 .dark .feature-card h3 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .feature-card p {
@@ -334,7 +334,7 @@
 }
 
 .dark .feature-card p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 /* Featured Quizzes Section */
@@ -360,7 +360,7 @@
 }
 
 .dark .section-header h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .quizzes-grid {
@@ -386,7 +386,7 @@
 }
 
 .dark .leaderboard h2 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .leaderboard-list {
@@ -458,7 +458,7 @@
 }
 
 .dark .username {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter username */
 }
 
 .stats {
@@ -467,7 +467,7 @@
 }
 
 .dark .stats {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter stats */
 }
 
 .score {

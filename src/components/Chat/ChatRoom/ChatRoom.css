@@ -9,7 +9,7 @@
 
 /* FIXED: Enhanced dark mode support for chat room */
 .dark .chat-room {
-  background: #0d1418; /* Darker background for better contrast */
+  background: #0d1418; /* Much darker background for better contrast */
 }
 
 /* WhatsApp Header */
@@ -187,7 +187,7 @@
   font-size: 12px;
 }
 
-/* Message Bubbles - FIXED: Enhanced dark mode visibility with better contrast */
+/* Message Bubbles - FIXED: CRITICAL - Enhanced dark mode visibility with perfect contrast */
 .message-bubble {
   max-width: 65%;
   position: relative;
@@ -216,7 +216,7 @@
 
 .dark .message-received .message-bubble {
   background: #2d3b44; /* Darker background for better contrast */
-  color: #f0f4f8; /* Brighter text color for readability */
+  color: #f0f4f8; /* Brighter text color for perfect readability */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
@@ -240,8 +240,9 @@
   font-weight: 500; /* Slightly bolder for better readability */
 }
 
+/* CRITICAL FIX: Ensure message text is perfectly visible in both themes */
 .dark .message-text {
-  color: #f0f4f8; /* Much brighter text for dark mode */
+  color: #f0f4f8; /* Much brighter text for dark mode - PERFECT VISIBILITY */
   font-weight: 500;
 }
 

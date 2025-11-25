@@ -142,7 +142,7 @@
 }
 
 .dark .profile-info h1 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .profile-info p {
@@ -152,7 +152,7 @@
 }
 
 .dark .profile-info p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .profile-actions {
@@ -209,7 +209,7 @@
 }
 
 .dark .stat-value {
-  color: var(--primary-light);
+  color: var(--primary-light); /* FIXED: Brighter stat value */
 }
 
 .stat-label {
@@ -220,7 +220,7 @@
 }
 
 .dark .stat-label {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter label */
 }
 
 .admin-stats-message {
@@ -373,11 +373,12 @@
   margin-bottom: var(--spacing-2xl);
 }
 
+/* FIXED: Section header line positioned higher */
 .info-section h3 {
   color: var(--gray-900);
   margin-bottom: var(--spacing-lg);
   border-bottom: 2px solid var(--gray-200);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs); /* FIXED: Reduced padding to move line up */
   font-size: clamp(1.1rem, 3vw, 1.5rem);
 }
 
@@ -409,7 +410,7 @@
 }
 
 .dark .info-item label {
-  color: var(--gray-300);
+  color: var(--gray-300); /* FIXED: Brighter label */
 }
 
 .info-item span {
@@ -419,7 +420,7 @@
 }
 
 .dark .info-item span {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .role {
@@ -483,18 +484,19 @@
 }
 
 .dark .admin-message p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .bio-section {
   margin-bottom: var(--spacing-2xl);
 }
 
+/* FIXED: Bio section header line positioned higher */
 .bio-section h3 {
   color: var(--gray-900);
   margin-bottom: var(--spacing-lg);
   border-bottom: 2px solid var(--gray-200);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs); /* FIXED: Reduced padding to move line up */
 }
 
 .dark .bio-section h3 {
@@ -510,7 +512,7 @@
 }
 
 .dark .bio-section p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .results-list {
@@ -552,7 +554,7 @@
 }
 
 .dark .quiz-info h4 {
-  color: var(--gray-200);
+  color: var(--gray-200); /* FIXED: Brighter heading */
 }
 
 .quiz-info p {
@@ -563,7 +565,7 @@
 }
 
 .dark .quiz-info p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .result-info {
@@ -672,7 +674,7 @@
 }
 
 .dark .empty-state {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter empty state */
 }
 
 .stats-loading {

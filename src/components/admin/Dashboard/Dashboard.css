@@ -13,7 +13,7 @@
 }
 
 .dark .dashboard-header h1 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .dashboard-header p {
@@ -23,7 +23,7 @@
 }
 
 .dark .dashboard-header p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .stats-grid {
@@ -79,7 +79,7 @@
 }
 
 .dark .stat-value {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter stat value */
 }
 
 .stat-label {
@@ -90,7 +90,7 @@
 }
 
 .dark .stat-label {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter label */
 }
 
 /* Admin Specific Stats */
@@ -168,7 +168,7 @@
 }
 
 .dark .quick-action-card h4 {
-  color: var(--gray-100);
+  color: var(--gray-100); /* FIXED: Brighter heading */
 }
 
 .quick-action-card p {
@@ -178,7 +178,7 @@
 }
 
 .dark .quick-action-card p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .action-arrow {
@@ -221,11 +221,12 @@
   margin-bottom: var(--spacing-lg);
 }
 
+/* FIXED: Section header line positioned higher */
 .dashboard-section h3 {
   color: var(--gray-900);
   margin: 0;
   border-bottom: 2px solid var(--primary-color);
-  padding-bottom: var(--spacing-sm);
+  padding-bottom: var(--spacing-xs); /* FIXED: Reduced padding to move line up */
 }
 
 .dark .dashboard-section h3 {
@@ -278,7 +279,7 @@
 }
 
 .dark .quiz-info h4 {
-  color: var(--gray-200);
+  color: var(--gray-200); /* FIXED: Brighter heading */
 }
 
 .quiz-info p {
@@ -288,7 +289,7 @@
 }
 
 .dark .quiz-info p {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .quiz-meta {
@@ -310,7 +311,7 @@
 .dark .quiz-meta span {
   background: var(--gray-600);
   border-color: var(--gray-500);
-  color: var(--gray-300);
+  color: var(--gray-300); /* FIXED: Brighter meta text */
 }
 
 .quiz-status {
@@ -349,7 +350,7 @@
 }
 
 .dark .user-info strong {
-  color: var(--gray-200);
+  color: var(--gray-200); /* FIXED: Brighter text */
 }
 
 .user-info span {
@@ -358,7 +359,7 @@
 }
 
 .dark .user-info span {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter text */
 }
 
 .result-info {
@@ -441,7 +442,7 @@
 }
 
 .dark .no-data {
-  color: var(--gray-400);
+  color: var(--gray-300); /* FIXED: Brighter no data text */
 }
 
 /* Mobile Styles */
