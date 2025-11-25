@@ -381,10 +381,12 @@ function App() {
                   } 
                 />
                 
+                {/* Privacy Policy Route - ADD THIS INSIDE Routes */}
+                <Route path="/privacy-policy" element={<Layout><PrivacyPolicy /></Layout>} />
+                
                 {/* 404 page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
-              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             </Router>
           </SocketProvider>
         </QuizProvider>
