@@ -34,6 +34,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [blockLoading, setBlockLoading] = useState(false);
   const [showSecurityMessage, setShowSecurityMessage] = useState(false);
   const [chatTheme, setChatTheme] = useState('default');
+  
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
@@ -56,6 +57,47 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   }, []);
 
   // Check block status when component loads
+  const checkDirectBlockStatus = useCallback(async () => {
+    if (room.type === 'private' && room.user && currentUser) {
+      try {
+        console.log('🔍 Checking block status for user:', room.user._id);
+        
+        // Method 1: Check current user's blockedUsers array directly
+        if (currentUser.blockedUsers && currentUser.blockedUsers.includes(room.user._id)) {
+          console.log('✅ User is BLOCKED');
+          setIsBlocked(true);
+          return true;
+        }
+        
+        // Method 2: Try to get fresh user data from API
+        try {
+          const response = await userService.getUserById(currentUser._id);
+          if (response.success && response.data) {
+            const freshUserData = response.data;
+            const hasBlocked = freshUserData.blockedUsers && 
+                              freshUserData.blockedUsers.includes(room.user._id);
+            
+            console.log(`🔍 API check: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
+            setIsBlocked(hasBlocked);
+            return hasBlocked;
+          }
+        } catch (apiError) {
+          console.log('⚠️ API check failed, using local data');
+        }
+        
+        console.log('🔍 User is NOT BLOCKED');
+        setIsBlocked(false);
+        return false;
+        
+      } catch (error) {
+        console.error('Error in direct block check:', error);
+        setIsBlocked(false);
+        return false;
+      }
+    }
+    return false;
+  }, [room, currentUser]);
+
   useEffect(() => {
     const initializeBlockStatus = async () => {
       if (room.type === 'private' && room.user) {
@@ -78,46 +120,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   }, [isFirstMessageInPrivateChat]);
 
-  const checkDirectBlockStatus = useCallback(async () => {
-    if (room.type === 'private' && room.user && currentUser) {
-      try {
-        console.log('🔍 Direct block status check for user:', room.user._id);
-        
-        // Method 1: Check current user's blockedUsers array directly
-        if (currentUser.blockedUsers && currentUser.blockedUsers.includes(room.user._id)) {
-          console.log('✅ Direct check: User is BLOCKED');
-          setIsBlocked(true);
-          return true;
-        }
-        
-        // Method 2: Try to get fresh user data from API
-        try {
-          const response = await userService.getUserById(currentUser._id);
-          if (response.success && response.data) {
-            const freshUserData = response.data;
-            const hasBlocked = freshUserData.blockedUsers && 
-                              freshUserData.blockedUsers.includes(room.user._id);
-            
-            console.log(`🔍 API check: ${hasBlocked ? 'BLOCKED' : 'NOT BLOCKED'}`);
-            setIsBlocked(hasBlocked);
-            return hasBlocked;
-          }
-        } catch (apiError) {
-          console.log('⚠️ API check failed, using local data');
-        }
-        
-        // Method 3: Try sending a test message to see if it's blocked
-        console.log('🔍 Testing message send capability...');
-        setIsBlocked(false); // Assume not blocked by default
-        
-      } catch (error) {
-        console.error('Error in direct block check:', error);
-      }
-    }
-    return false;
-  }, [room, currentUser]);
-
-  // NEW: Force unblock using multiple methods
+  // Force unblock using multiple methods
   const forceUnblockUser = async () => {
     if (room.type === 'private' && room.user) {
       try {
@@ -213,7 +216,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // NEW: Chat Theme Handler
+  // Chat Theme Handler
   const handleChatTheme = () => {
     const themes = [
       { name: 'Default', value: 'default', description: 'Standard WhatsApp-like theme' },
@@ -237,7 +240,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // UPDATED: Block/Unblock with better error handling
+  // Block/Unblock with better error handling
   const handleBlockUser = async () => {
     if (room.type === 'private' && room.user) {
       try {
@@ -347,6 +350,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       } catch (error) {
         console.error('❌ Failed to load messages:', error);
         setError('Failed to load messages. Please try again.');
+        setMessages([]); // Ensure messages is always an array
       } finally {
         setLoading(false);
       }
@@ -386,13 +390,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       if (belongsToRoom) {
         console.log('✅ Message belongs to current room, adding to messages');
         setMessages(prev => {
-          const exists = prev.some(msg => msg._id === message._id);
+          // Ensure prev is always an array
+          const currentMessages = Array.isArray(prev) ? prev : [];
+          const exists = currentMessages.some(msg => msg._id === message._id);
           if (exists) {
             console.log('⚠️ Message already exists, skipping duplicate');
-            return prev;
+            return currentMessages;
           }
           
-          const updatedMessages = [...prev, message];
+          const updatedMessages = [...currentMessages, message];
           console.log(`📊 Messages count: ${updatedMessages.length}`);
           return updatedMessages;
         });
@@ -416,7 +422,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   }, [messages]);
 
   const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
   };
 
   // Handle sending messages with better error handling
@@ -639,8 +647,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                       View Profile
                     </button>
                     
-                    {/* REMOVED: Debug Check Block Status button */}
-                    
                     {isBlocked && (
                       <button 
                         className="menu-item force-unblock-item" 
@@ -656,7 +662,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   </>
                 )}
                 
-                {/* NEW: Chat Theme Option - Replaces Mute Notifications */}
+                {/* Chat Theme Option */}
                 <button className="menu-item" onClick={handleChatTheme} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-5-8a5 5 0 1110 0 5 5 0 01-10 0z"/>
@@ -709,7 +715,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       <div className="messages-container">
         {loading ? (
           <Loading text="Loading messages..." />
-        ) : messages.length === 0 ? (
+        ) : !messages || messages.length === 0 ? (
           <div className="no-messages">
             <div className="no-messages-icon">💬</div>
             <p>No messages yet</p>
@@ -722,7 +728,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
           </div>
         ) : (
           <>
-            {/* NEW: Security Message for First-Time Private Chats */}
+            {/* Security Message for First-Time Private Chats */}
             {showSecurityMessage && room.type === 'private' && (
               <div className="security-message">
                 <div className="security-icon">🔒</div>
@@ -730,14 +736,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   <strong>Messages are secured with end-to-end encryption</strong>
                   <p>Only you and {room.user?.username} can read or listen to them. No one else, not even King Ice Quiz, can access them.</p>
                   <button 
-                className="security-learn-more"
-                onClick={() => {
-                // Link to the dedicated privacy policy page
-                window.open('/privacy-policy', '_blank');
-                }}
-                >
-                Learn more
-                </button>
+                    className="security-learn-more"
+                    onClick={() => {
+                      window.location.href = '/privacy-policy';
+                    }}
+                  >
+                    Learn more
+                  </button>
                 </div>
                 <button 
                   className="security-dismiss"
