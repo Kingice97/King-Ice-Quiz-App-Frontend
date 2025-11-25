@@ -22,6 +22,7 @@ import Dashboard from './pages/Dashboard/Dashboard';
 import QuizResults from './pages/QuizResults/QuizResults';
 import NotFound from './pages/NotFound/NotFound';
 import UserProfile from './pages/UserProfile/UserProfile';
+import PrivacyPolicy from './pages/PrivacyPolicy/PrivacyPolicy';
 
 // Chat Pages
 import Chat from './pages/Chat/Chat';
@@ -383,6 +384,7 @@ function App() {
                 {/* 404 page */}
                 <Route path="*" element={<Layout><NotFound /></Layout>} />
               </Routes>
+              <Route path="/privacy-policy" element={<PrivacyPolicy />} />
             </Router>
           </SocketProvider>
         </QuizProvider>

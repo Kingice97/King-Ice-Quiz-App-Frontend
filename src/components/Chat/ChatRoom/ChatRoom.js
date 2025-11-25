@@ -32,11 +32,16 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [menuMessage, setMenuMessage] = useState('');
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
+  const [showSecurityMessage, setShowSecurityMessage] = useState(false);
+  const [chatTheme, setChatTheme] = useState('default');
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
   const hasLoadedRef = useRef(false);
   const menuRef = useRef(null);
+
+  // Check if this is the first message in a private chat
+  const isFirstMessageInPrivateChat = room.type === 'private' && messages.length === 0;
 
   // Close menu when clicking outside
   useEffect(() => {
@@ -50,7 +55,29 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // NEW: Direct block status check using the current user's data
+  // Check block status when component loads
+  useEffect(() => {
+    const initializeBlockStatus = async () => {
+      if (room.type === 'private' && room.user) {
+        await checkDirectBlockStatus();
+      }
+    };
+    
+    initializeBlockStatus();
+  }, [room, checkDirectBlockStatus]);
+
+  // Show security message for first-time private chats
+  useEffect(() => {
+    if (isFirstMessageInPrivateChat) {
+      setShowSecurityMessage(true);
+      // Auto-hide after 8 seconds
+      const timer = setTimeout(() => {
+        setShowSecurityMessage(false);
+      }, 8000);
+      return () => clearTimeout(timer);
+    }
+  }, [isFirstMessageInPrivateChat]);
+
   const checkDirectBlockStatus = useCallback(async () => {
     if (room.type === 'private' && room.user && currentUser) {
       try {
@@ -128,52 +155,41 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // Check block status when component loads
-  useEffect(() => {
-    const initializeBlockStatus = async () => {
-      if (room.type === 'private' && room.user) {
-        await checkDirectBlockStatus();
-      }
-    };
-    
-    initializeBlockStatus();
-  }, [room, checkDirectBlockStatus]);
-
   const toggleMenu = () => {
     setShowMenu(!showMenu);
     setMenuMessage('');
   };
 
-const handleViewProfile = async () => {
-  if (room.type === 'private' && room.user) {
-    try {
-      setMenuLoading(true);
-      setMenuMessage('Loading profile...');
-      
-      console.log(`👤 Attempting to view profile for: ${room.user.username}`);
-      
-      // Directly navigate to the profile page
-      const profileUrl = `/profile/${room.user.username}`;
-      console.log(`🔗 Opening profile URL: ${profileUrl}`);
-      
-      // Use window.location for reliable navigation
-      window.location.href = profileUrl;
-      
-    } catch (error) {
-      console.error('❌ Failed to open profile:', error);
-      setMenuMessage('Failed to open profile');
-      
-      // Fallback: Try to open in new tab after a delay
-      setTimeout(() => {
+  const handleViewProfile = async () => {
+    if (room.type === 'private' && room.user) {
+      try {
+        setMenuLoading(true);
+        setMenuMessage('Loading profile...');
+        
+        console.log(`👤 Attempting to view profile for: ${room.user.username}`);
+        
+        // Directly navigate to the profile page
         const profileUrl = `/profile/${room.user.username}`;
-        window.open(profileUrl, '_blank');
-      }, 1000);
-    } finally {
-      setMenuLoading(false);
-      setTimeout(() => setShowMenu(false), 2000);
+        console.log(`🔗 Opening profile URL: ${profileUrl}`);
+        
+        // Use window.location for reliable navigation
+        window.location.href = profileUrl;
+        
+      } catch (error) {
+        console.error('❌ Failed to open profile:', error);
+        setMenuMessage('Failed to open profile');
+        
+        // Fallback: Try to open in new tab after a delay
+        setTimeout(() => {
+          const profileUrl = `/profile/${room.user.username}`;
+          window.open(profileUrl, '_blank');
+        }, 1000);
+      } finally {
+        setMenuLoading(false);
+        setTimeout(() => setShowMenu(false), 2000);
+      }
     }
-  }
-};
+  };
 
   const handleClearChat = async () => {
     if (window.confirm('Are you sure you want to clear this chat? This action cannot be undone.')) {
@@ -194,6 +210,30 @@ const handleViewProfile = async () => {
         setMenuLoading(false);
         setTimeout(() => setShowMenu(false), 2000);
       }
+    }
+  };
+
+  // NEW: Chat Theme Handler
+  const handleChatTheme = () => {
+    const themes = [
+      { name: 'Default', value: 'default', description: 'Standard WhatsApp-like theme' },
+      { name: 'Dark Blue', value: 'dark-blue', description: 'Deep blue background' },
+      { name: 'Purple', value: 'purple', description: 'Elegant purple theme' },
+      { name: 'Green', value: 'green', description: 'Nature-inspired green' },
+      { name: 'Sunset', value: 'sunset', description: 'Warm orange and red tones' }
+    ];
+    
+    const themeOptions = themes.map(theme => 
+      `${themes.indexOf(theme) + 1}. ${theme.name} - ${theme.description}`
+    ).join('\n');
+    
+    const choice = prompt(`Choose a chat theme:\n\n${themeOptions}\n\nEnter number (1-${themes.length}):`);
+    
+    if (choice && themes[parseInt(choice) - 1]) {
+      const selectedTheme = themes[parseInt(choice) - 1];
+      setChatTheme(selectedTheme.value);
+      setMenuMessage(`Chat theme changed to ${selectedTheme.name}`);
+      setTimeout(() => setShowMenu(false), 2000);
     }
   };
 
@@ -252,31 +292,6 @@ const handleViewProfile = async () => {
       } catch (error) {
         console.error('Failed to submit report:', error);
         setMenuMessage('Failed to submit report: ' + error.message);
-      } finally {
-        setMenuLoading(false);
-        setTimeout(() => setShowMenu(false), 2000);
-      }
-    }
-  };
-
-  const handleMuteChat = async () => {
-    const duration = prompt('Mute notifications for:\n1. 1 hour\n2. 8 hours\n3. 1 week\n4. Always\n\nEnter number (1-4):');
-    const durations = {
-      '1': '1 hour',
-      '2': '8 hours', 
-      '3': '1 week',
-      '4': 'always'
-    };
-    
-    if (durations[duration]) {
-      try {
-        setMenuLoading(true);
-        await chatService.muteChat(room.id, durations[duration]);
-        setMenuMessage(`Chat muted for ${durations[duration]}`);
-        
-      } catch (error) {
-        console.error('Failed to mute chat:', error);
-        setMenuMessage('Failed to mute chat');
       } finally {
         setMenuLoading(false);
         setTimeout(() => setShowMenu(false), 2000);
@@ -566,7 +581,7 @@ const handleViewProfile = async () => {
   const currentTypingUsers = typingUsers[room.id] || [];
 
   return (
-    <div className="chat-room">
+    <div className={`chat-room ${chatTheme !== 'default' ? `chat-theme-${chatTheme}` : ''}`}>
       {/* WhatsApp-style Fixed Header */}
       <div className="chat-header">
         <div className="header-left">
@@ -624,18 +639,8 @@ const handleViewProfile = async () => {
                       View Profile
                     </button>
                     
-                    {/* Debug buttons */}
-                    <button 
-                      className="menu-item debug-item" 
-                      onClick={checkDirectBlockStatus}
-                      disabled={menuLoading}
-                    >
-                      <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                        <path d="M12 4V1L8 5l4 4V6c3.31 0 6 2.69 6 6 0 1.01-.25 1.97-.7 2.8l1.46 1.46C19.54 15.03 20 13.57 20 12c0-4.42-3.58-8-8-8zm0 14c-3.31 0-6-2.69-6-6 0-1.01.25-1.97.7-2.8L5.24 7.74C4.46 8.97 4 10.43 4 12c0 4.42 3.58 8 8 8v3l4-4-4-4v3z"/>
-                      </svg>
-                      Check Block Status
-                    </button>
-
+                    {/* REMOVED: Debug Check Block Status button */}
+                    
                     {isBlocked && (
                       <button 
                         className="menu-item force-unblock-item" 
@@ -650,12 +655,15 @@ const handleViewProfile = async () => {
                     )}
                   </>
                 )}
-                <button className="menu-item" onClick={handleMuteChat} disabled={menuLoading}>
+                
+                {/* NEW: Chat Theme Option - Replaces Mute Notifications */}
+                <button className="menu-item" onClick={handleChatTheme} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
-                    <path d="M12 3.7L6.7 8.9H3v6h3.7L12 20.3V3.7zm10 8.3c0 3.5-2.7 6.4-6.2 6.8v-2.1c2.4-.4 4.2-2.4 4.2-4.7s-1.8-4.3-4.2-4.7V5.5c3.5.4 6.2 3.3 6.2 6.8z"/>
+                    <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-5-8a5 5 0 1110 0 5 5 0 01-10 0z"/>
                   </svg>
-                  Mute Notifications
+                  Chat Theme
                 </button>
+                
                 <button className="menu-item" onClick={handleClearChat} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/>
@@ -713,46 +721,75 @@ const handleViewProfile = async () => {
             </p>
           </div>
         ) : (
-          messages.map((message, index) => {
-            const showDate = index === 0 || 
-              formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
+          <>
+            {/* NEW: Security Message for First-Time Private Chats */}
+            {showSecurityMessage && room.type === 'private' && (
+              <div className="security-message">
+                <div className="security-icon">🔒</div>
+                <div className="security-content">
+                  <strong>Messages are secured with end-to-end encryption</strong>
+                  <p>Only you and {room.user?.username} can read or listen to them. No one else, not even King Ice Quiz, can access them.</p>
+                  <button 
+                className="security-learn-more"
+                onClick={() => {
+                // Link to the dedicated privacy policy page
+                window.open('/privacy-policy', '_blank');
+                }}
+                >
+                Learn more
+                </button>
+                </div>
+                <button 
+                  className="security-dismiss"
+                  onClick={() => setShowSecurityMessage(false)}
+                  aria-label="Dismiss security message"
+                >
+                  ×
+                </button>
+              </div>
+            )}
             
-            const isOwnMessage = message.user === currentUser._id || 
-                               message.username === currentUser.username;
+            {messages.map((message, index) => {
+              const showDate = index === 0 || 
+                formatDate(messages[index - 1].timestamp) !== formatDate(message.timestamp);
+              
+              const isOwnMessage = message.user === currentUser._id || 
+                                 message.username === currentUser.username;
 
-            return (
-              <React.Fragment key={message._id || `message-${index}-${message.timestamp}`}>
-                {showDate && (
-                  <div className="date-divider">
-                    <span>{formatDate(message.timestamp)}</span>
-                  </div>
-                )}
-                <div className={`message ${isOwnMessage ? 'message-sent' : 'message-received'}`}>
-                  {!isOwnMessage && room.type === 'global' && (
-                    <div className="message-avatar">
-                      {message.profilePicture ? (
-                        <img src={message.profilePicture} alt={message.username} />
-                      ) : (
-                        <div className="avatar-placeholder">
-                          {message.username?.charAt(0).toUpperCase()}
-                        </div>
-                      )}
+              return (
+                <React.Fragment key={message._id || `message-${index}-${message.timestamp}`}>
+                  {showDate && (
+                    <div className="date-divider">
+                      <span>{formatDate(message.timestamp)}</span>
                     </div>
                   )}
-                  <div className="message-bubble">
+                  <div className={`message ${isOwnMessage ? 'message-sent' : 'message-received'}`}>
                     {!isOwnMessage && room.type === 'global' && (
-                      <div className="sender-name">{message.username}</div>
+                      <div className="message-avatar">
+                        {message.profilePicture ? (
+                          <img src={message.profilePicture} alt={message.username} />
+                        ) : (
+                          <div className="avatar-placeholder">
+                            {message.username?.charAt(0).toUpperCase()}
+                          </div>
+                        )}
+                      </div>
                     )}
-                    <div className="message-text">{message.message}</div>
-                    <div className="message-time">
-                      {formatTime(message.timestamp)}
-                      {isOwnMessage && renderMessageStatus(message)}
+                    <div className="message-bubble">
+                      {!isOwnMessage && room.type === 'global' && (
+                        <div className="sender-name">{message.username}</div>
+                      )}
+                      <div className="message-text">{message.message}</div>
+                      <div className="message-time">
+                        {formatTime(message.timestamp)}
+                        {isOwnMessage && renderMessageStatus(message)}
+                      </div>
                     </div>
                   </div>
-                </div>
-              </React.Fragment>
-            );
-          })
+                </React.Fragment>
+              );
+            })}
+          </>
         )}
         
         {currentTypingUsers.length > 0 && (
