@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Helmet } from 'react-helmet-async';
 import { useAuth } from '../../context/AuthContext';
 import { useSocket } from '../../context/SocketContext';
+import { useTheme } from '../../context/ThemeContext'; // FIXED: Added theme context
 import { userService } from '../../services/userService';
 import { chatService } from '../../services/chatService';
 import Loading from '../../components/common/Loading/Loading';
@@ -14,6 +15,7 @@ import './Chat.css';
 const Chat = () => {
   const { user, isAuthenticated, loading: authLoading } = useAuth();
   const { onlineUsers, isConnected, joinQuizRoom, socket } = useSocket();
+  const { isDark, toggleTheme } = useTheme(); // FIXED: Added theme toggle
   
   const [activeTab, setActiveTab] = useState('chats');
   const [onlineUsersList, setOnlineUsersList] = useState([]);
@@ -251,8 +253,19 @@ const Chat = () => {
         <div className="chat-sidebar">
           <div className="sidebar-header">
             <h2>Chats</h2>
-            <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
-              {isConnected ? '🟢 Online' : '🔴 Offline'}
+            <div className="header-actions">
+              {/* FIXED: Added theme toggle to chat */}
+              <button 
+                className="chat-theme-toggle"
+                onClick={toggleTheme}
+                aria-label={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+                title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+              >
+                {isDark ? '☀️' : '🌙'}
+              </button>
+              <div className={`connection-status ${isConnected ? 'connected' : 'disconnected'}`}>
+                {isConnected ? '🟢 Online' : '🔴 Offline'}
+              </div>
             </div>
           </div>
 

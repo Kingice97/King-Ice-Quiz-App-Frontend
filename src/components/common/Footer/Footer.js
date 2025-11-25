@@ -42,14 +42,14 @@ const Footer = () => {
                   <li><Link to="/dashboard">Dashboard</Link></li>
                 </>
               )}
+              {/* FIXED: Added Chat to Quick Links */}
+              <li><Link to="/chat">Chat</Link></li>
               {isAdmin && (
                 <li><Link to="/admin">Admin Dashboard</Link></li>
               )}
               {isAuthenticated && <li><Link to="/profile">Profile</Link></li>}
             </ul>
           </div>
-
-          {/* REMOVED: Categories section for regular users */}
 
           {isAdmin && (
             <div className="footer-section">

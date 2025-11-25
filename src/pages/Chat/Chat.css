@@ -325,3 +325,102 @@
     padding: 12px;
   }
 }
+
+/* FIXED: Header actions for theme toggle */
+.header-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.chat-theme-toggle {
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 8px;
+  font-size: 1.2rem;
+  border-radius: 50%;
+  transition: background-color 0.2s ease;
+  color: inherit;
+}
+
+.chat-theme-toggle:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+/* Ensure chat content has proper contrast in both themes */
+.chat-sidebar {
+  background: white;
+  color: #333;
+}
+
+.dark .chat-sidebar {
+  background: var(--gray-800);
+  color: var(--gray-100);
+}
+
+.chat-main {
+  background: #f8f9fa;
+}
+
+.dark .chat-main {
+  background: var(--gray-900);
+}
+
+.sidebar-header {
+  background: #f0f0f0;
+  color: #333;
+}
+
+.dark .sidebar-header {
+  background: var(--gray-700);
+  color: var(--gray-100);
+}
+
+.chat-tabs {
+  background: #f8f9fa;
+}
+
+.dark .chat-tabs {
+  background: var(--gray-700);
+}
+
+.tab {
+  color: #666;
+}
+
+.dark .tab {
+  color: var(--gray-300);
+}
+
+.tab.active {
+  color: #007bff;
+}
+
+.dark .tab.active {
+  color: var(--primary-light);
+}
+
+.sidebar-footer {
+  background: #f8f9fa;
+}
+
+.dark .sidebar-footer {
+  background: var(--gray-700);
+}
+
+.username {
+  color: #333;
+}
+
+.dark .username {
+  color: var(--gray-100);
+}
+
+.user-status {
+  color: #666;
+}
+
+.dark .user-status {
+  color: var(--gray-400);
+}
