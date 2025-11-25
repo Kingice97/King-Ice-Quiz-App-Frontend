@@ -34,7 +34,7 @@
     margin-top: 0;
     padding: 0;
     width: 100%;
-    padding-top: 70px; /* FIXED: Add space for mobile navbar */
+    padding-top: 80px; /* FIXED: Add space for mobile navbar */
   }
 }
 
@@ -221,7 +221,7 @@ a:hover {
 @media (max-width: 768px) {
   .page-container {
     padding: var(--spacing-md);
-    padding-top: 80px; /* FIXED: Extra space for mobile navbar */
+    padding-top: 90px; /* FIXED: Extra space for mobile navbar */
   }
 }
 
@@ -874,7 +874,7 @@ a:hover {
 @media (max-width: 768px) {
   .content-area {
     padding: var(--spacing-md);
-    padding-top: 80px; /* FIXED: Extra space for mobile navbar */
+    padding-top: 90px; /* FIXED: Extra space for mobile navbar */
   }
 }
 
