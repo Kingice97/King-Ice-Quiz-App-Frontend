@@ -7,22 +7,6 @@
   width: 100%;
 }
 
-/* Enhanced theme support using CSS variables */
-.chat-room {
-  --chat-primary: #075e54;
-  --chat-secondary: #128c7e;
-  --chat-sent-bubble: #dcf8c6;
-  --chat-received-bubble: #ffffff;
-  --chat-background: #e5ddd5;
-  --chat-text: #1a1a1a;
-  --chat-text-light: #666666;
-}
-
-/* FIXED: Enhanced dark mode support for chat room */
-.dark .chat-room {
-  background: var(--chat-background, #0d1418);
-}
-
 /* WhatsApp Header */
 .chat-header {
   background: var(--chat-primary, #075e54);
@@ -145,12 +129,6 @@
   font-weight: 500;
 }
 
-.dark .date-divider span {
-  background: rgba(255, 255, 255, 0.15);
-  color: var(--chat-text-light, #e1e5e9);
-  font-weight: 600;
-}
-
 /* Messages */
 .message {
   display: flex;
@@ -188,7 +166,7 @@
   font-size: 12px;
 }
 
-/* Message Bubbles - FIXED VISIBILITY with theme support */
+/* Message Bubbles - USING CSS VARIABLES */
 .message-bubble {
   max-width: 65%;
   position: relative;
@@ -218,12 +196,7 @@
   margin-bottom: 4px;
 }
 
-.dark .sender-name {
-  color: var(--chat-secondary, #6bc9b5);
-  font-weight: 700;
-}
-
-/* CRITICAL FIX: Message text visibility with theme support - IMPROVED CONTRAST */
+/* CRITICAL FIX: Message text visibility with theme support */
 .message-text {
   font-size: 14px;
   line-height: 1.4;
@@ -231,29 +204,6 @@
   margin-bottom: 4px;
   font-weight: 500;
   color: var(--chat-text, #1a1a1a) !important;
-}
-
-/* Ensure text is always visible in dark mode */
-.dark .message-text {
-  color: var(--chat-text, #ffffff) !important;
-  font-weight: 500;
-}
-
-/* Force text color for both sent and received messages */
-.message-sent .message-text {
-  color: var(--chat-text, #1a1a1a) !important;
-}
-
-.message-received .message-text {
-  color: var(--chat-text, #1a1a1a) !important;
-}
-
-.dark .message-sent .message-text {
-  color: var(--chat-text, #ffffff) !important;
-}
-
-.dark .message-received .message-text {
-  color: var(--chat-text, #ffffff) !important;
 }
 
 .message-time {
@@ -280,10 +230,6 @@
 }
 
 .message-status.double-tick.read {
-  color: #34b7f1;
-}
-
-.dark .message-status.double-tick.read {
   color: #34b7f1;
 }
 
@@ -335,11 +281,6 @@
   width: 100%;
 }
 
-.dark .input-container {
-  background: #1f2b32;
-  border-top-color: #2d3b44;
-}
-
 .input-wrapper {
   display: flex;
   align-items: center;
@@ -348,11 +289,6 @@
   padding: 4px;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   width: 100%;
-}
-
-.dark .input-wrapper {
-  background: #2d3b44;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .message-input {
@@ -367,13 +303,8 @@
   color: var(--chat-text, #333);
 }
 
-.dark .message-input {
-  color: var(--chat-text, #f0f4f8);
-  font-weight: 500;
-}
-
-.dark .message-input::placeholder {
-  color: var(--chat-text-light, #a8b5c1);
+.message-input::placeholder {
+  color: var(--chat-text-light, #999);
 }
 
 .send-button {
@@ -400,10 +331,6 @@
   cursor: not-allowed;
 }
 
-.dark .send-button:disabled {
-  background: #3a4a54;
-}
-
 .send-button.sending {
   background: #999;
 }
@@ -417,12 +344,6 @@
   border-bottom: 1px solid #ffcdd2;
   font-size: 14px;
   width: 100%;
-}
-
-.dark .chat-error {
-  background: #2d1b1b;
-  color: #ff8a8a;
-  border-bottom-color: #5c2b2b;
 }
 
 .no-messages {
@@ -455,11 +376,6 @@
   font-weight: 600;
 }
 
-.dark .blocked-badge {
-  background: rgba(231, 76, 60, 0.3);
-  color: #ff6b6b;
-}
-
 /* Security Message Styles */
 .security-message {
   display: flex;
@@ -471,11 +387,6 @@
   margin: 16px 0;
   gap: 12px;
   animation: slideInDown 0.3s ease-out;
-}
-
-.dark .security-message {
-  background: rgba(0, 149, 246, 0.15);
-  border-color: rgba(0, 149, 246, 0.4);
 }
 
 @keyframes slideInDown {
@@ -506,10 +417,6 @@
   margin-bottom: 4px;
 }
 
-.dark .security-content strong {
-  color: #4db5ff;
-}
-
 .security-content p {
   color: var(--chat-text-light, #666);
   font-size: 12px;
@@ -528,16 +435,8 @@
   text-decoration: underline;
 }
 
-.dark .security-learn-more {
-  color: #4db5ff;
-}
-
 .security-learn-more:hover {
   color: #0077cc;
-}
-
-.dark .security-learn-more:hover {
-  color: #66c2ff;
 }
 
 .security-dismiss {
@@ -558,10 +457,6 @@
 
 .security-dismiss:hover {
   background: rgba(0, 0, 0, 0.1);
-}
-
-.dark .security-dismiss:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 /* Theme Selector Styles */
@@ -590,11 +485,6 @@
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
 }
 
-.dark .theme-selector-modal {
-  background: #2d3b44;
-  color: white;
-}
-
 .theme-selector-header {
   display: flex;
   justify-content: space-between;
@@ -602,10 +492,6 @@
   margin-bottom: 20px;
   padding-bottom: 16px;
   border-bottom: 1px solid #eee;
-}
-
-.dark .theme-selector-header {
-  border-bottom-color: #3a4a54;
 }
 
 .theme-selector-header h3 {
@@ -629,16 +515,8 @@
   justify-content: center;
 }
 
-.dark .close-theme-selector {
-  color: #a8b5c1;
-}
-
 .close-theme-selector:hover {
   background: rgba(0, 0, 0, 0.1);
-}
-
-.dark .close-theme-selector:hover {
-  background: rgba(255, 255, 255, 0.1);
 }
 
 .themes-grid {
@@ -655,11 +533,6 @@
   cursor: pointer;
   transition: all 0.3s ease;
   background: white;
-}
-
-.dark .theme-card {
-  background: #374151;
-  border-color: #4b5563;
 }
 
 .theme-card:hover {
@@ -732,12 +605,6 @@
   animation: slideDown 0.2s ease-out;
 }
 
-.dark .dropdown-menu {
-  background: #2d3b44;
-  border-color: #3a4a54;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
-}
-
 @keyframes slideDown {
   from {
     opacity: 0;
@@ -764,16 +631,8 @@
   text-align: left;
 }
 
-.dark .menu-item {
-  color: #f0f4f8;
-}
-
 .menu-item:hover:not(:disabled) {
   background: #f5f5f5;
-}
-
-.dark .menu-item:hover:not(:disabled) {
-  background: #3a4a54;
 }
 
 .menu-item:disabled {
@@ -793,22 +652,12 @@
   background: #ffebee;
 }
 
-.dark .report-item:hover:not(:disabled) {
-  background: #3d2a2a;
-}
-
 .menu-message {
   padding: 8px 16px;
   font-size: 12px;
   color: #666;
   border-bottom: 1px solid #f0f0f0;
   background: #f8f9fa;
-}
-
-.dark .menu-message {
-  color: #a8b5c1;
-  border-bottom-color: #3a4a54;
-  background: #2d3b44;
 }
 
 .menu-loading-spinner {
@@ -823,6 +672,122 @@
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+/* Dark mode overrides */
+.dark .chat-room {
+  background: var(--chat-background, #0d1418);
+}
+
+.dark .input-container {
+  background: #1f2b32;
+  border-top-color: #2d3b44;
+}
+
+.dark .input-wrapper {
+  background: #2d3b44;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+}
+
+.dark .message-input {
+  color: var(--chat-text, #f0f4f8);
+}
+
+.dark .message-input::placeholder {
+  color: var(--chat-text-light, #a8b5c1);
+}
+
+.dark .send-button:disabled {
+  background: #3a4a54;
+}
+
+.dark .chat-error {
+  background: #2d1b1b;
+  color: #ff8a8a;
+  border-bottom-color: #5c2b2b;
+}
+
+.dark .date-divider span {
+  background: rgba(255, 255, 255, 0.15);
+  color: var(--chat-text-light, #e1e5e9);
+  font-weight: 600;
+}
+
+.dark .sender-name {
+  color: var(--chat-secondary, #6bc9b5);
+  font-weight: 700;
+}
+
+.dark .theme-selector-modal {
+  background: #2d3b44;
+  color: white;
+}
+
+.dark .theme-selector-header {
+  border-bottom-color: #3a4a54;
+}
+
+.dark .close-theme-selector {
+  color: #a8b5c1;
+}
+
+.dark .close-theme-selector:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .theme-card {
+  background: #374151;
+  border-color: #4b5563;
+}
+
+.dark .dropdown-menu {
+  background: #2d3b44;
+  border-color: #3a4a54;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
+}
+
+.dark .menu-item {
+  color: #f0f4f8;
+}
+
+.dark .menu-item:hover:not(:disabled) {
+  background: #3a4a54;
+}
+
+.dark .menu-message {
+  color: #a8b5c1;
+  border-bottom-color: #3a4a54;
+  background: #2d3b44;
+}
+
+.dark .report-item:hover:not(:disabled) {
+  background: #3d2a2a;
+}
+
+.dark .security-message {
+  background: rgba(0, 149, 246, 0.15);
+  border-color: rgba(0, 149, 246, 0.4);
+}
+
+.dark .security-content strong {
+  color: #4db5ff;
+}
+
+.dark .security-learn-more {
+  color: #4db5ff;
+}
+
+.dark .security-learn-more:hover {
+  color: #66c2ff;
+}
+
+.dark .security-dismiss:hover {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.dark .blocked-badge {
+  background: rgba(231, 76, 60, 0.3);
+  color: #ff6b6b;
 }
 
 /* Responsive */
