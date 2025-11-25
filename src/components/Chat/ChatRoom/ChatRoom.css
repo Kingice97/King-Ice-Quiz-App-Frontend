@@ -187,7 +187,7 @@
   font-size: 12px;
 }
 
-/* Message Bubbles - FIXED: CRITICAL - Enhanced dark mode visibility with perfect contrast */
+/* CRITICAL FIX: Message Bubbles - Ensure message text is visible */
 .message-bubble {
   max-width: 65%;
   position: relative;
@@ -195,28 +195,30 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
+/* Sent messages (your messages) */
 .message-sent .message-bubble {
   background: #dcf8c6;
   border-radius: 18px 18px 5px 18px;
   margin-left: auto;
-  color: #1a1a1a; /* Ensure text is dark in light bubbles */
+  color: #1a1a1a !important; /* CRITICAL: Force dark text in light bubbles */
 }
 
 .dark .message-sent .message-bubble {
   background: #056162; /* Darker green for better contrast */
-  color: #ffffff; /* Pure white for maximum readability */
+  color: #ffffff !important; /* CRITICAL: Force white text in dark mode */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
+/* Received messages (other people's messages) */
 .message-received .message-bubble {
   background: white;
   border-radius: 18px 18px 18px 5px;
-  color: #1a1a1a; /* Ensure text is dark in light bubbles */
+  color: #1a1a1a !important; /* CRITICAL: Force dark text in light bubbles */
 }
 
 .dark .message-received .message-bubble {
   background: #2d3b44; /* Darker background for better contrast */
-  color: #f0f4f8; /* Brighter text color for perfect readability */
+  color: #ffffff !important; /* CRITICAL: Force white text in dark mode */
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
@@ -232,17 +234,19 @@
   font-weight: 700;
 }
 
+/* CRITICAL FIX: Message text visibility */
 .message-text {
   font-size: 14px;
   line-height: 1.4;
   word-wrap: break-word;
   margin-bottom: 4px;
   font-weight: 500; /* Slightly bolder for better readability */
+  color: #1a1a1a !important; /* CRITICAL: Ensure dark text in light mode */
 }
 
-/* CRITICAL FIX: Ensure message text is perfectly visible in both themes */
+/* CRITICAL: Force white text in dark mode for perfect visibility */
 .dark .message-text {
-  color: #f0f4f8; /* Much brighter text for dark mode - PERFECT VISIBILITY */
+  color: #ffffff !important; /* PERFECT VISIBILITY - Pure white */
   font-weight: 500;
 }
 
