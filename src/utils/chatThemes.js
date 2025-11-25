@@ -94,8 +94,8 @@ export const chatThemes = [
       sentBubble: '#1f2937',
       receivedBubble: '#374151', 
       background: '#111827',
-      text: '#f8fafc', // Changed from #ffffff to #f8fafc for better contrast
-      textLight: '#e2e8f0' // Changed from #d1d5db to #e2e8f0 for better visibility
+      text: '#393a3aa1', // Changed from #ffffff to #f8fafc for better contrast
+      textLight: '#333133ff' // Changed from #d1d5db to #e2e8f0 for better visibility
     }
   },
   {
