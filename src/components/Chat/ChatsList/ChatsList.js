@@ -59,8 +59,7 @@ const ChatsList = ({
 
   const getProfilePicture = (participant) => {
     if (participant?.profile?.picture) {
-      // Replace with:
-return participant.profile.picture; // Use Cloudinary URL directly
+      return participant.profile.picture; // Use Cloudinary URL directly
     }
     return null;
   };
@@ -69,11 +68,12 @@ return participant.profile.picture; // Use Cloudinary URL directly
     return (
       <div className="chats-list">
         <div className="chats-header">
-          <h3>Your Chats</h3>
+          {/* REMOVED: "Your Chats" heading */}
           <button 
             className="refresh-btn" 
             onClick={onRefresh}
             disabled={true}
+            title="Refresh conversations"
           >
             ↻
           </button>
@@ -86,38 +86,16 @@ return participant.profile.picture; // Use Cloudinary URL directly
     );
   }
 
-  if (error) {
+  // REMOVED: Error state display - will show empty state instead
+  if (error || conversations.length === 0) {
     return (
       <div className="chats-list">
         <div className="chats-header">
-          <h3>Your Chats</h3>
+          {/* REMOVED: "Your Chats" heading */}
           <button 
             className="refresh-btn" 
             onClick={onRefresh}
-          >
-            ↻
-          </button>
-        </div>
-        <div className="error-conversations">
-          <div className="error-icon">⚠️</div>
-          <h4>Error Loading Conversations</h4>
-          <p>{error}</p>
-          <button className="btn btn-outline" onClick={onRefresh}>
-            Try Again
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  if (conversations.length === 0) {
-    return (
-      <div className="chats-list">
-        <div className="chats-header">
-          <h3>Your Chats</h3>
-          <button 
-            className="refresh-btn" 
-            onClick={onRefresh}
+            title="Refresh conversations"
           >
             ↻
           </button>
@@ -126,9 +104,6 @@ return participant.profile.picture; // Use Cloudinary URL directly
           <div className="no-chats-icon">💬</div>
           <h4>No conversations yet</h4>
           <p>Start a new chat by finding users or they will appear here when someone messages you.</p>
-          <button className="btn btn-outline" onClick={onRefresh}>
-            Refresh
-          </button>
         </div>
       </div>
     );
@@ -137,7 +112,7 @@ return participant.profile.picture; // Use Cloudinary URL directly
   return (
     <div className="chats-list">
       <div className="chats-header">
-        <h3>Your Chats</h3>
+        {/* REMOVED: "Your Chats" heading */}
         <button 
           className="refresh-btn" 
           onClick={onRefresh}

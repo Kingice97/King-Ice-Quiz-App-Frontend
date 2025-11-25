@@ -7,18 +7,12 @@
 
 .chats-header {
   display: flex;
-  justify-content: space-between;
+  justify-content: flex-end;
   align-items: center;
   padding: 1rem;
   border-bottom: 1px solid var(--border-color);
   background: var(--card-bg);
-}
-
-.chats-header h3 {
-  margin: 0;
-  color: var(--text-color);
-  font-size: 1.1rem;
-  font-weight: 600;
+  min-height: 60px;
 }
 
 .refresh-btn {
@@ -26,10 +20,15 @@
   border: none;
   font-size: 1.2rem;
   cursor: pointer;
-  padding: 0.25rem 0.5rem;
-  border-radius: 4px;
+  padding: 0.5rem;
+  border-radius: 50%;
   color: var(--text-muted);
   transition: all 0.2s ease;
+   width: 40px;
+  height: 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .refresh-btn:hover:not(:disabled) {
