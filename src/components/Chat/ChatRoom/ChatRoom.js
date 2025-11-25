@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useSocket } from '../../../context/SocketContext';
 import { chatService } from '../../../services/chatService';
 import { userService } from '../../../services/userService';
+import { chatThemes, getThemeById, applyChatTheme } from '../../../utils/chatThemes';
 import Loading from '../../common/Loading/Loading';
 import './ChatRoom.css';
 
@@ -33,13 +34,15 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [isBlocked, setIsBlocked] = useState(false);
   const [blockLoading, setBlockLoading] = useState(false);
   const [showSecurityMessage, setShowSecurityMessage] = useState(false);
-  const [chatTheme, setChatTheme] = useState('default');
+  const [showThemeSelector, setShowThemeSelector] = useState(false);
+  const [selectedTheme, setSelectedTheme] = useState('default');
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
   const messageListenerRef = useRef(null);
   const hasLoadedRef = useRef(false);
   const menuRef = useRef(null);
+  const themeSelectorRef = useRef(null);
 
   // Check if this is the first message in a private chat
   const isFirstMessageInPrivateChat = room.type === 'private' && messages.length === 0;
@@ -49,6 +52,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     const handleClickOutside = (event) => {
       if (menuRef.current && !menuRef.current.contains(event.target)) {
         setShowMenu(false);
+      }
+      if (themeSelectorRef.current && !themeSelectorRef.current.contains(event.target)) {
+        setShowThemeSelector(false);
       }
     };
 
@@ -119,6 +125,13 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       return () => clearTimeout(timer);
     }
   }, [isFirstMessageInPrivateChat]);
+
+  // Apply selected theme
+  useEffect(() => {
+    const savedTheme = localStorage.getItem('chatTheme') || 'default';
+    setSelectedTheme(savedTheme);
+    applyChatTheme(savedTheme, document.body.classList.contains('dark'));
+  }, []);
 
   // Force unblock using multiple methods
   const forceUnblockUser = async () => {
@@ -216,28 +229,19 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     }
   };
 
-  // Chat Theme Handler
+  // Enhanced Chat Theme Handler
   const handleChatTheme = () => {
-    const themes = [
-      { name: 'Default', value: 'default', description: 'Standard WhatsApp-like theme' },
-      { name: 'Dark Blue', value: 'dark-blue', description: 'Deep blue background' },
-      { name: 'Purple', value: 'purple', description: 'Elegant purple theme' },
-      { name: 'Green', value: 'green', description: 'Nature-inspired green' },
-      { name: 'Sunset', value: 'sunset', description: 'Warm orange and red tones' }
-    ];
-    
-    const themeOptions = themes.map(theme => 
-      `${themes.indexOf(theme) + 1}. ${theme.name} - ${theme.description}`
-    ).join('\n');
-    
-    const choice = prompt(`Choose a chat theme:\n\n${themeOptions}\n\nEnter number (1-${themes.length}):`);
-    
-    if (choice && themes[parseInt(choice) - 1]) {
-      const selectedTheme = themes[parseInt(choice) - 1];
-      setChatTheme(selectedTheme.value);
-      setMenuMessage(`Chat theme changed to ${selectedTheme.name}`);
-      setTimeout(() => setShowMenu(false), 2000);
-    }
+    setShowThemeSelector(true);
+    setShowMenu(false);
+  };
+
+  const selectTheme = (themeId) => {
+    setSelectedTheme(themeId);
+    applyChatTheme(themeId, document.body.classList.contains('dark'));
+    localStorage.setItem('chatTheme', themeId);
+    setShowThemeSelector(false);
+    setMenuMessage(`Theme changed to ${getThemeById(themeId).name}`);
+    setTimeout(() => setMenuMessage(''), 2000);
   };
 
   // Block/Unblock with better error handling
@@ -589,7 +593,54 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const currentTypingUsers = typingUsers[room.id] || [];
 
   return (
-    <div className={`chat-room ${chatTheme !== 'default' ? `chat-theme-${chatTheme}` : ''}`}>
+    <div className="chat-room">
+      {/* Theme Selector Modal */}
+      {showThemeSelector && (
+        <div className="theme-selector-overlay">
+          <div className="theme-selector-modal" ref={themeSelectorRef}>
+            <div className="theme-selector-header">
+              <h3>Choose Chat Theme</h3>
+              <button 
+                className="close-theme-selector"
+                onClick={() => setShowThemeSelector(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="themes-grid">
+              {chatThemes.map(theme => (
+                <div 
+                  key={theme.id}
+                  className={`theme-card ${selectedTheme === theme.id ? 'selected' : ''}`}
+                  onClick={() => selectTheme(theme.id)}
+                >
+                  <div 
+                    className="theme-preview"
+                    style={{
+                      background: theme.colors.background,
+                      border: `2px solid ${theme.colors.primary}`
+                    }}
+                  >
+                    <div 
+                      className="theme-bubble sent"
+                      style={{ background: theme.colors.sentBubble }}
+                    />
+                    <div 
+                      className="theme-bubble received"
+                      style={{ background: theme.colors.receivedBubble }}
+                    />
+                  </div>
+                  <div className="theme-info">
+                    <h4>{theme.name}</h4>
+                    <p>{theme.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* WhatsApp-style Fixed Header */}
       <div className="chat-header">
         <div className="header-left">
@@ -662,7 +713,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
                   </>
                 )}
                 
-                {/* Chat Theme Option */}
+                {/* Enhanced Chat Theme Option */}
                 <button className="menu-item" onClick={handleChatTheme} disabled={menuLoading}>
                   <svg width="18" height="18" viewBox="0 0 24 24" fill="currentColor">
                     <path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10zm0-2a8 8 0 100-16 8 8 0 000 16zm-5-8a5 5 0 1110 0 5 5 0 01-10 0z"/>
