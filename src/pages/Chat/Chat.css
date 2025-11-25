@@ -100,8 +100,9 @@
   border-bottom: 1px solid #e0e0e0;
   padding: 0 20px;
   flex-shrink: 0;
-  top: 69px; /* Height of sidebar-header */
-  z-index: 99;
+  position: sticky;
+  top: 0; /* Height of sidebar-header */
+  z-index: 100;
 }
 
 .dark .chat-tabs {
