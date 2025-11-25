@@ -7,9 +7,9 @@
   width: 100%;
 }
 
-/* FIXED: Dark mode support for chat room */
+/* FIXED: Enhanced dark mode support for chat room */
 .dark .chat-room {
-  background: #1a1a1a;
+  background: #0d1418; /* Darker background for better contrast */
 }
 
 /* WhatsApp Header */
@@ -28,7 +28,7 @@
 }
 
 .dark .chat-header {
-  background: #0d4d44;
+  background: #1f2b32; /* Darker header for better contrast */
 }
 
 .header-left {
@@ -114,7 +114,7 @@
   background: rgba(255, 255, 255, 0.1);
 }
 
-/* Messages Container - FIXED: Dark mode background */
+/* Messages Container - FIXED: Enhanced dark mode background */
 .messages-container {
   flex: 1;
   overflow-y: auto;
@@ -123,10 +123,10 @@
   width: 100%;
 }
 
-/* FIXED: Dark mode messages background */
+/* FIXED: Enhanced dark mode messages background with better contrast */
 .dark .messages-container {
-  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23075e54' fill-opacity='0.1' fill-rule='evenodd'/%3E%3C/svg%3E");
-  background-color: #1a1a1a;
+  background-image: url("data:image/svg+xml,%3Csvg width='100' height='100' viewBox='0 0 100 100' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M11 18c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm48 25c3.866 0 7-3.134 7-7s-3.134-7-7-7-7 3.134-7 7 3.134 7 7 7zm-43-7c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm63 31c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM34 90c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zm56-76c1.657 0 3-1.343 3-3s-1.343-3-3-3-3 1.343-3 3 1.343 3 3 3zM12 86c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm28-65c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm23-11c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-6 60c2.21 0 4-1.79 4-4s-1.79-4-4-4-4 1.79-4 4 1.79 4 4 4zm29 22c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zM32 63c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm57-13c2.76 0 5-2.24 5-5s-2.24-5-5-5-5 2.24-5 5 2.24 5 5 5zm-9-21c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM60 91c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM35 41c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2zM12 60c1.105 0 2-.895 2-2s-.895-2-2-2-2 .895-2 2 .895 2 2 2z' fill='%23ffffff' fill-opacity='0.03' fill-rule='evenodd'/%3E%3C/svg%3E");
+  background-color: #0d1418; /* Much darker background for better text contrast */
 }
 
 /* Date Divider */
@@ -145,8 +145,9 @@
 }
 
 .dark .date-divider span {
-  background: rgba(255, 255, 255, 0.1);
-  color: #cccccc;
+  background: rgba(255, 255, 255, 0.15); /* Enhanced contrast */
+  color: #e1e5e9; /* Brighter text */
+  font-weight: 600;
 }
 
 /* Messages */
@@ -186,36 +187,37 @@
   font-size: 12px;
 }
 
-/* Message Bubbles - FIXED: Dark mode visibility */
+/* Message Bubbles - FIXED: Enhanced dark mode visibility with better contrast */
 .message-bubble {
   max-width: 65%;
   position: relative;
+  padding: 8px 12px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
 }
 
 .message-sent .message-bubble {
   background: #dcf8c6;
   border-radius: 18px 18px 5px 18px;
   margin-left: auto;
+  color: #1a1a1a; /* Ensure text is dark in light bubbles */
 }
 
 .dark .message-sent .message-bubble {
-  background: #056162;
-  color: #ffffff;
+  background: #056162; /* Darker green for better contrast */
+  color: #ffffff; /* Pure white for maximum readability */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .message-received .message-bubble {
   background: white;
   border-radius: 18px 18px 18px 5px;
+  color: #1a1a1a; /* Ensure text is dark in light bubbles */
 }
 
 .dark .message-received .message-bubble {
-  background: #2a2f32;
-  color: #e9edef;
-}
-
-.message-bubble {
-  padding: 8px 12px;
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+  background: #2d3b44; /* Darker background for better contrast */
+  color: #f0f4f8; /* Brighter text color for readability */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
 }
 
 .sender-name {
@@ -226,7 +228,8 @@
 }
 
 .dark .sender-name {
-  color: #6bc9b5;
+  color: #6bc9b5; /* Brighter color for better visibility */
+  font-weight: 700;
 }
 
 .message-text {
@@ -234,10 +237,12 @@
   line-height: 1.4;
   word-wrap: break-word;
   margin-bottom: 4px;
+  font-weight: 500; /* Slightly bolder for better readability */
 }
 
 .dark .message-text {
-  color: #e9edef;
+  color: #f0f4f8; /* Much brighter text for dark mode */
+  font-weight: 500;
 }
 
 .message-time {
@@ -245,12 +250,12 @@
   justify-content: flex-end;
   align-items: center;
   font-size: 11px;
-  color: #999;
+  color: #666;
   gap: 4px;
 }
 
 .dark .message-time {
-  color: #8696a0;
+  color: #a8b5c1; /* Brighter time text */
 }
 
 /* WhatsApp Message Status */
@@ -260,11 +265,11 @@
 }
 
 .message-status.single-tick {
-  color: #999;
+  color: #666;
 }
 
 .message-status.double-tick {
-  color: #999;
+  color: #666;
 }
 
 .message-status.double-tick.read {
@@ -273,6 +278,11 @@
 
 .dark .message-status.double-tick.read {
   color: #34b7f1;
+}
+
+.dark .message-status.single-tick,
+.dark .message-status.double-tick {
+  color: #a8b5c1; /* Brighter ticks for dark mode */
 }
 
 /* Typing Indicator */
@@ -287,8 +297,8 @@
 }
 
 .dark .typing-indicator {
-  background: #2a2f32;
-  color: #e9edef;
+  background: #2d3b44; /* Darker background */
+  color: #f0f4f8; /* Brighter text */
 }
 
 .typing-dots {
@@ -306,7 +316,7 @@
 }
 
 .dark .typing-dots span {
-  background: #8696a0;
+  background: #a8b5c1; /* Brighter dots */
 }
 
 .typing-dots span:nth-child(1) { animation-delay: -0.32s; }
@@ -324,7 +334,7 @@
 }
 
 .dark .typing-text {
-  color: #8696a0;
+  color: #a8b5c1; /* Brighter typing text */
 }
 
 /* Input Area */
@@ -336,8 +346,8 @@
 }
 
 .dark .input-container {
-  background: #1f2c34;
-  border-top-color: #2a3942;
+  background: #1f2b32; /* Darker input background */
+  border-top-color: #2d3b44;
 }
 
 .input-wrapper {
@@ -351,7 +361,8 @@
 }
 
 .dark .input-wrapper {
-  background: #2a3942;
+  background: #2d3b44; /* Darker input wrapper */
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .message-input {
@@ -367,11 +378,12 @@
 }
 
 .dark .message-input {
-  color: #e9edef;
+  color: #f0f4f8; /* Brighter input text */
+  font-weight: 500;
 }
 
 .dark .message-input::placeholder {
-  color: #8696a0;
+  color: #a8b5c1; /* Brighter placeholder */
 }
 
 .send-button {
@@ -399,7 +411,7 @@
 }
 
 .dark .send-button:disabled {
-  background: #2a3942;
+  background: #3a4a54;
 }
 
 .send-button.sending {
@@ -431,7 +443,7 @@
 }
 
 .dark .no-messages {
-  color: #8696a0;
+  color: #a8b5c1; /* Brighter no messages text */
 }
 
 .no-messages-icon {
@@ -444,6 +456,22 @@
   margin-top: 8px;
   font-size: 14px;
   opacity: 0.8;
+}
+
+/* Blocked badge */
+.blocked-badge {
+  background: rgba(231, 76, 60, 0.2);
+  color: #e74c3c;
+  padding: 2px 8px;
+  border-radius: 10px;
+  font-size: 10px;
+  margin-left: 8px;
+  font-weight: 600;
+}
+
+.dark .blocked-badge {
+  background: rgba(231, 76, 60, 0.3);
+  color: #ff6b6b;
 }
 
 /* Responsive */
@@ -519,9 +547,9 @@
 }
 
 .dark .dropdown-menu {
-  background: #2a3942;
-  border-color: #36444d;
-  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
+  background: #2d3b44; /* Darker dropdown */
+  border-color: #3a4a54;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.4);
 }
 
 @keyframes slideDown {
@@ -551,7 +579,7 @@
 }
 
 .dark .menu-item {
-  color: #e9edef;
+  color: #f0f4f8; /* Brighter menu text */
 }
 
 .menu-item:hover:not(:disabled) {
@@ -559,7 +587,7 @@
 }
 
 .dark .menu-item:hover:not(:disabled) {
-  background: #36444d;
+  background: #3a4a54; /* Darker hover */
 }
 
 .menu-item:disabled {
@@ -592,9 +620,9 @@
 }
 
 .dark .menu-message {
-  color: #8696a0;
-  border-bottom-color: #36444d;
-  background: #2a3942;
+  color: #a8b5c1; /* Brighter menu message */
+  border-bottom-color: #3a4a54;
+  background: #2d3b44;
 }
 
 .menu-loading-spinner {
