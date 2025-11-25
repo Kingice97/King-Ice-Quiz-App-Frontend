@@ -27,14 +27,26 @@
   width: 100vw;
 }
 
-/* FIXED: Mobile adjustments with proper spacing */
+/* FIXED: Enhanced mobile adjustments with proper spacing to prevent navbar overlap */
 @media (max-width: 768px) {
   .main-content {
     margin-left: 0;
     margin-top: 0;
     padding: 0;
     width: 100%;
-    padding-top: 80px; /* FIXED: Add space for mobile navbar */
+    padding-top: 70px !important; /* FIXED: Increased space for mobile navbar - CRITICAL FIX */
+    min-height: calc(100vh - 70px); /* FIXED: Ensure content fits properly */
+  }
+
+  /* FIXED: Ensure all page containers have proper top padding */
+  .page-container,
+  .content-area,
+  .home-page,
+  .quizzes-page,
+  .dashboard-page,
+  .profile-page,
+  .admin-page {
+    padding-top: 20px !important; /* FIXED: Additional padding for content */
   }
 }
 
@@ -209,7 +221,7 @@ a:hover {
   max-width: 1024px;
 }
 
-/* Page content container - FIXED: Better mobile spacing */
+/* Page content container - FIXED: Enhanced mobile spacing */
 .page-container {
   padding: var(--spacing-xl);
   max-width: 1200px;
@@ -221,7 +233,8 @@ a:hover {
 @media (max-width: 768px) {
   .page-container {
     padding: var(--spacing-md);
-    padding-top: 90px; /* FIXED: Extra space for mobile navbar */
+    padding-top: 90px !important; /* FIXED: Extra space for mobile navbar - CRITICAL FIX */
+    min-height: calc(100vh - 90px);
   }
 }
 
@@ -719,7 +732,7 @@ a:hover {
   color: var(--gray-100);
 }
 
-/* Ensure proper spacing for all pages */
+/* FIXED: Ensure proper spacing for all pages with mobile navbar consideration */
 .home-page,
 .quizzes-page,
 .dashboard-page,
@@ -727,6 +740,19 @@ a:hover {
 .admin-page,
 .chat-page {
   min-height: 100vh;
+  width: 100%;
+}
+
+/* FIXED: Enhanced mobile spacing for all page types */
+@media (max-width: 768px) {
+  .home-page,
+  .quizzes-page,
+  .dashboard-page,
+  .profile-page,
+  .admin-page {
+    padding-top: 80px !important; /* FIXED: Prevent navbar overlap */
+    min-height: calc(100vh - 80px);
+  }
 }
 
 /* Chat page specific adjustments */
@@ -737,7 +763,7 @@ a:hover {
   width: 100%;
 }
 
-/* Responsive improvements */
+/* FIXED: Enhanced responsive improvements for mobile */
 @media (max-width: 768px) {
   .main-content {
     padding-top: 0;
@@ -848,6 +874,7 @@ a:hover {
 @media (max-width: 768px) {
   .footer {
     margin-left: 0;
+    margin-top: 70px; /* FIXED: Account for mobile navbar height */
   }
 }
 
@@ -865,16 +892,18 @@ a:hover {
   }
 }
 
-/* Ensure content is properly spaced */
+/* FIXED: Enhanced content area spacing for mobile */
 .content-area {
   padding: var(--spacing-xl);
   min-height: 100vh;
+  width: 100%;
 }
 
 @media (max-width: 768px) {
   .content-area {
     padding: var(--spacing-md);
-    padding-top: 90px; /* FIXED: Extra space for mobile navbar */
+    padding-top: 90px !important; /* FIXED: Extra space for mobile navbar - CRITICAL FIX */
+    min-height: calc(100vh - 90px);
   }
 }
 
@@ -890,10 +919,16 @@ a:hover {
   display: flex;
 }
 
-/* FIXED: Ensure pages start from top */
+/* FIXED: Ensure pages start from top with proper mobile spacing */
 .page-start-from-top {
   margin-top: 0;
   padding-top: 0;
+}
+
+@media (max-width: 768px) {
+  .page-start-from-top {
+    padding-top: 70px !important; /* FIXED: Mobile navbar spacing */
+  }
 }
 
 /* FIXED: Theme toggle styles for chat */
@@ -910,4 +945,26 @@ a:hover {
 
 .chat-theme-toggle:hover {
   background: rgba(255, 255, 255, 0.1);
+}
+
+/* FIXED: Critical mobile fixes to prevent content being covered by navbar */
+@media (max-width: 768px) {
+  /* Ensure all main content areas have proper top spacing */
+  .main-content > *:first-child {
+    padding-top: 20px;
+  }
+  
+  /* Specific fixes for common page layouts */
+  .quiz-container,
+  .dashboard-container,
+  .profile-container,
+  .admin-container {
+    padding-top: 20px;
+  }
+  
+  /* Ensure chat room doesn't get covered */
+  .chat-room {
+    padding-top: 0;
+    height: 100vh;
+  }
 }
