@@ -23,11 +23,100 @@ body {
   transition: color 0.3s ease, background-color 0.3s ease;
 }
 
-/* ===== QUICK THEME FIXES ===== */
-/* Nuclear option for text visibility */
-body *:not(.btn):not(.btn *):not([class*="bg-"]) {
+/* ===== GLOBAL TEXT VISIBILITY SAFETY NET ===== */
+/* Force critical text elements to always be visible in both themes */
+
+/* Headers - always visible */
+h1, h2, h3, h4, h5, h6 {
   color: var(--text-primary) !important;
 }
+
+/* Navigation and user text */
+.navbar *,
+.sidebar *,
+.username,
+.user-name,
+.profile-name,
+.user-info * {
+  color: var(--text-primary) !important;
+}
+
+/* Card content */
+.card,
+.card *:not(.btn):not(.btn *) {
+  color: var(--text-primary) !important;
+}
+
+/* Form labels and text */
+.form-label,
+.form-text,
+.form-control,
+.form-select {
+  color: var(--text-primary) !important;
+}
+
+/* Table content */
+.table,
+.table th,
+.table td {
+  color: var(--text-primary) !important;
+}
+
+/* Button text (preserve button styles but ensure visibility) */
+.btn:not(.btn-outline) {
+  color: var(--text-inverse) !important;
+}
+
+.btn-outline {
+  color: var(--text-primary) !important;
+}
+
+/* Links */
+a:not(.btn) {
+  color: var(--primary-color) !important;
+}
+
+a:not(.btn):hover {
+  color: var(--primary-dark) !important;
+}
+
+.dark a:not(.btn):hover {
+  color: var(--primary-light) !important;
+}
+
+/* Alert and notification text */
+.alert,
+.alert * {
+  color: var(--text-primary) !important;
+}
+
+/* List items */
+.list-group-item,
+.list-group-item * {
+  color: var(--text-primary) !important;
+}
+
+/* Modal content */
+.modal-content,
+.modal-content *:not(.btn):not(.btn *) {
+  color: var(--text-primary) !important;
+}
+
+/* Footer text */
+.footer,
+.footer * {
+  color: var(--text-primary) !important;
+}
+
+/* Utility classes for manual overrides */
+.text-force-primary { color: var(--text-primary) !important; }
+.text-force-secondary { color: var(--text-secondary) !important; }
+.text-force-muted { color: var(--text-muted) !important; }
+.text-force-inverse { color: var(--text-inverse) !important; }
+
+.bg-force-primary { background-color: var(--bg-primary) !important; }
+.bg-force-secondary { background-color: var(--bg-secondary) !important; }
+.bg-force-card { background-color: var(--bg-card) !important; }
 
 /* Dark mode styles */
 .dark {
