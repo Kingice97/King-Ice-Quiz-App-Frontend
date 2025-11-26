@@ -1,0 +1,436 @@
+/* Theme fixes for better visibility across all devices */
+
+/* Base text visibility fixes */
+body {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+/* Ensure all text elements have proper contrast */
+h1, h2, h3, h4, h5, h6 {
+  color: var(--text-primary);
+}
+
+p, span, div {
+  color: var(--text-primary);
+}
+
+a {
+  color: var(--primary-color);
+}
+
+a:hover {
+  color: var(--primary-dark);
+}
+
+/* Navbar specific fixes */
+.navbar {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.navbar-brand,
+.navbar-text {
+  color: var(--text-primary) !important;
+}
+
+.navbar-nav .nav-link {
+  color: var(--text-primary) !important;
+}
+
+.navbar-nav .nav-link:hover {
+  color: var(--primary-color) !important;
+}
+
+/* User info in navbar/sidebar */
+.username,
+.user-name,
+.profile-name,
+.user-info {
+  color: var(--text-primary) !important;
+  font-weight: 600;
+}
+
+.user-email,
+.user-details {
+  color: var(--text-secondary) !important;
+}
+
+/* Card fixes */
+.card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.card-title {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.card-text {
+  color: var(--text-primary);
+}
+
+.card-subtitle {
+  color: var(--text-secondary);
+}
+
+.card-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.card-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-primary);
+}
+
+/* Button fixes */
+.btn {
+  color: var(--text-inverse);
+}
+
+.btn-primary {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+.btn-outline-primary {
+  color: var(--primary-color);
+  border-color: var(--primary-color);
+}
+
+.btn-outline-primary:hover {
+  background-color: var(--primary-color);
+  color: white;
+}
+
+.btn-secondary {
+  background-color: var(--secondary-color);
+  border-color: var(--secondary-color);
+  color: var(--text-primary);
+}
+
+.btn-outline-secondary {
+  color: var(--text-secondary);
+  border-color: var(--border-primary);
+}
+
+.btn-outline-secondary:hover {
+  background-color: var(--secondary-color);
+  color: var(--text-primary);
+}
+
+/* Form controls */
+.form-control {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.form-control:focus {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--primary-color);
+}
+
+.form-label {
+  color: var(--text-primary);
+  font-weight: 500;
+}
+
+.form-text {
+  color: var(--text-secondary);
+}
+
+.form-control::placeholder {
+  color: var(--text-muted);
+}
+
+/* Table fixes */
+.table {
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+}
+
+.table th {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+  font-weight: 600;
+}
+
+.table td {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.table-striped tbody tr:nth-of-type(odd) {
+  background-color: var(--bg-secondary);
+}
+
+/* Alert fixes */
+.alert {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+  border-left: 4px solid transparent;
+}
+
+.alert-success {
+  border-left-color: var(--success-color);
+}
+
+.alert-error {
+  border-left-color: var(--danger-color);
+}
+
+.alert-warning {
+  border-left-color: var(--warning-color);
+}
+
+.alert-info {
+  border-left-color: var(--info-color);
+}
+
+/* Badge fixes */
+.badge {
+  color: var(--text-inverse);
+}
+
+.badge.bg-secondary {
+  background-color: var(--gray-500) !important;
+  color: var(--text-inverse);
+}
+
+/* List group fixes */
+.list-group-item {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border-color: var(--border-primary);
+}
+
+.list-group-item.active {
+  background-color: var(--primary-color);
+  border-color: var(--primary-color);
+  color: white;
+}
+
+/* Modal fixes */
+.modal-content {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.modal-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.modal-footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-primary);
+}
+
+.modal-title {
+  color: var(--text-primary);
+}
+
+/* Chat specific fixes */
+.chat-container {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.chat-message {
+  color: var(--text-primary);
+}
+
+.chat-header {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-bottom: 1px solid var(--border-primary);
+}
+
+.message-sender {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.message-time {
+  color: var(--text-muted);
+}
+
+/* Quiz specific fixes */
+.quiz-container {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.quiz-title {
+  color: var(--text-primary);
+}
+
+.quiz-question {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.quiz-option {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.quiz-option:hover {
+  background-color: var(--bg-secondary);
+  border-color: var(--primary-color);
+}
+
+.quiz-option.selected {
+  background-color: var(--primary-color);
+  color: white;
+  border-color: var(--primary-color);
+}
+
+/* Profile page fixes */
+.profile-section {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.profile-stats {
+  color: var(--text-primary);
+}
+
+.profile-bio {
+  color: var(--text-primary);
+}
+
+.stats-number {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stats-label {
+  color: var(--text-secondary);
+}
+
+/* Admin panel fixes */
+.admin-panel {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+}
+
+.admin-card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+  border: 1px solid var(--border-primary);
+}
+
+.admin-sidebar {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-right: 1px solid var(--border-primary);
+}
+
+/* Footer fixes */
+.footer {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+  border-top: 1px solid var(--border-primary);
+}
+
+.footer a {
+  color: var(--text-primary);
+}
+
+.footer a:hover {
+  color: var(--primary-color);
+}
+
+/* Loading states */
+.loading-text {
+  color: var(--text-secondary);
+}
+
+/* Utility classes for manual overrides */
+.text-theme-primary { color: var(--text-primary) !important; }
+.text-theme-secondary { color: var(--text-secondary) !important; }
+.text-theme-muted { color: var(--text-muted) !important; }
+.text-theme-inverse { color: var(--text-inverse) !important; }
+
+.bg-theme-primary { background-color: var(--bg-primary) !important; }
+.bg-theme-secondary { background-color: var(--bg-secondary) !important; }
+.bg-theme-card { background-color: var(--bg-card) !important; }
+
+.border-theme-primary { border-color: var(--border-primary) !important; }
+.border-theme-secondary { border-color: var(--border-secondary) !important; }
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  :root {
+    --text-primary: #000000;
+    --text-secondary: #333333;
+    --border-primary: #000000;
+  }
+  
+  .dark {
+    --text-primary: #ffffff;
+    --text-secondary: #e0e0e0;
+    --border-primary: #ffffff;
+  }
+}
+
+/* Ensure all interactive elements are visible */
+input, textarea, select {
+  color: var(--text-primary) !important;
+}
+
+/* Fix for any remaining invisible text */
+* {
+  color: inherit;
+}
+
+/* Specific fix for sidebar navigation */
+.sidebar {
+  background-color: var(--bg-secondary);
+  color: var(--text-primary);
+}
+
+.sidebar-nav .nav-link {
+  color: var(--text-primary);
+}
+
+.sidebar-nav .nav-link:hover {
+  color: var(--primary-color);
+  background-color: var(--bg-primary);
+}
+
+/* Dashboard specific fixes */
+.dashboard-stats {
+  color: var(--text-primary);
+}
+
+.dashboard-card {
+  background-color: var(--bg-card);
+  color: var(--text-primary);
+}
+
+.stats-value {
+  color: var(--text-primary);
+  font-weight: 600;
+}
+
+.stats-description {
+  color: var(--text-secondary);
+}
