@@ -16,59 +16,12 @@
   background: rgba(0, 0, 0, 0.95);
 }
 
-.loading-spinner {
+/* Dot Loader Styles */
+.loading-dots {
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-/* Modern smooth spinner */
-.spinner {
-  border: 2px solid transparent;
-  border-top: 2px solid #007bff;
-  border-right: 2px solid #007bff;
-  border-radius: 50%;
-  animation: spin 0.8s linear infinite;
-}
-
-.loading-small .spinner {
-  width: 18px;
-  height: 18px;
-  border-width: 2px;
-}
-
-.loading-medium .spinner {
-  width: 22px;
-  height: 22px;
-  border-width: 2px;
-}
-
-.loading-large .spinner {
-  width: 26px;
-  height: 26px;
-  border-width: 2px;
-}
-
-.dark .spinner {
-  border-top-color: #007bff;
-  border-right-color: #007bff;
-}
-
-@keyframes spin {
-  0% { 
-    transform: rotate(0deg); 
-  }
-  100% { 
-    transform: rotate(360deg); 
-  }
-}
-
-/* Alternative: Dot pulse loader */
-.dot-pulse {
-  display: flex;
   gap: 4px;
-  align-items: center;
-  justify-content: center;
 }
 
 .dot {
@@ -76,9 +29,25 @@
   height: 6px;
   border-radius: 50%;
   background-color: #007bff;
-  animation: pulse 1.4s ease-in-out infinite both;
+  animation: dot-pulse 1.4s ease-in-out infinite both;
 }
 
+.loading-small .dot {
+  width: 4px;
+  height: 4px;
+}
+
+.loading-medium .dot {
+  width: 6px;
+  height: 6px;
+}
+
+.loading-large .dot {
+  width: 8px;
+  height: 8px;
+}
+
+/* Dot animation delays */
 .dot:nth-child(1) {
   animation-delay: -0.32s;
 }
@@ -87,11 +56,15 @@
   animation-delay: -0.16s;
 }
 
+.dot:nth-child(3) {
+  animation-delay: 0s;
+}
+
 .dark .dot {
   background-color: #007bff;
 }
 
-@keyframes pulse {
+@keyframes dot-pulse {
   0%, 80%, 100% {
     transform: scale(0.8);
     opacity: 0.5;

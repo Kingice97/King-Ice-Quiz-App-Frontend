@@ -1,7 +1,7 @@
 import React from 'react';
 import './Loading.css';
 
-const Loading = ({ type = 'spinner', size = 'medium', overlay = false }) => {
+const Loading = ({ type = 'dots', size = 'medium', overlay = false }) => {
   if (type === 'skeleton') {
     return (
       <div className="skeleton-container">
@@ -17,21 +17,25 @@ const Loading = ({ type = 'spinner', size = 'medium', overlay = false }) => {
   if (overlay) {
     return (
       <div className="loading-overlay">
-        <div className={`loading-spinner ${sizeClass}`}>
-          <div className="spinner"></div>
+        <div className={`loading-dots ${sizeClass}`}>
+          <div className="dot"></div>
+          <div className="dot"></div>
+          <div className="dot"></div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className={`loading-spinner ${sizeClass}`}>
-      <div className="spinner"></div>
+    <div className={`loading-dots ${sizeClass}`}>
+      <div className="dot"></div>
+      <div className="dot"></div>
+      <div className="dot"></div>
     </div>
   );
 };
 
-// Skeleton loading components for different use cases
+// Skeleton loading components remain the same
 export const SkeletonMessage = () => (
   <div className="skeleton-message">
     <div className="skeleton-avatar"></div>
