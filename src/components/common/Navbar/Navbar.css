@@ -390,7 +390,7 @@
 
 .user-name {
   font-weight: 500;
-  color: var(--gray-900) !important; /* Force dark color */
+  color: var(--gray-900) !important; /* FIXED: Force dark color */
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
@@ -398,7 +398,7 @@
 }
 
 .dark .user-name {
-  color: var(--gray-100) !important; /* Force light color */
+  color: var(--gray-100) !important; /* FIXED: Force light color */
 }
 
 .admin-badge {
@@ -415,6 +415,37 @@
 
 .dark .admin-badge {
   background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+}
+
+/* FIXED: Navbar button hovers */
+.auth-buttons-sidebar .btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-inverse) !important;
+  border: 1px solid var(--primary-color);
+}
+
+.auth-buttons-sidebar .btn-primary:hover {
+  background-color: var(--primary-dark);
+  color: var(--text-inverse) !important;
+  border-color: var(--primary-dark);
+}
+
+.auth-buttons-sidebar .btn-outline {
+  background-color: transparent;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary);
+}
+
+.auth-buttons-sidebar .btn-outline:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-400);
+}
+
+.dark .auth-buttons-sidebar .btn-outline:hover {
+  background-color: var(--gray-700);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-500);
 }
 
 .auth-buttons-sidebar {
@@ -562,6 +593,37 @@
   display: flex;
   gap: 0.5rem;
   flex-direction: column;
+}
+
+/* FIXED: Mobile auth buttons */
+.auth-buttons-mobile .btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-inverse) !important;
+  border: 1px solid var(--primary-color);
+}
+
+.auth-buttons-mobile .btn-primary:hover {
+  background-color: var(--primary-dark);
+  color: var(--text-inverse) !important;
+  border-color: var(--primary-dark);
+}
+
+.auth-buttons-mobile .btn-outline {
+  background-color: transparent;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary);
+}
+
+.auth-buttons-mobile .btn-outline:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-400);
+}
+
+.dark .auth-buttons-mobile .btn-outline:hover {
+  background-color: var(--gray-700);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-500);
 }
 
 .mobile-social-section {

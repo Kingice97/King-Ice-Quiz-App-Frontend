@@ -41,6 +41,30 @@
   flex-wrap: wrap;
 }
 
+/* FIXED: Home page button hovers */
+.hero-actions .btn-primary {
+  background-color: var(--primary-color);
+  color: var(--text-inverse) !important;
+  border: 1px solid var(--primary-color);
+}
+
+.hero-actions .btn-primary:hover {
+  background-color: var(--primary-dark);
+  color: var(--text-inverse) !important;
+  border-color: var(--primary-dark);
+}
+
+.hero-actions .btn-outline {
+  background-color: transparent;
+  color: var(--text-inverse) !important;
+  border: 2px solid var(--text-inverse);
+}
+
+.hero-actions .btn-outline:hover {
+  background-color: var(--text-inverse);
+  color: var(--primary-color) !important;
+}
+
 .hero-image {
   display: flex;
   justify-content: center;
@@ -504,6 +528,30 @@
   gap: var(--spacing-md);
   justify-content: center;
   flex-wrap: wrap;
+}
+
+/* FIXED: CTA section buttons */
+.cta-actions .btn-primary {
+  background-color: var(--white);
+  color: var(--primary-color) !important;
+  border: 1px solid var(--white);
+}
+
+.cta-actions .btn-primary:hover {
+  background-color: transparent;
+  color: var(--white) !important;
+  border-color: var(--white);
+}
+
+.cta-actions .btn-outline {
+  background-color: transparent;
+  color: var(--white) !important;
+  border: 2px solid var(--white);
+}
+
+.cta-actions .btn-outline:hover {
+  background-color: var(--white);
+  color: var(--primary-color) !important;
 }
 
 /* Mobile Styles */

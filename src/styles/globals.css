@@ -118,6 +118,55 @@ a:not(.btn):hover {
 .bg-force-secondary { background-color: var(--bg-secondary) !important; }
 .bg-force-card { background-color: var(--bg-card) !important; }
 
+/* ===== BUTTON HOVER SAFETY NET ===== */
+/* Ensure button text remains visible on hover */
+
+.btn-primary {
+  background-color: var(--primary-color) !important;
+  color: var(--text-inverse) !important;
+  border: 1px solid var(--primary-color) !important;
+}
+
+.btn-primary:hover {
+  background-color: var(--primary-dark) !important;
+  color: var(--text-inverse) !important;
+  border-color: var(--primary-dark) !important;
+}
+
+.dark .btn-primary:hover {
+  background-color: var(--primary-light) !important;
+  color: var(--text-inverse) !important;
+}
+
+.btn-outline {
+  background-color: transparent !important;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary) !important;
+}
+
+.btn-outline:hover {
+  background-color: var(--gray-100) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--gray-400) !important;
+}
+
+.dark .btn-outline:hover {
+  background-color: var(--gray-700) !important;
+  color: var(--text-primary) !important;
+  border-color: var(--gray-500) !important;
+}
+
+/* Special case for hero section outline buttons */
+.hero-actions .btn-outline:hover {
+  background-color: var(--text-inverse) !important;
+  color: var(--primary-color) !important;
+}
+
+.cta-actions .btn-outline:hover {
+  background-color: var(--white) !important;
+  color: var(--primary-color) !important;
+}
+
 /* Dark mode styles */
 .dark {
   color-scheme: dark;
