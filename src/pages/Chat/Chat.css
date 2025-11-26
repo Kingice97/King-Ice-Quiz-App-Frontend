@@ -41,7 +41,6 @@
 .sidebar-header {
   padding: 20px;
   background: #f0f0f0;
-  border-bottom: 1px solid #e0e0e0;
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -53,7 +52,6 @@
 
 .dark .sidebar-header {
   background: var(--gray-700);
-  border-bottom-color: var(--gray-600); /* FIXED: Dark header */
 }
 
 .sidebar-header h2 {
@@ -103,6 +101,7 @@
   position: sticky;
   top: 81px; /* Height of sidebar-header */
   z-index: 150;
+  margin-top: 0;
 }
 
 .dark .chat-tabs {
