@@ -37,6 +37,63 @@ import LeaderboardPage from './pages/Admin/LeaderboardPage';
 
 import './App.css';
 
+// Keep-alive service - Add this function
+const startKeepAlive = () => {
+  // Only run in production
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('🔔 KeepAlive: Disabled in development');
+    return;
+  }
+
+  const backendUrl = process.env.REACT_APP_BACKEND_URL;
+  
+  if (!backendUrl) {
+    console.warn('❌ KeepAlive: No backend URL found');
+    return;
+  }
+
+  console.log('🔔 KeepAlive: Starting service for backend:', backendUrl);
+
+  // Ping immediately when app starts
+  fetch(`${backendUrl}/health`)
+    .then(response => {
+      if (response.ok) {
+        console.log('✅ KeepAlive: Initial ping successful');
+      } else {
+        console.warn('⚠️ KeepAlive: Initial ping failed', response.status);
+      }
+    })
+    .catch(error => {
+      console.warn('⚠️ KeepAlive: Initial ping error', error.message);
+    });
+
+  // Ping every 10 minutes (600,000 ms)
+  const intervalId = setInterval(async () => {
+    try {
+      const response = await fetch(`${backendUrl}/health`, {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      
+      if (response.ok) {
+        console.log('✅ KeepAlive: Backend ping successful');
+      } else {
+        console.warn('⚠️ KeepAlive: Backend ping failed', response.status);
+      }
+    } catch (error) {
+      console.warn('⚠️ KeepAlive: Backend ping error', error.message);
+    }
+  }, 10 * 60 * 1000); // 10 minutes
+
+  // Return cleanup function
+  return () => {
+    clearInterval(intervalId);
+    console.log('🔔 KeepAlive: Service stopped');
+  };
+};
+
 // Layout wrapper component to conditionally show header/footer
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -63,6 +120,9 @@ function App() {
   useEffect(() => {
     // Initialize security features
     initSecurity();
+
+    // ========== KEEP-ALIVE SERVICE ==========
+    const keepAliveCleanup = startKeepAlive();
 
     // ========== PWA INSTALLATION HANDLING ==========
     const handleBeforeInstallPrompt = (e) => {
@@ -114,6 +174,11 @@ function App() {
       window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
       clearTimeout(installTimer);
+      
+      // Cleanup keep-alive service
+      if (keepAliveCleanup) {
+        keepAliveCleanup();
+      }
     };
   }, [deferredPrompt, showInstallPrompt]);
 
