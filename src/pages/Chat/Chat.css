@@ -4,10 +4,11 @@
   width: 100vw;
   margin: 0;
   padding: 0;
+  overflow: hidden; /* ADDED: Prevent overall page scrolling */
 }
 
 .dark .chat-page {
-  background: var(--gray-900); /* FIXED: Consistent dark background */
+  background: var(--gray-900);
 }
 
 .chat-container {
@@ -19,7 +20,7 @@
 }
 
 .dark .chat-container {
-  background: var(--gray-900); /* FIXED: Dark container background */
+  background: var(--gray-900);
 }
 
 /* Sidebar - Always visible */
@@ -30,12 +31,13 @@
   display: flex;
   flex-direction: column;
   background: white;
-  position: relative; /* ADDED: Create stacking context */
+  position: relative;
+  overflow: hidden; /* ADDED: Contain scrolling within sidebar */
 }
 
 .dark .chat-sidebar {
   background: var(--gray-800);
-  border-right-color: var(--gray-700); /* FIXED: Darker border */
+  border-right-color: var(--gray-700);
 }
 
 /* Sidebar Header - FIXED: Proper sticky positioning */
@@ -62,7 +64,7 @@
 }
 
 .dark .sidebar-header h2 {
-  color: var(--gray-100); /* FIXED: Brighter text */
+  color: var(--gray-100);
 }
 
 .connection-status {
@@ -78,7 +80,7 @@
 }
 
 .dark .connection-status.connected {
-  background: rgba(25, 118, 210, 0.2); /* FIXED: Dark mode connected */
+  background: rgba(25, 118, 210, 0.2);
   color: #90caf9;
 }
 
@@ -88,7 +90,7 @@
 }
 
 .dark .connection-status.disconnected {
-  background: rgba(211, 47, 47, 0.2); /* FIXED: Dark mode disconnected */
+  background: rgba(211, 47, 47, 0.2);
   color: #ef9a9a;
 }
 
@@ -100,14 +102,14 @@
   padding: 0 20px;
   flex-shrink: 0;
   position: sticky;
-  top: 81px; /* CHANGED: Height of sidebar-header (20px + 20px + ~41px content) */
+  top: 81px; /* Height of sidebar-header */
   z-index: 150;
   margin-top: 0;
 }
 
 .dark .chat-tabs {
   background: var(--gray-700);
-  border-bottom-color: var(--gray-600); /* FIXED: Dark tabs */
+  border-bottom-color: var(--gray-600);
 }
 
 .tab {
@@ -125,7 +127,7 @@
 }
 
 .dark .tab {
-  color: var(--gray-300); /* FIXED: Brighter tab text */
+  color: var(--gray-300);
 }
 
 .tab.active {
@@ -134,7 +136,7 @@
 }
 
 .dark .tab.active {
-  color: var(--primary-light); /* FIXED: Active tab in dark */
+  color: var(--primary-light);
   border-bottom-color: var(--primary-light);
 }
 
@@ -143,7 +145,7 @@
 }
 
 .dark .tab:hover {
-  background: rgba(255, 255, 255, 0.05); /* FIXED: Dark hover */
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .tab-badge {
@@ -156,29 +158,57 @@
 }
 
 .dark .tab-badge {
-  background: var(--primary-light); /* FIXED: Dark badge */
+  background: var(--primary-light);
 }
 
 /* Tab Content - FIXED: No gap between tabs and content */
 .tab-content {
   flex: 1;
   overflow-y: auto;
-  background: white; /* FIXED: Ensure background */
+  background: white;
+  /* ADDED: Custom scrollbar for desktop */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}
+
+.tab-content::-webkit-scrollbar {
+  width: 6px;
+}
+
+.tab-content::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.tab-content::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.tab-content::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
 }
 
 .dark .tab-content {
-  background: var(--gray-800); /* FIXED: Dark content */
+  background: var(--gray-800);
+}
+
+.dark .tab-content::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark .tab-content::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 /* Global Chat Section */
 .global-chat-section {
   padding: 20px;
   text-align: center;
-  background: white; /* FIXED: Ensure background */
+  background: white;
 }
 
 .dark .global-chat-section {
-  background: var(--gray-800); /* FIXED: Dark section */
+  background: var(--gray-800);
 }
 
 .section-header h3 {
@@ -188,7 +218,7 @@
 }
 
 .dark .section-header h3 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .section-header p {
@@ -198,95 +228,27 @@
 }
 
 .dark .section-header p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .btn-block {
   width: 100%;
 }
 
-/* Sidebar Footer */
-.sidebar-footer {
-  padding: 16px 20px;
-  border-top: 1px solid #e0e0e0;
-  background: #f8f9fa;
-  flex-shrink: 0;
-}
+/* REMOVED: Sidebar Footer section completely */
 
-.dark .sidebar-footer {
-  background: var(--gray-700);
-  border-top-color: var(--gray-600); /* FIXED: Dark footer */
-}
-
-.user-info {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.user-avatar {
-  width: 40px;
-  height: 40px;
-}
-
-.avatar-image {
-  width: 100%;
-  height: 100%;
-  border-radius: 50%;
-  object-fit: cover;
-}
-
-.avatar-placeholder {
-  width: 40px;
-  height: 40px;
-  border-radius: 50%;
-  background: #007bff;
-  color: white;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.dark .avatar-placeholder {
-  background: var(--primary-light); /* FIXED: Dark placeholder */
-}
-
-.user-details {
-  flex: 1;
-}
-
-.username {
-  font-weight: 600;
-  font-size: 14px;
-  color: #333;
-}
-
-.dark .username {
-  color: var(--gray-100); /* FIXED: Brighter username */
-}
-
-.user-status {
-  font-size: 12px;
-  color: #666;
-}
-
-.dark .user-status {
-  color: var(--gray-400); /* FIXED: Brighter status */
-}
-
-/* Main Chat Area - FIXED: Full width */
+/* Main Chat Area - FIXED: Static, no scrolling */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #f8f9fa;
   width: 100%;
+  overflow: hidden; /* ADDED: Prevent scrolling in main area */
 }
 
 .dark .chat-main {
-  background: var(--gray-900); /* FIXED: Dark main area */
+  background: var(--gray-900);
 }
 
 /* Empty State */
@@ -300,7 +262,7 @@
 }
 
 .dark .chat-empty-state {
-  background: var(--gray-900); /* FIXED: Dark empty state */
+  background: var(--gray-900);
 }
 
 .empty-state-content {
@@ -309,7 +271,7 @@
 }
 
 .dark .empty-state-content {
-  color: var(--gray-300); /* FIXED: Brighter empty text */
+  color: var(--gray-300);
 }
 
 .empty-state-icon {
@@ -325,7 +287,7 @@
 }
 
 .dark .empty-state-content h3 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .empty-state-content p {
@@ -334,7 +296,7 @@
 }
 
 .dark .empty-state-content p {
-  color: var(--gray-300); /* FIXED: Brighter paragraph */
+  color: var(--gray-300);
 }
 
 /* Connection Help */
@@ -349,7 +311,7 @@
 }
 
 .dark .connection-help {
-  background: rgba(255, 193, 7, 0.1); /* FIXED: Dark help */
+  background: rgba(255, 193, 7, 0.1);
   border-color: rgba(255, 193, 7, 0.3);
   color: #ffd54f;
 }
@@ -372,7 +334,7 @@
 }
 
 .dark .auth-error h2 {
-  color: #ef9a9a; /* FIXED: Dark error text */
+  color: #ef9a9a;
 }
 
 .auth-error p {
@@ -381,10 +343,10 @@
 }
 
 .dark .auth-error p {
-  color: var(--gray-300); /* FIXED: Brighter error text */
+  color: var(--gray-300);
 }
 
-/* FIXED: Header actions for theme toggle */
+/* Header actions for theme toggle */
 .header-actions {
   display: flex;
   align-items: center;
@@ -407,10 +369,10 @@
 }
 
 .dark .chat-theme-toggle:hover {
-  background: rgba(255, 255, 255, 0.05); /* FIXED: Dark hover */
+  background: rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive Design - FIXED: Better mobile support */
+/* Responsive Design */
 @media (max-width: 768px) {
   .chat-page {
     height: 100vh;
@@ -430,7 +392,7 @@
   }
   
   .dark .chat-sidebar {
-    border-bottom-color: var(--gray-600); /* FIXED: Dark border */
+    border-bottom-color: var(--gray-600);
   }
   
   .chat-main {
@@ -440,12 +402,12 @@
   
   /* Adjust padding for mobile */
   .sidebar-header {
-    padding: 16px; /* REDUCED: Smaller padding on mobile */
+    padding: 16px;
   }
   
   .chat-tabs {
-    padding: 0 16px; /* REDUCED: Smaller padding on mobile */
-    top: 57px; /* CHANGED: Adjusted for mobile header height (16px + 16px + ~25px content) */
+    padding: 0 16px;
+    top: 57px; /* Adjusted for mobile header height */
   }
   
   .global-chat-section {
@@ -462,14 +424,13 @@
   }
 }
 
-/* FIXED: Ensure no overflow on mobile */
 @media (max-width: 480px) {
   .chat-sidebar {
     width: 100vw;
   }
   
   .sidebar-header {
-    padding: 12px; /* FURTHER REDUCED: Even smaller on very small screens */
+    padding: 12px;
   }
   
   .sidebar-header h2 {
@@ -477,8 +438,8 @@
   }
   
   .chat-tabs {
-    padding: 0 12px; /* FURTHER REDUCED: Even smaller on very small screens */
-    top: 49px; /* CHANGED: Adjusted for very small screens (12px + 12px + ~25px content) */
+    padding: 0 12px;
+    top: 49px; /* Adjusted for very small screens */
   }
   
   .tab {

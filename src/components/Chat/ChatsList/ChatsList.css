@@ -8,7 +8,34 @@
 .conversations-container {
   flex: 1;
   overflow-y: auto;
-  padding: 0; /* REMOVED: All padding to touch tabs */
+  /* ADDED: Custom scrollbar */
+  scrollbar-width: thin;
+  scrollbar-color: #c1c1c1 transparent;
+}
+
+.conversations-container::-webkit-scrollbar {
+  width: 6px;
+}
+
+.conversations-container::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.conversations-container::-webkit-scrollbar-thumb {
+  background: #c1c1c1;
+  border-radius: 3px;
+}
+
+.conversations-container::-webkit-scrollbar-thumb:hover {
+  background: #a8a8a8;
+}
+
+.dark .conversations-container::-webkit-scrollbar-thumb {
+  background: #4b5563;
+}
+
+.dark .conversations-container::-webkit-scrollbar-thumb:hover {
+  background: #6b7280;
 }
 
 .conversation-item {
@@ -226,24 +253,6 @@
   font-size: 0.9rem;
 }
 
-/* Scrollbar styling */
-.conversations-container::-webkit-scrollbar {
-  width: 4px;
-}
-
-.conversations-container::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-.conversations-container::-webkit-scrollbar-thumb {
-  background: var(--border-color);
-  border-radius: 2px;
-}
-
-.conversations-container::-webkit-scrollbar-thumb:hover {
-  background: var(--text-muted);
-}
-
 /* Responsive design */
 @media (max-width: 768px) {
   .conversation-item {
@@ -264,9 +273,4 @@
   .last-message {
     font-size: 0.8rem;
   }
-}
-
-/* Ensure proper spacing for empty states */
-.chats-list > *:not(.conversations-container) {
-  flex-shrink: 0;
 }
