@@ -67,17 +67,7 @@ const ChatsList = ({
   if (loading) {
     return (
       <div className="chats-list">
-        <div className="chats-header">
-          {/* REMOVED: "Your Chats" heading */}
-          <button 
-            className="refresh-btn" 
-            onClick={onRefresh}
-            disabled={true}
-            title="Refresh conversations"
-          >
-            ↻
-          </button>
-        </div>
+        {/* REMOVED: Entire chats-header div */}
         <div className="loading-conversations">
           <div className="loading-spinner"></div>
           <p>Loading conversations...</p>
@@ -90,16 +80,7 @@ const ChatsList = ({
   if (error || conversations.length === 0) {
     return (
       <div className="chats-list">
-        <div className="chats-header">
-          {/* REMOVED: "Your Chats" heading */}
-          <button 
-            className="refresh-btn" 
-            onClick={onRefresh}
-            title="Refresh conversations"
-          >
-            ↻
-          </button>
-        </div>
+        {/* REMOVED: Entire chats-header div */}
         <div className="no-conversations">
           <div className="no-chats-icon">💬</div>
           <h4>No conversations yet</h4>
@@ -111,16 +92,7 @@ const ChatsList = ({
 
   return (
     <div className="chats-list">
-      <div className="chats-header">
-        {/* REMOVED: "Your Chats" heading */}
-        <button 
-          className="refresh-btn" 
-          onClick={onRefresh}
-          title="Refresh conversations"
-        >
-          ↻
-        </button>
-      </div>
+      {/* REMOVED: Entire chats-header div */}
       
       <div className="conversations-container">
         {conversations.map((conversation) => {
