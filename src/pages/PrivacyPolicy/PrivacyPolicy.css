@@ -28,7 +28,7 @@
   display: flex;
   align-items: center;
   gap: var(--spacing-sm);
-  color: var(--primary-color);
+  color: var(--primary-color) !important; /* Force primary color */
   text-decoration: none;
   font-weight: 500;
   padding: var(--spacing-sm) var(--spacing-md);
@@ -37,18 +37,18 @@
 }
 
 .dark .back-button {
-  color: var(--primary-light);
+  color: var(--primary-light) !important; /* Force light primary color */
 }
 
 .back-button:hover {
   background: var(--gray-100);
   text-decoration: none;
-  color: var(--primary-dark);
+  color: var(--primary-dark) !important; /* Force hover color */
 }
 
 .dark .back-button:hover {
   background: var(--gray-700);
-  color: var(--primary-color);
+  color: var(--primary-color) !important; /* Force hover color */
 }
 
 .privacy-header h1 {

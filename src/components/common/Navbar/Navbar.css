@@ -390,7 +390,7 @@
 
 .user-name {
   font-weight: 500;
-  color: var(--gray-900);
+  color: var(--gray-900) !important; /* Force dark color */
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
@@ -398,7 +398,7 @@
 }
 
 .dark .user-name {
-  color: var(--gray-100);
+  color: var(--gray-100) !important; /* Force light color */
 }
 
 .admin-badge {

@@ -14,12 +14,12 @@
 }
 
 .page-header h1 {
-  color: var(--gray-900);
+  color: var(--gray-900) !important; /* Force dark color in light mode */
   margin-bottom: var(--spacing-sm);
 }
 
 .dark .page-header h1 {
-  color: var(--gray-100);
+  color: var(--gray-100) !important; /* Force light color in dark mode */
 }
 
 .page-header p {
