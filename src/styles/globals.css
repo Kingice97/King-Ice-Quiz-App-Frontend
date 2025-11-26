@@ -2,7 +2,7 @@
 @import './variables.css';
 @import './components.css';
 @import './utilities.css';
-@import './theme-fixes.css'; /* Add this line */
+/* REMOVE the theme-fixes.css import */
 
 /* Base styles */
 * {
@@ -22,6 +22,37 @@ body {
   color: var(--text-primary);
   background-color: var(--bg-primary);
   transition: color 0.3s ease, background-color 0.3s ease;
+}
+
+/* ===== QUICK THEME FIXES ===== */
+/* Add this section instead of theme-fixes.css */
+
+/* Nuclear option for text visibility */
+body,
+body *:not(.btn):not(.btn *):not([class*="bg-"]):not([class*="text-"]) {
+  color: var(--text-primary) !important;
+}
+
+/* Specific fixes for common components */
+.navbar,
+.navbar * {
+  color: var(--text-primary) !important;
+}
+
+.card,
+.card *:not(.btn):not(.btn *) {
+  color: var(--text-primary) !important;
+}
+
+.table,
+.table th,
+.table td {
+  color: var(--text-primary) !important;
+}
+
+/* Ensure buttons keep their styles */
+.btn {
+  color: inherit !important;
 }
 
 /* Dark mode styles */
