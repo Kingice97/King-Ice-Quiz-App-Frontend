@@ -30,6 +30,7 @@
   display: flex;
   flex-direction: column;
   background: white;
+  position: relative; /* ADDED: Create stacking context */
 }
 
 .dark .chat-sidebar {
@@ -37,11 +38,10 @@
   border-right-color: var(--gray-700); /* FIXED: Darker border */
 }
 
-/* Sidebar Header - FIXED: Remove bottom border since tabs will attach directly */
+/* Sidebar Header - FIXED: Proper sticky positioning */
 .sidebar-header {
   padding: 20px;
   background: #f0f0f0;
-  /* REMOVED: border-bottom: 1px solid #e0e0e0; */
   display: flex;
   justify-content: space-between;
   align-items: center;
@@ -53,7 +53,6 @@
 
 .dark .sidebar-header {
   background: var(--gray-700);
-  /* REMOVED: border-bottom-color: var(--gray-600); */
 }
 
 .sidebar-header h2 {
@@ -93,7 +92,7 @@
   color: #ef9a9a;
 }
 
-/* Tabs - FIXED: Responsive sticky positioning */
+/* Tabs - FIXED: Stick to bottom of sidebar header */
 .chat-tabs {
   display: flex;
   background: #f8f9fa;
@@ -101,7 +100,7 @@
   padding: 0 20px;
   flex-shrink: 0;
   position: sticky;
-  top: 0; /* CHANGED: Stick to top of viewport */
+  top: 81px; /* CHANGED: Height of sidebar-header (20px + 20px + ~41px content) */
   z-index: 150;
   margin-top: 0;
 }
@@ -446,7 +445,7 @@
   
   .chat-tabs {
     padding: 0 16px; /* REDUCED: Smaller padding on mobile */
-    top: 0; /* CHANGED: Same top value for consistency */
+    top: 57px; /* CHANGED: Adjusted for mobile header height (16px + 16px + ~25px content) */
   }
   
   .global-chat-section {
@@ -479,7 +478,7 @@
   
   .chat-tabs {
     padding: 0 12px; /* FURTHER REDUCED: Even smaller on very small screens */
-    top: 0; /* CHANGED: Consistent top value */
+    top: 49px; /* CHANGED: Adjusted for very small screens (12px + 12px + ~25px content) */
   }
   
   .tab {
