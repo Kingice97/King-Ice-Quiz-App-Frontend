@@ -1,7 +1,7 @@
 import React from 'react';
 import './Loading.css';
 
-const Loading = ({ type = 'spinner', size = 'medium', text, overlay = false }) => {
+const Loading = ({ type = 'spinner', size = 'medium', overlay = false }) => {
   if (type === 'skeleton') {
     return (
       <div className="skeleton-container">
@@ -19,7 +19,6 @@ const Loading = ({ type = 'spinner', size = 'medium', text, overlay = false }) =
       <div className="loading-overlay">
         <div className={`loading-spinner ${sizeClass}`}>
           <div className="spinner"></div>
-          {text && <div className="loading-text">{text}</div>}
         </div>
       </div>
     );
@@ -28,7 +27,6 @@ const Loading = ({ type = 'spinner', size = 'medium', text, overlay = false }) =
   return (
     <div className={`loading-spinner ${sizeClass}`}>
       <div className="spinner"></div>
-      {text && <div className="loading-text">{text}</div>}
     </div>
   );
 };
