@@ -4,7 +4,7 @@
   width: 100vw;
   margin: 0;
   padding: 0;
-  overflow: hidden; /* ADDED: Prevent overall page scrolling */
+  overflow: hidden;
 }
 
 .dark .chat-page {
@@ -32,7 +32,7 @@
   flex-direction: column;
   background: white;
   position: relative;
-  overflow: hidden; /* ADDED: Contain scrolling within sidebar */
+  overflow: hidden;
 }
 
 .dark .chat-sidebar {
@@ -40,7 +40,7 @@
   border-right-color: var(--gray-700);
 }
 
-/* Sidebar Header - FIXED: Proper sticky positioning */
+/* Sidebar Header */
 .sidebar-header {
   padding: 20px;
   background: #f0f0f0;
@@ -94,7 +94,7 @@
   color: #ef9a9a;
 }
 
-/* Tabs - FIXED: Stick to bottom of sidebar header */
+/* Tabs */
 .chat-tabs {
   display: flex;
   background: #f8f9fa;
@@ -102,7 +102,7 @@
   padding: 0 20px;
   flex-shrink: 0;
   position: sticky;
-  top: 81px; /* Height of sidebar-header */
+  top: 81px;
   z-index: 150;
   margin-top: 0;
 }
@@ -161,12 +161,11 @@
   background: var(--primary-light);
 }
 
-/* Tab Content - FIXED: No gap between tabs and content */
+/* Tab Content */
 .tab-content {
   flex: 1;
   overflow-y: auto;
   background: white;
-  /* ADDED: Custom scrollbar for desktop */
   scrollbar-width: thin;
   scrollbar-color: #c1c1c1 transparent;
 }
@@ -235,16 +234,14 @@
   width: 100%;
 }
 
-/* REMOVED: Sidebar Footer section completely */
-
-/* Main Chat Area - FIXED: Static, no scrolling */
+/* Main Chat Area - FIXED: Full height for mobile */
 .chat-main {
   flex: 1;
   display: flex;
   flex-direction: column;
   background: #f8f9fa;
   width: 100%;
-  overflow: hidden; /* ADDED: Prevent scrolling in main area */
+  overflow: hidden;
 }
 
 .dark .chat-main {
@@ -372,7 +369,7 @@
   background: rgba(255, 255, 255, 0.05);
 }
 
-/* Responsive Design */
+/* Responsive Design - FIXED: Mobile chat room display */
 @media (max-width: 768px) {
   .chat-page {
     height: 100vh;
@@ -382,6 +379,7 @@
   .chat-container {
     flex-direction: column;
     width: 100vw;
+    height: 100vh;
   }
   
   .chat-sidebar {
@@ -389,6 +387,7 @@
     min-width: auto;
     border-right: none;
     border-bottom: 1px solid #e0e0e0;
+    height: 100vh; /* FIXED: Full height */
   }
   
   .dark .chat-sidebar {
@@ -398,6 +397,11 @@
   .chat-main {
     flex: 1;
     width: 100vw;
+    height: 100vh; /* FIXED: Full height */
+    position: absolute; /* FIXED: Overlay the sidebar */
+    top: 0;
+    left: 0;
+    z-index: 300; /* FIXED: Above everything */
   }
   
   /* Adjust padding for mobile */
@@ -407,19 +411,28 @@
   
   .chat-tabs {
     padding: 0 16px;
-    top: 57px; /* Adjusted for mobile header height */
+    top: 57px;
   }
   
   .global-chat-section {
     padding: 16px;
   }
   
-  /* Hide sidebar when chat is open on mobile */
+  /* FIXED: Hide sidebar when chat is open on mobile */
   .chat-container.mobile-chat-open .chat-sidebar {
     display: none;
   }
   
   .chat-container.mobile-chat-open .chat-main {
+    display: flex;
+  }
+  
+  /* FIXED: Show sidebar when no chat is selected */
+  .chat-container:not(.mobile-chat-open) .chat-main {
+    display: none;
+  }
+  
+  .chat-container:not(.mobile-chat-open) .chat-sidebar {
     display: flex;
   }
 }
@@ -439,7 +452,7 @@
   
   .chat-tabs {
     padding: 0 12px;
-    top: 49px; /* Adjusted for very small screens */
+    top: 49px;
   }
   
   .tab {
