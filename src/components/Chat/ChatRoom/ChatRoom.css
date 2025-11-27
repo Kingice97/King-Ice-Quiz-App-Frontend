@@ -882,3 +882,25 @@
     min-width: 200px;
   }
 }
+
+/* Remove any potential emoji icons from input */
+.message-input::-webkit-input-placeholder::before,
+.message-input::-moz-placeholder::before,
+.message-input:-ms-input-placeholder::before,
+.message-input::-webkit-input-placeholder::after,
+.message-input::-moz-placeholder::after,
+.message-input:-ms-input-placeholder::after {
+  content: none !important;
+}
+
+/* Ensure no background images in input */
+.message-input {
+  background-image: none !important;
+}
+
+/* Remove any emoji picker button if exists */
+.emoji-picker-button,
+.emoji-button,
+.emoji-trigger {
+  display: none !important;
+}
