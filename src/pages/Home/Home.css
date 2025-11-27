@@ -56,13 +56,13 @@
 
 .hero-actions .btn-outline {
   background-color: transparent;
-  color: var(--text-inverse) !important;
-  border: 2px solid var(--text-inverse);
+  color: var(--white) !important; /* FIXED: White text on colored background */
+  border: 2px solid var(--white);
 }
 
 .hero-actions .btn-outline:hover {
-  background-color: var(--text-inverse);
-  color: var(--primary-color) !important;
+  background-color: var(--white);
+  color: var(--primary-color) !important; /* FIXED: Primary color on hover */
 }
 
 .hero-image {
@@ -103,6 +103,18 @@
 .admin-graphic {
   background: rgba(255, 255, 255, 0.15);
   border: 2px solid rgba(255, 255, 255, 0.3);
+}
+
+/* Admin hero section outline buttons */
+.admin-hero .hero-actions .btn-outline {
+  background-color: transparent;
+  color: var(--white) !important;
+  border: 2px solid var(--white);
+}
+
+.admin-hero .hero-actions .btn-outline:hover {
+  background-color: var(--white);
+  color: var(--gray-800) !important; /* FIXED: Dark text for admin section */
 }
 
 /* Admin Stats Section */
@@ -385,6 +397,25 @@
 
 .dark .section-header h2 {
   color: var(--gray-100); /* FIXED: Brighter heading */
+}
+
+/* Section header outline buttons */
+.section-header .btn-outline {
+  background-color: transparent;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary);
+}
+
+.section-header .btn-outline:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-400);
+}
+
+.dark .section-header .btn-outline:hover {
+  background-color: var(--gray-700);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-500);
 }
 
 .quizzes-grid {
