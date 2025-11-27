@@ -1,4 +1,11 @@
 User-agent: *
 Allow: /
 
+# Sitemap location
 Sitemap: https://king-ice-quiz.vercel.app/sitemap.xml
+
+# Allow all crawlers
+Disallow:
+
+# Preferred crawl delay
+Crawl-delay: 1
