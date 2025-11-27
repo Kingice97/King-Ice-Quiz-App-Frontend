@@ -679,3 +679,38 @@
     padding: var(--spacing-md);
   }
 }
+
+/* REMOVE hover effects for problematic buttons */
+.hero-actions .btn-outline:hover,
+.admin-hero .hero-actions .btn-outline:hover,
+.section-header .btn-outline:hover {
+  background-color: transparent !important;
+  color: inherit !important;
+  border-color: inherit !important;
+  transform: none !important;
+}
+
+/* Specifically fix the text colors */
+.hero-actions .btn-outline,
+.admin-hero .hero-actions .btn-outline {
+  color: var(--white) !important;
+  border-color: var(--white) !important;
+}
+
+.hero-actions .btn-outline:hover,
+.admin-hero .hero-actions .btn-outline:hover {
+  color: var(--white) !important;
+  border-color: var(--white) !important;
+  opacity: 0.8; /* Slight opacity change instead of full hover */
+}
+
+.section-header .btn-outline {
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+}
+
+.section-header .btn-outline:hover {
+  color: var(--text-primary) !important;
+  border-color: var(--border-primary) !important;
+  opacity: 0.8;
+}
