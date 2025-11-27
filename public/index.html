@@ -5,13 +5,39 @@
     <link rel="icon" type="image/png" href="%PUBLIC_URL%/brain-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     
+    <!-- SEO Meta Tags -->
+    <title>King Ice Quiz - Interactive Quiz Platform | Test Your Knowledge</title>
+    <meta name="description" content="King Ice Quiz - The ultimate quiz experience. Test your knowledge with interactive quizzes, compete with friends, climb the leaderboard, and join live chat rooms.">
+    <meta name="keywords" content="quiz, trivia, knowledge test, interactive quiz, King Ice Quiz, online quiz, educational quiz, fun quiz, brain game, learning platform">
+    <meta name="author" content="King Ice Quiz">
+    
+    <!-- Google Site Verification -->
+    <meta name="google-site-verification" content="xUKPqjA_RaYZjGdXnKHRdAsvMsLKLRXD9UnA3M8HoDk" />
+    
+    <!-- Open Graph Tags (for social media) -->
+    <meta property="og:title" content="King Ice Quiz - Interactive Quiz Platform">
+    <meta property="og:description" content="Test your knowledge with King Ice Quiz. Interactive quizzes, real-time chat, and competitive leaderboards.">
+    <meta property="og:image" content="%PUBLIC_URL%/brain-icon.png">
+    <meta property="og:url" content="https://king-ice-quiz.vercel.app">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="King Ice Quiz">
+    
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="King Ice Quiz - Interactive Quiz Platform">
+    <meta name="twitter:description" content="Test your knowledge with interactive quizzes, compete with friends, and climb the leaderboard.">
+    <meta name="twitter:image" content="%PUBLIC_URL%/brain-icon.png">
+    <meta name="twitter:site" content="@kingicequiz">
+    
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://king-ice-quiz.vercel.app" />
+    
     <!-- PWA Meta Tags -->
     <meta name="theme-color" content="#3182ce" />
     <meta name="application-name" content="King Ice Quiz">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="default">
     <meta name="apple-mobile-web-app-title" content="King Ice Quiz">
-    <meta name="description" content="Interactive quiz platform with real-time chat and leaderboards">
     <meta name="format-detection" content="telephone=no">
     <meta name="mobile-web-app-capable" content="yes">
     <meta name="msapplication-TileColor" content="#3182ce">
@@ -19,11 +45,45 @@
     
     <!-- Apple Touch Icons -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/brain-icon.png">
+    <link rel="apple-touch-icon" sizes="192x192" href="%PUBLIC_URL%/brain-icon.png">
     
     <!-- PWA Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
     
-    <title>King Ice Quiz - Interactive Quiz Platform</title>
+    <!-- Structured Data for SEO -->
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "King Ice Quiz",
+      "description": "Interactive quiz platform to test your knowledge with various categories and real-time chat features",
+      "url": "https://king-ice-quiz.vercel.app",
+      "applicationCategory": "GameApplication",
+      "operatingSystem": "Any",
+      "permissions": "browser",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "King Ice Quiz"
+      },
+      "audience": {
+        "@type": "PeopleAudience",
+        "suggestedMinAge": 13,
+        "suggestedMaxAge": 100
+      },
+      "screenshot": [
+        {
+          "@type": "ImageObject",
+          "url": "https://king-ice-quiz.vercel.app/brain-icon.png",
+          "caption": "King Ice Quiz Platform"
+        }
+      ]
+    }
+    </script>
     
     <style>
       /* Loading screen for better app-like experience */
@@ -67,7 +127,13 @@
       <p>Loading amazing quiz experience...</p>
     </div>
     
-    <noscript>You need to enable JavaScript to run this app.</noscript>
+    <noscript>
+      <div style="text-align: center; padding: 50px; font-family: Arial, sans-serif;">
+        <h1>King Ice Quiz</h1>
+        <p>You need to enable JavaScript to run this app.</p>
+        <p>King Ice Quiz is an interactive platform where you can test your knowledge with various quizzes, compete with friends, and climb the leaderboard.</p>
+      </div>
+    </noscript>
     <div id="root"></div>
     
     <!-- Service Worker Registration -->
