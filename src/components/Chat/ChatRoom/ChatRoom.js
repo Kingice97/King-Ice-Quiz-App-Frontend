@@ -36,6 +36,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const [showSecurityMessage, setShowSecurityMessage] = useState(false);
   const [showThemeSelector, setShowThemeSelector] = useState(false);
   const [selectedTheme, setSelectedTheme] = useState('default');
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false); // NEW: Emoji picker state
   
   const messagesEndRef = useRef(null);
   const typingTimeoutRef = useRef(null);
@@ -43,6 +44,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
   const hasLoadedRef = useRef(false);
   const menuRef = useRef(null);
   const themeSelectorRef = useRef(null);
+  const emojiPickerRef = useRef(null); // NEW: Emoji picker ref
 
   // Check if this is the first message in a private chat
   const isFirstMessageInPrivateChat = room.type === 'private' && messages.length === 0;
@@ -55,6 +57,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       }
       if (themeSelectorRef.current && !themeSelectorRef.current.contains(event.target)) {
         setShowThemeSelector(false);
+      }
+      if (emojiPickerRef.current && !emojiPickerRef.current.contains(event.target)) {
+        setShowEmojiPicker(false);
       }
     };
 
@@ -154,6 +159,12 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
     
     return () => observer.disconnect();
   }, [selectedTheme]);
+
+  // NEW: Handle emoji selection
+  const handleEmojiSelect = (emoji) => {
+    setNewMessage(prev => prev + emoji);
+    setShowEmojiPicker(false);
+  };
 
   // Force unblock using multiple methods
   const forceUnblockUser = async () => {
@@ -476,6 +487,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       }
 
       setNewMessage('');
+      setShowEmojiPicker(false); // NEW: Close emoji picker when sending
       
       if (isTyping) {
         setIsTyping(false);
@@ -615,8 +627,43 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
 
   const currentTypingUsers = typingUsers[room.id] || [];
 
+  // NEW: Popular emojis for the picker
+  const popularEmojis = [
+    '😀', '😂', '🥰', '😎', '🤔', '😍', '🙏', '👍', '❤️', '🔥',
+    '🎉', '🙌', '👏', '😊', '😘', '🤣', '😅', '😭', '😡', '🥺',
+    '🤩', '😋', '😴', '😷', '🤗', '👀', '💯', '✨', '🎶', '🏆'
+  ];
+
   return (
     <div className="chat-room">
+      {/* NEW: Emoji Picker Modal */}
+      {showEmojiPicker && (
+        <div className="emoji-picker-overlay">
+          <div className="emoji-picker-modal" ref={emojiPickerRef}>
+            <div className="emoji-picker-header">
+              <h4>Choose an emoji</h4>
+              <button 
+                className="close-emoji-picker"
+                onClick={() => setShowEmojiPicker(false)}
+              >
+                ×
+              </button>
+            </div>
+            <div className="emoji-grid">
+              {popularEmojis.map(emoji => (
+                <button 
+                  key={emoji} 
+                  className="emoji-item"
+                  onClick={() => handleEmojiSelect(emoji)}
+                >
+                  {emoji}
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Theme Selector Modal */}
       {showThemeSelector && (
         <div className="theme-selector-overlay">
@@ -887,10 +934,21 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
         <div ref={messagesEndRef} />
       </div>
 
+      {/* NEW: Updated Input Area with Emoji Button */}
       <div className="input-container">
         <div className="input-wrapper">
+          {/* Emoji Picker Button */}
+          <button 
+            type="button"
+            className="emoji-button"
+            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
+            disabled={sending || !isConnected || isBlocked}
+          >
+            😊
+          </button>
+          
           <input
-            type="search"
+            type="text"
             value={newMessage}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
@@ -899,8 +957,6 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             className="message-input"
             maxLength={500}
             disabled={sending || !isConnected || isBlocked}
-            inputMode="text"  // Prevents emoji keyboard on mobile
-            enterKeyHint="send"  // Changes enter key to "send" on mobile
           />
           <button 
             onClick={handleSendMessage}
