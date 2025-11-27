@@ -135,7 +135,7 @@ const Footer = () => {
               </svg>
             </a>
             <a 
-              href="https://x.com/kingicequiz?s=09" 
+              href="https://x.com/KingIceQuizApp?s=09" 
               aria-label="Twitter" 
               target="_blank" 
               rel="noopener noreferrer"

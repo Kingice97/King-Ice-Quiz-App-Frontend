@@ -43,7 +43,7 @@ const Navbar = () => {
   const contactInfo = {
     email: 'olubiyiisaacanu@gmail.com',
     whatsappUrl: 'https://wa.me/2348145659286',
-    twitterUrl: 'https://x.com/kingicequiz?s=09'
+    twitterUrl: 'https://x.com/KingIceQuizApp?s=09'
   };
 
   const NavigationLinks = ({ mobile = false }) => (
