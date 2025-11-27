@@ -1,4 +1,6 @@
 User-agent: *
 Allow: /
 
+# Sitemaps
 Sitemap: https://king-ice-quiz.vercel.app/sitemap.xml
+Sitemap: https://king-ice-quiz.vercel.app/sitemap_index.xml
