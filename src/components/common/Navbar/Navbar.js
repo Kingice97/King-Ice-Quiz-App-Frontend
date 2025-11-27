@@ -297,26 +297,6 @@ const Navbar = () => {
             {isAuthenticated ? (
               <div className="user-menu-sidebar">
                 <div className="user-info-sidebar">
-                  <div className="user-avatar">
-                    {user?.profile?.picture ? (
-                      <img 
-                        src={user.profile.picture.startsWith('http') 
-                          ? user.profile.picture 
-                          : `${process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com'}${user.profile.picture}`
-                        }
-                        alt={user.username}
-                        className="profile-avatar-img"
-                        onError={(e) => {
-                          // Hide the image and show fallback
-                          e.target.style.display = 'none';
-                          e.target.nextSibling.style.display = 'flex';
-                        }}
-                      />
-                    ) : null}
-                    <div className="avatar-fallback">
-                      {user?.username?.charAt(0).toUpperCase()}
-                    </div>
-                  </div>
                   <div className="user-details">
                     <span className="user-name">{user?.username}</span>
                   </div>
