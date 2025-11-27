@@ -957,6 +957,9 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             className="message-input"
             maxLength={500}
             disabled={sending || !isConnected || isBlocked}
+            // Add these attributes to prevent browser emoji picker
+            inputMode="text"
+            enterKeyHint="send"
           />
           <button 
             onClick={handleSendMessage}
