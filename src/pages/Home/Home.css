@@ -700,3 +700,24 @@
   color: var(--text-primary) !important;
   border-color: var(--border-primary) !important;
 }
+
+/* Make 'View All Quizzes' a primary button */
+.featured-quizzes .section-header .btn-outline {
+  background-color: var(--primary-color) !important;
+  color: var(--text-inverse) !important;
+  border: 2px solid var(--primary-color) !important;
+  font-weight: 600;
+  transition: all 0.3s ease;
+}
+
+.featured-quizzes .section-header .btn-outline:hover {
+  background-color: var(--primary-dark) !important;
+  border-color: var(--primary-dark) !important;
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md);
+}
+
+.dark .featured-quizzes .section-header .btn-outline:hover {
+  background-color: var(--primary-light) !important;
+  border-color: var(--primary-light) !important;
+}
