@@ -13,7 +13,7 @@
 }
 
 .dark .dashboard-header h1 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .dashboard-header p {
@@ -23,7 +23,7 @@
 }
 
 .dark .dashboard-header p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .stats-grid {
@@ -42,10 +42,12 @@
   align-items: center;
   gap: var(--spacing-md);
   transition: transform var(--transition-fast);
+  border: 1px solid var(--gray-200);
 }
 
 .dark .stat-card {
   background: var(--gray-800);
+  border-color: var(--gray-600);
 }
 
 .stat-card:hover {
@@ -79,38 +81,57 @@
 }
 
 .dark .stat-value {
-  color: var(--gray-100); /* FIXED: Brighter stat value */
+  color: var(--gray-100);
 }
 
 .stat-label {
   font-size: var(--font-size-sm);
-  color: var(--gray-500);
+  color: var(--gray-700);
   text-transform: uppercase;
   letter-spacing: 0.5px;
+  font-weight: 600;
 }
 
 .dark .stat-label {
-  color: var(--gray-300); /* FIXED: Brighter label */
+  color: var(--gray-300);
 }
 
-/* Admin Specific Stats */
+/* Admin Specific Stats - FIXED: Better light mode visibility */
 .admin-stat {
-  background: linear-gradient(135deg, var(--primary-color) 0%, var(--primary-dark) 100%);
-  color: white;
-  border: none;
+  background: var(--white);
+  border: 2px solid var(--primary-color);
+}
+
+.dark .admin-stat {
+  background: var(--gray-800);
+  border-color: var(--primary-light);
 }
 
 .admin-stat .stat-value {
-  color: white;
+  color: var(--primary-dark);
   font-size: var(--font-size-2xl);
 }
 
+.dark .admin-stat .stat-value {
+  color: var(--primary-light);
+}
+
 .admin-stat .stat-label {
-  color: rgba(255, 255, 255, 0.9);
+  color: var(--gray-700);
+  font-weight: 600;
+}
+
+.dark .admin-stat .stat-label {
+  color: var(--gray-300);
 }
 
 .admin-stat .stat-icon {
-  background: rgba(255, 255, 255, 0.2);
+  background: var(--primary-color);
+  color: var(--white);
+}
+
+.dark .admin-stat .stat-icon {
+  background: var(--primary-light);
 }
 
 /* Quick Actions */
@@ -168,7 +189,7 @@
 }
 
 .dark .quick-action-card h4 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .quick-action-card p {
@@ -178,7 +199,7 @@
 }
 
 .dark .quick-action-card p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .action-arrow {
@@ -208,10 +229,12 @@
   border-radius: var(--border-radius-xl);
   padding: var(--spacing-xl);
   box-shadow: var(--shadow-md);
+  border: 1px solid var(--gray-200);
 }
 
 .dark .dashboard-section {
   background: var(--gray-800);
+  border-color: var(--gray-600);
 }
 
 .section-header {
@@ -221,12 +244,11 @@
   margin-bottom: var(--spacing-lg);
 }
 
-/* FIXED: Section header line positioned higher */
 .dashboard-section h3 {
   color: var(--gray-900);
   margin: 0;
   border-bottom: 2px solid var(--primary-color);
-  padding-bottom: var(--spacing-xs); /* FIXED: Reduced padding to move line up */
+  padding-bottom: var(--spacing-xs);
 }
 
 .dark .dashboard-section h3 {
@@ -279,7 +301,7 @@
 }
 
 .dark .quiz-info h4 {
-  color: var(--gray-200); /* FIXED: Brighter heading */
+  color: var(--gray-200);
 }
 
 .quiz-info p {
@@ -289,7 +311,7 @@
 }
 
 .dark .quiz-info p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .quiz-meta {
@@ -305,13 +327,13 @@
   border: 1px solid var(--gray-300);
   border-radius: var(--border-radius-md);
   font-size: var(--font-size-sm);
-  color: var(--gray-600);
+  color: var(--gray-700);
 }
 
 .dark .quiz-meta span {
   background: var(--gray-600);
   border-color: var(--gray-500);
-  color: var(--gray-300); /* FIXED: Brighter meta text */
+  color: var(--gray-300);
 }
 
 .quiz-status {
@@ -350,7 +372,7 @@
 }
 
 .dark .user-info strong {
-  color: var(--gray-200); /* FIXED: Brighter text */
+  color: var(--gray-200);
 }
 
 .user-info span {
@@ -359,7 +381,7 @@
 }
 
 .dark .user-info span {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .result-info {
@@ -442,7 +464,7 @@
 }
 
 .dark .no-data {
-  color: var(--gray-300); /* FIXED: Brighter no data text */
+  color: var(--gray-300);
 }
 
 /* Mobile Styles */
