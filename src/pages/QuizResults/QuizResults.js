@@ -32,7 +32,7 @@ const { data: resultsData, loading: resultsLoading } = useApi(() =>
   return (
     <div className="quiz-results-page">
       <Helmet>
-        <title>{quiz?.title ? `${quiz.title} Results` : 'Quiz Results'} - King Ice Quiz App</title>
+        <title>{quiz?.title ? `${quiz.title} Results` : 'Quiz Results'} - King Ice Quiz</title>
       </Helmet>
 
       <div className="container">

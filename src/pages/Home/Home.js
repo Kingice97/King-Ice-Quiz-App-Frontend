@@ -185,7 +185,7 @@ const Home = () => {
       <section className="hero">
         <div className="hero-content">
           <div className="hero-text">
-            <h1>Test Your Knowledge with King Ice Quiz App</h1>
+            <h1>Test Your Knowledge with King Ice Quiz</h1>
             <p>
               Challenge yourself with thousands of quizzes across various categories. 
               Compete with others, track your progress, and become a quiz lord!
@@ -219,7 +219,7 @@ const Home = () => {
       {/* Features Section */}
       <section className="features">
         <div className="container">
-          <h2>Why Choose King Ice Quiz App?</h2>
+          <h2>Why Choose King Ice Quiz?</h2>
           <div className="features-grid">
             <div className="feature-card">
               <div className="feature-icon">📚</div>

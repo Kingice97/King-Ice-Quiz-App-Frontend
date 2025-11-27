@@ -17,8 +17,8 @@ const UserSearch = () => {
   return (
     <div className="user-search-page">
       <Helmet>
-        <title>Find Users - King Ice Quiz App</title>
-        <meta name="description" content="Search for users to connect with on King Ice Quiz App" />
+        <title>Find Users - King Ice Quiz</title>
+        <meta name="description" content="Search for users to connect with on King Ice Quiz" />
       </Helmet>
 
       <div className="user-search-container">

@@ -2,56 +2,56 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/</loc>
+    <loc>https://king-ice-quiz.vercel.app/</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/login</loc>
+    <loc>https://king-ice-quiz.vercel.app/login</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/register</loc>
+    <loc>https://king-ice-quiz.vercel.app/register</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/quizzes</loc>
+    <loc>https://king-ice-quiz.vercel.app/quizzes</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/dashboard</loc>
+    <loc>https://king-ice-quiz.vercel.app/dashboard</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/profile</loc>
+    <loc>https://king-ice-quiz.vercel.app/profile</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/chat</loc>
+    <loc>https://king-ice-quiz.vercel.app/chat</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/users</loc>
+    <loc>https://king-ice-quiz.vercel.app/users</loc>
   </url>
 
   <!-- Admin Pages -->
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/admin</loc>
+    <loc>https://king-ice-quiz.vercel.app/admin</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/admin/quizzes</loc>
+    <loc>https://king-ice-quiz.vercel.app/admin/quizzes</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/admin/users</loc>
+    <loc>https://king-ice-quiz.vercel.app/admin/users</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/admin/results</loc>
+    <loc>https://king-ice-quiz.vercel.app/admin/results</loc>
   </url>
 
   <url>
-    <loc>https://king-ice-quiz-app.vercel.app/admin/leaderboard</loc>
+    <loc>https://king-ice-quiz.vercel.app/admin/leaderboard</loc>
   </url>
 
 </urlset>

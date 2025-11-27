@@ -329,8 +329,8 @@ const Quiz = () => {
   return (
     <div className="quiz-page">
       <Helmet>
-        <title>{quiz.title} - King Ice Quiz App</title>
-        <meta name="description" content={`Take the ${quiz.title} quiz on King Ice Quiz App`} />
+        <title>{quiz.title} - King Ice Quiz</title>
+        <meta name="description" content={`Take the ${quiz.title} quiz on King Ice Quiz`} />
       </Helmet>
 
       <div className="quiz-container">

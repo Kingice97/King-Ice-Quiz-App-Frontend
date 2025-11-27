@@ -191,8 +191,8 @@ const Admin = () => {
   return (
     <div className="admin-page">
       <Helmet>
-        <title>Admin Dashboard - King Ice Quiz App</title>
-        <meta name="description" content="King Ice Quiz App administration dashboard" />
+        <title>Admin Dashboard - King Ice Quiz</title>
+        <meta name="description" content="King Ice Quiz administration dashboard" />
       </Helmet>
 
       <div className="container">

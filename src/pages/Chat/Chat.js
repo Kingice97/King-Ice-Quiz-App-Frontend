@@ -265,8 +265,8 @@ const Chat = () => {
   return (
     <div className="chat-page">
       <Helmet>
-        <title>Chat - King Ice Quiz App</title>
-        <meta name="description" content="Chat with other users on King Ice Quiz App" />
+        <title>Chat - King Ice Quiz</title>
+        <meta name="description" content="Chat with other users on King Ice Quiz" />
       </Helmet>
 
       {/* ADDED: Mobile container class */}

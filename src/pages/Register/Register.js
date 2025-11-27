@@ -25,14 +25,14 @@ const Register = () => {
   return (
     <div className="register-page">
       <Helmet>
-        <title>Sign Up - King Ice Quiz App</title>
-        <meta name="description" content="Create your King Ice Quiz App account" />
+        <title>Sign Up - King Ice Quiz</title>
+        <meta name="description" content="Create your King Ice Quiz account" />
       </Helmet>
 
       <div className="register-container">
         <div className="register-content">
           <div className="register-header">
-            <h1>Join King Ice Quiz App</h1>
+            <h1>Join King Ice Quiz</h1>
             <p>Start your knowledge journey today</p>
           </div>
 
@@ -43,7 +43,7 @@ const Register = () => {
           />
 
           <div className="register-benefits">
-            <h3>With King Ice Quiz App you can:</h3>
+            <h3>With King Ice Quiz you can:</h3>
             <div className="benefits-grid">
               <div className="benefit-card">
                 <div className="benefit-icon">🎯</div>

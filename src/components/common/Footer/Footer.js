@@ -22,7 +22,7 @@ const Footer = () => {
           <div className="footer-section">
             <div className="footer-logo">
               <span className="logo-icon">🧠</span>
-              King Ice Quiz App
+              King Ice Quiz
             </div>
             <p className="footer-description">
               {isAdmin 
@@ -104,7 +104,7 @@ const Footer = () => {
                   href="#terms" 
                   onClick={(e) => {
                     e.preventDefault();
-                    alert(`📝 Terms of Service\n\nBy using King Ice Quiz App, you agree to:\n\nACCOUNT TERMS:\n• You must be at least 13 years old to use this platform\n• One account per user - no sharing or multiple accounts\n• Keep your login credentials secure and confidential\n\nCONTENT USAGE:\n• All quiz content is for educational purposes only\n• Do not copy, distribute, or misuse quiz materials\n• Respect intellectual property rights\n\nUSER CONDUCT:\n• No cheating, hacking, or exploiting platform vulnerabilities\n• Be respectful to other users in comments and interactions\n• No inappropriate or offensive content\n\nPLATFORM USAGE:\n• Service may be temporarily unavailable for maintenance\n• We reserve the right to remove inappropriate content\n• Terms may be updated - continued use means acceptance\n\nContact for questions: ${contactInfo.email}`);
+                    alert(`📝 Terms of Service\n\nBy using King Ice Quiz, you agree to:\n\nACCOUNT TERMS:\n• You must be at least 13 years old to use this platform\n• One account per user - no sharing or multiple accounts\n• Keep your login credentials secure and confidential\n\nCONTENT USAGE:\n• All quiz content is for educational purposes only\n• Do not copy, distribute, or misuse quiz materials\n• Respect intellectual property rights\n\nUSER CONDUCT:\n• No cheating, hacking, or exploiting platform vulnerabilities\n• Be respectful to other users in comments and interactions\n• No inappropriate or offensive content\n\nPLATFORM USAGE:\n• Service may be temporarily unavailable for maintenance\n• We reserve the right to remove inappropriate content\n• Terms may be updated - continued use means acceptance\n\nContact for questions: ${contactInfo.email}`);
                   }}
                 >
                   Terms of Service
@@ -116,7 +116,7 @@ const Footer = () => {
 
         <div className="footer-bottom">
           <div className="footer-copyright">
-            &copy; {currentYear} King Ice Quiz App. All rights reserved.
+            &copy; {currentYear} King Ice Quiz. All rights reserved.
             {isAdmin && <span className="admin-footer-badge"> • Admin Mode</span>}
           </div>
           <div className="footer-social">
@@ -135,7 +135,7 @@ const Footer = () => {
               </svg>
             </a>
             <a 
-              href="https://x.com/KingIceQuizApp?s=09" 
+              href="https://x.com/kingicequiz?s=09" 
               aria-label="Twitter" 
               target="_blank" 
               rel="noopener noreferrer"

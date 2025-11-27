@@ -100,8 +100,8 @@ const UserProfile = () => {
   return (
     <div className="user-profile-page">
       <Helmet>
-        <title>{user.username} - King Ice Quiz App</title>
-        <meta name="description" content={`View ${user.username}'s profile on King Ice Quiz App`} />
+        <title>{user.username} - King Ice Quiz</title>
+        <meta name="description" content={`View ${user.username}'s profile on King Ice Quiz`} />
       </Helmet>
 
       <div className="profile-container">

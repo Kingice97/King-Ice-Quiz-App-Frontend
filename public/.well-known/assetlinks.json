@@ -5,7 +5,7 @@
     ],
     "target": {
       "namespace": "web",
-      "site": "https://king-ice-quiz-app.vercel.app"
+      "site": "https://king-ice-quiz.vercel.app"
     }
   }
 ]

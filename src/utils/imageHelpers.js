@@ -9,7 +9,7 @@ export const getProfilePictureUrl = (pictureUrl) => {
   
   // If it's a local path, prepend server URL (for backward compatibility)
   if (pictureUrl.startsWith('/uploads')) {
-    const baseUrl = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+    const baseUrl = process.env.REACT_APP_API_URL || 'https://king-ice-quiz.onrender.com';
     return `${baseUrl}${pictureUrl}`;
   }
   

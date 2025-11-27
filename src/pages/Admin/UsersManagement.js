@@ -10,7 +10,7 @@ const UsersManagement = () => {
   const { currentUser } = useAuth();
 
   // ✅ FIXED: Use absolute API URL
-  const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+  const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz.onrender.com';
 
   useEffect(() => {
     const fetchUsers = async () => {

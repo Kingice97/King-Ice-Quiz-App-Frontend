@@ -1,5 +1,5 @@
 /* eslint-disable no-restricted-globals */
-// Service Worker for King Ice Quiz App
+// Service Worker for King Ice Quiz
 // Version: 2.2.0
 // Cache Strategy: Network First for APIs, Cache First for static assets
 // Added: Push Notifications for quizzes and chats
@@ -21,7 +21,7 @@ const APP_SHELL_URLS = [
 // ==================== INSTALL EVENT ====================
 // Fired when the service worker is first installed
 self.addEventListener('install', (event) => {
-  console.log('🟢 Service Worker: Installing King Ice Quiz App...');
+  console.log('🟢 Service Worker: Installing King Ice Quiz...');
   
   // Pre-cache the app shell (essential files for offline functionality)
   event.waitUntil(
@@ -44,7 +44,7 @@ self.addEventListener('install', (event) => {
 // ==================== ACTIVATE EVENT ====================
 // Fired when the service worker becomes active
 self.addEventListener('activate', (event) => {
-  console.log('🟢 Service Worker: King Ice Quiz App activated');
+  console.log('🟢 Service Worker: King Ice Quiz activated');
   
   event.waitUntil(
     // Clean up old caches

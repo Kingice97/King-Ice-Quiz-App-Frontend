@@ -69,8 +69,8 @@ const QuizList = () => {
   return (
     <div className="quiz-list-page">
       <Helmet>
-        <title>Quizzes - King Ice Quiz App</title>
-        <meta name="description" content="Browse all available quizzes on King Ice Quiz App" />
+        <title>Quizzes - King Ice Quiz</title>
+        <meta name="description" content="Browse all available quizzes on King Ice Quiz" />
       </Helmet>
 
       <div className="container">

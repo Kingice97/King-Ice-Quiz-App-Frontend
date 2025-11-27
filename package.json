@@ -1,8 +1,8 @@
 {
-  "name": "kingicequizapp",
+  "name": "kingicequiz",
   "version": "1.0.4",
-  "homepage": "https://king-ice-quiz-app.vercel.app",
-  "description": "King Ice Quiz App - Test your knowledge with real-time chat",
+  "homepage": "https://king-ice-quiz.vercel.app",
+  "description": "King Ice Quiz - Test your knowledge with real-time chat",
   "private": true,
   "dependencies": {
     "axios": "^1.5.0",

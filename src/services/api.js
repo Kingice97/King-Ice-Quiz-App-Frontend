@@ -3,7 +3,7 @@ import axios from 'axios';
 console.log('🔄 DEBUG: api.js LOADED - version 1.0.6 - FIXED AUTH REDIRECT');
 
 // ✅ FIXED: Use the correct Render URL
-const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+const API_URL = process.env.REACT_APP_API_URL || 'https://king-ice-quiz.onrender.com';
 
 console.log('🔄 DEBUG: API_URL:', API_URL);
 

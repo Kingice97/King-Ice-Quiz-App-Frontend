@@ -42,7 +42,7 @@ const ResultPage = () => {
   return (
     <div className="result-page">
       <Helmet>
-        <title>Quiz Results - King Ice Quiz App</title>
+        <title>Quiz Results - King Ice Quiz</title>
         <meta name="description" content={`View your results for ${quizTitle}`} />
       </Helmet>
 

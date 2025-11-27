@@ -25,8 +25,8 @@ const Login = () => {
   return (
     <div className="login-page">
       <Helmet>
-        <title>Login - King Ice Quiz App</title>
-        <meta name="description" content="Sign in to your King Ice Quiz App account" />
+        <title>Login - King Ice Quiz</title>
+        <meta name="description" content="Sign in to your King Ice Quiz account" />
       </Helmet>
 
       <div className="login-container">

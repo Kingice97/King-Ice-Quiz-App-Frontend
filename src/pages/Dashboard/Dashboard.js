@@ -59,8 +59,8 @@ const Dashboard = () => {
   return (
     <div className="dashboard-page">
       <Helmet>
-        <title>Dashboard - King Ice Quiz App</title>
-        <meta name="description" content="Your King Ice Quiz App dashboard" />
+        <title>Dashboard - King Ice Quiz</title>
+        <meta name="description" content="Your King Ice Quiz dashboard" />
       </Helmet>
 
       <div className="container">

@@ -55,7 +55,7 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
     <div className="register-form">
       <div className="form-header">
         <h2>Create Account</h2>
-        <p>Join King Ice Quiz App and start testing your knowledge</p>
+        <p>Join King Ice Quiz and start testing your knowledge</p>
       </div>
 
       {error && (

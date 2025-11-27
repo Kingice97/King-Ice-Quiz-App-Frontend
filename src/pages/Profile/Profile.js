@@ -28,7 +28,7 @@ const Profile = () => {
       console.log('🔍 Profile Debug - Cloudinary URL:', pictureUrl);
       return pictureUrl;
     } else if (pictureUrl.startsWith('/uploads')) {
-      const baseUrl = process.env.REACT_APP_API_URL || 'https://king-ice-quiz-app.onrender.com';
+      const baseUrl = process.env.REACT_APP_API_URL || 'https://king-ice-quiz.onrender.com';
       const fullUrl = `${baseUrl}${pictureUrl}`;
       console.log('🔍 Profile Debug - Local URL:', fullUrl);
       return fullUrl;
@@ -203,9 +203,9 @@ const Profile = () => {
     <div className="profile-page">
       <Helmet>
         <title>
-          {user?.role === 'admin' ? 'Admin Profile' : 'Profile'} - King Ice Quiz App
+          {user?.role === 'admin' ? 'Admin Profile' : 'Profile'} - King Ice Quiz
         </title>
-        <meta name="description" content={user?.role === 'admin' ? 'Admin dashboard for managing King Ice Quiz App' : 'View and manage your King Ice Quiz App profile'} />
+        <meta name="description" content={user?.role === 'admin' ? 'Admin dashboard for managing King Ice Quiz' : 'View and manage your King Ice Quiz profile'} />
       </Helmet>
 
       {/* Success/Error Message */}
