@@ -225,7 +225,6 @@ const Navbar = () => {
                   <div className="user-menu-mobile">
                     <div className="user-info-mobile">
                       <span className="user-greeting">Hello, {user?.username}</span>
-                      {isAdmin && <span className="admin-badge">Admin</span>}
                     </div>
                     <button 
                       className="btn btn-outline btn-sm logout-btn"
@@ -308,7 +307,7 @@ const Navbar = () => {
                         alt={user.username}
                         className="profile-avatar-img"
                         onError={(e) => {
-                          // Fallback to initial if image fails to load
+                          // Hide the image and show fallback
                           e.target.style.display = 'none';
                           e.target.nextSibling.style.display = 'flex';
                         }}
@@ -320,7 +319,6 @@ const Navbar = () => {
                   </div>
                   <div className="user-details">
                     <span className="user-name">{user?.username}</span>
-                    {isAdmin && <span className="admin-badge">Admin</span>}
                   </div>
                 </div>
                 <button 

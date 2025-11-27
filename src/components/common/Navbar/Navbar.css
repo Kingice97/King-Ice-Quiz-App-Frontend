@@ -366,7 +366,7 @@
   gap: 0.75rem;
 }
 
-/* User avatar with profile picture - FIXED to fill circle */
+/* User avatar with profile picture - WhatsApp Style */
 .user-avatar {
   width: 32px;
   height: 32px;
@@ -411,7 +411,7 @@
 
 .user-name {
   font-weight: 500;
-  color: var(--gray-900) !important; /* FIXED: Force dark color */
+  color: var(--gray-900) !important;
   font-size: 0.9rem;
   white-space: nowrap;
   overflow: hidden;
@@ -419,23 +419,7 @@
 }
 
 .dark .user-name {
-  color: var(--gray-100) !important; /* FIXED: Force light color */
-}
-
-.admin-badge {
-  background: linear-gradient(135deg, #e74c3c, #c0392b);
-  color: white;
-  padding: 0.2rem 0.5rem;
-  border-radius: 12px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  white-space: nowrap;
-}
-
-.dark .admin-badge {
-  background: linear-gradient(135deg, #ff6b6b, #ee5a52);
+  color: var(--gray-100) !important;
 }
 
 /* FIXED: Navbar button hovers */
