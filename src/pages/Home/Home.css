@@ -41,7 +41,7 @@
   flex-wrap: wrap;
 }
 
-/* FIXED: Home page button hovers */
+/* FIXED: Home page button hovers - CORRECTED VERSION */
 .hero-actions .btn-primary {
   background-color: var(--primary-color);
   color: var(--text-inverse) !important;
@@ -63,6 +63,18 @@
 .hero-actions .btn-outline:hover {
   background-color: var(--white);
   color: var(--primary-color) !important; /* FIXED: Primary color on hover */
+}
+
+/* Admin hero section outline buttons */
+.admin-hero .hero-actions .btn-outline {
+  background-color: transparent;
+  color: var(--white) !important;
+  border: 2px solid var(--white);
+}
+
+.admin-hero .hero-actions .btn-outline:hover {
+  background-color: var(--white);
+  color: var(--gray-800) !important; /* FIXED: Dark text for admin section */
 }
 
 .hero-image {
@@ -105,18 +117,6 @@
   border: 2px solid rgba(255, 255, 255, 0.3);
 }
 
-/* Admin hero section outline buttons */
-.admin-hero .hero-actions .btn-outline {
-  background-color: transparent;
-  color: var(--white) !important;
-  border: 2px solid var(--white);
-}
-
-.admin-hero .hero-actions .btn-outline:hover {
-  background-color: var(--white);
-  color: var(--gray-800) !important; /* FIXED: Dark text for admin section */
-}
-
 /* Admin Stats Section */
 .admin-stats {
   padding: var(--spacing-3xl) 0;
@@ -134,7 +134,7 @@
 }
 
 .dark .admin-stats h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .stats-grid {
@@ -180,7 +180,7 @@
 }
 
 .dark .stat-value {
-  color: var(--primary-light); /* FIXED: Brighter stat value */
+  color: var(--primary-light);
 }
 
 .stat-label {
@@ -191,7 +191,7 @@
 }
 
 .dark .stat-label {
-  color: var(--gray-300); /* FIXED: Brighter label */
+  color: var(--gray-300);
 }
 
 /* Admin Actions Section */
@@ -211,7 +211,7 @@
 }
 
 .dark .admin-actions h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .actions-grid {
@@ -263,7 +263,7 @@
 }
 
 .dark .action-content h3 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .action-content p {
@@ -274,7 +274,7 @@
 }
 
 .dark .action-content p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 .action-arrow {
@@ -303,7 +303,42 @@
 }
 
 .dark .recent-activity h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
+}
+
+/* Section header outline buttons */
+.section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-2xl);
+}
+
+.section-header h2 {
+  color: var(--gray-900);
+  margin: 0;
+}
+
+.dark .section-header h2 {
+  color: var(--gray-100);
+}
+
+.section-header .btn-outline {
+  background-color: transparent;
+  color: var(--text-primary) !important;
+  border: 1px solid var(--border-primary);
+}
+
+.section-header .btn-outline:hover {
+  background-color: var(--gray-100);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-400);
+}
+
+.dark .section-header .btn-outline:hover {
+  background-color: var(--gray-700);
+  color: var(--text-primary) !important;
+  border-color: var(--gray-500);
 }
 
 /* Features Section */
@@ -323,7 +358,7 @@
 }
 
 .dark .features h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .features-grid {
@@ -360,7 +395,7 @@
 }
 
 .dark .feature-card h3 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .feature-card p {
@@ -370,7 +405,7 @@
 }
 
 .dark .feature-card p {
-  color: var(--gray-300); /* FIXED: Brighter text */
+  color: var(--gray-300);
 }
 
 /* Featured Quizzes Section */
@@ -381,41 +416,6 @@
 
 .dark .featured-quizzes {
   background: var(--gray-900);
-}
-
-.section-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: var(--spacing-2xl);
-}
-
-.section-header h2 {
-  color: var(--gray-900);
-  margin: 0;
-}
-
-.dark .section-header h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
-}
-
-/* Section header outline buttons */
-.section-header .btn-outline {
-  background-color: transparent;
-  color: var(--text-primary) !important;
-  border: 1px solid var(--border-primary);
-}
-
-.section-header .btn-outline:hover {
-  background-color: var(--gray-100);
-  color: var(--text-primary) !important;
-  border-color: var(--gray-400);
-}
-
-.dark .section-header .btn-outline:hover {
-  background-color: var(--gray-700);
-  color: var(--text-primary) !important;
-  border-color: var(--gray-500);
 }
 
 .quizzes-grid {
@@ -441,7 +441,7 @@
 }
 
 .dark .leaderboard h2 {
-  color: var(--gray-100); /* FIXED: Brighter heading */
+  color: var(--gray-100);
 }
 
 .leaderboard-list {
@@ -513,7 +513,7 @@
 }
 
 .dark .username {
-  color: var(--gray-100); /* FIXED: Brighter username */
+  color: var(--gray-100);
 }
 
 .stats {
@@ -522,7 +522,7 @@
 }
 
 .dark .stats {
-  color: var(--gray-300); /* FIXED: Brighter stats */
+  color: var(--gray-300);
 }
 
 .score {
