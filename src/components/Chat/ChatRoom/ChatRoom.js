@@ -890,7 +890,7 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
       <div className="input-container">
         <div className="input-wrapper">
           <input
-            type="text"
+            type="search"
             value={newMessage}
             onChange={handleInputChange}
             onBlur={handleInputBlur}
@@ -899,6 +899,8 @@ const ChatRoom = ({ room, currentUser, onBack }) => {
             className="message-input"
             maxLength={500}
             disabled={sending || !isConnected || isBlocked}
+            inputMode="text"  // Prevents emoji keyboard on mobile
+            enterKeyHint="send"  // Changes enter key to "send" on mobile
           />
           <button 
             onClick={handleSendMessage}
