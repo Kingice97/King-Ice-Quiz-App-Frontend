@@ -8,8 +8,8 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
     username: '',
     email: '',
     password: '',
-    confirmPassword: '',
-    role: 'user'
+    confirmPassword: ''
+    // Removed: role: 'user' - backend will handle this
   });
   const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
@@ -40,6 +40,7 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
       return;
     }
 
+    // Backend will automatically set role to 'user'
     onSubmit(formData);
   };
 
@@ -172,25 +173,7 @@ const RegisterForm = ({ onSubmit, loading, error }) => {
           {errors.confirmPassword && <div className="form-error">{errors.confirmPassword}</div>}
         </div>
 
-        <div className="form-group">
-          <label htmlFor="role" className="form-label">
-            Account Type
-          </label>
-          <select
-            id="role"
-            name="role"
-            value={formData.role}
-            onChange={handleChange}
-            className="form-control"
-            disabled={loading}
-          >
-            <option value="user">User</option>
-            <option value="admin">Admin</option>
-          </select>
-          <div className="form-text">
-            Choose "Admin" if you want to create quizzes
-          </div>
-        </div>
+        {/* REMOVED: Account Type Selection Section */}
 
         <button 
           type="submit" 

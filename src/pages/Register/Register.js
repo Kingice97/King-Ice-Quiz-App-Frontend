@@ -26,7 +26,7 @@ const Register = () => {
     <div className="register-page">
       <Helmet>
         <title>Sign Up - King Ice Quiz</title>
-        <meta name="description" content="Create your King Ice Quiz account" />
+        <meta name="description" content="Create your King Ice Quiz account and start testing your knowledge with interactive quizzes" />
       </Helmet>
 
       <div className="register-container">
@@ -60,7 +60,6 @@ const Register = () => {
                 <h4>Earn Badges</h4>
                 <p>Unlock achievements and climb leaderboards</p>
               </div>
-              {/* NEW: Chat feature */}
               <div className="benefit-card">
                 <div className="benefit-icon">💬</div>
                 <h4>Real-time Chat</h4>
