@@ -216,31 +216,30 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Features Section */}
+      {/* Your Quiz Journey Section - UPDATED */}
       <section className="features">
         <div className="container">
-          <h2>Why Choose King Ice Quiz?</h2>
+          <h2>Your Quiz Journey</h2>
           <div className="features-grid">
             <div className="feature-card">
-              <div className="feature-icon">📚</div>
-              <h3>Diverse Categories</h3>
-              <p>From science to entertainment, we have quizzes for every interest and knowledge level.</p>
+              <div className="feature-icon">🚀</div>
+              <h3>Continue Learning</h3>
+              <p>Pick up where you left off and discover new quizzes tailored to your interests.</p>
             </div>
             <div className="feature-card">
-              <div className="feature-icon">⚡</div>
-              <h3>Instant Feedback</h3>
-              <p>Get immediate results with detailed explanations and performance analytics.</p>
+              <div className="feature-icon">📊</div>
+              <h3>Track Progress</h3>
+              <p>Monitor your improvement with detailed analytics and personal performance stats.</p>
             </div>
             <div className="feature-card">
               <div className="feature-icon">🏆</div>
-              <h3>Compete & Learn</h3>
-              <p>Climb the leaderboards, earn achievements, and track your learning progress.</p>
+              <h3>Climb Rankings</h3>
+              <p>Compete with others and watch your position rise on the global leaderboard.</p>
             </div>
-            {/* NEW: Chat Feature */}
             <div className="feature-card">
               <div className="feature-icon">💬</div>
-              <h3>Real-time Chat</h3>
-              <p>Chat with other quiz enthusiasts, discuss questions, and share knowledge in real-time.</p>
+              <h3>Join Conversations</h3>
+              <p>Chat with fellow quiz enthusiasts and share knowledge in real-time.</p>
             </div>
           </div>
         </div>
