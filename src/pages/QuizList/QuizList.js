@@ -17,6 +17,7 @@ const QuizList = () => {
   });
   const [sortBy, setSortBy] = useState('createdAt');
   const [sortOrder, setSortOrder] = useState('desc');
+  const [searchInput, setSearchInput] = useState(filters.search);
 
   const { data: quizzesData, loading, error, setData } = useApi(() =>
     quizService.getQuizzes({
@@ -54,12 +55,21 @@ const QuizList = () => {
     handleFilterChange('search', search);
   };
 
+  const handleSearchInputChange = (e) => {
+    setSearchInput(e.target.value);
+    // If search input is cleared, immediately clear the search filter
+    if (!e.target.value.trim()) {
+      handleFilterChange('search', '');
+    }
+  };
+
   const clearFilters = () => {
     setFilters({
       category: '',
       difficulty: '',
       search: ''
     });
+    setSearchInput('');
     setSortBy('createdAt');
     setSortOrder('desc');
   };
@@ -86,7 +96,8 @@ const QuizList = () => {
               type="text"
               name="search"
               placeholder="Search quizzes by title, description, or category..."
-              defaultValue={filters.search}
+              value={searchInput}
+              onChange={handleSearchInputChange}
               className="search-input"
             />
             <button type="submit" className="btn btn-primary">
@@ -201,13 +212,20 @@ const QuizList = () => {
               <div className="empty-state">
                 <div className="empty-icon">🔍</div>
                 <h3>No quizzes found</h3>
-                <p>Try adjusting your search criteria or browse all categories.</p>
-                <button
-                  onClick={clearFilters}
-                  className="btn btn-primary"
-                >
-                  Clear Filters
-                </button>
+                <p>
+                  {hasActiveFilters 
+                    ? "Try adjusting your search criteria or browse all categories." 
+                    : "No quizzes are available at the moment. Please check back later."
+                  }
+                </p>
+                {hasActiveFilters && (
+                  <button
+                    onClick={clearFilters}
+                    className="btn btn-primary"
+                  >
+                    Clear Filters
+                  </button>
+                )}
               </div>
             )}
           </>
