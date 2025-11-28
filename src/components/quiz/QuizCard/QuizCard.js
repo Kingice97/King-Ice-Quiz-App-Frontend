@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../../../context/AuthContext';
 import { useQuiz } from '../../../context/QuizContext';
+import { quizService } from '../../../services/quizService';
 import { getDifficultyBadgeClass, getDifficultyColor } from '../../../utils/helpers';
 import './QuizCard.css';
 
@@ -22,14 +23,16 @@ const QuizCard = ({ quiz }) => {
 
   const [hasCompleted, setHasCompleted] = useState(false);
   const [userScore, setUserScore] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   const difficultyClass = getDifficultyBadgeClass(difficulty);
   const isAdmin = user?.role === 'admin';
 
   // Check if user has completed this quiz
   useEffect(() => {
-    const checkQuizCompletion = () => {
+    const checkQuizCompletion = async () => {
       if (!user) {
+        setLoading(false);
         return;
       }
 
@@ -43,6 +46,7 @@ const QuizCard = ({ quiz }) => {
         console.log(`✅ Found in QuizContext - Score: ${contextResult.score}%`);
         setHasCompleted(true);
         setUserScore(contextResult.score);
+        setLoading(false);
         return;
       }
 
@@ -53,19 +57,71 @@ const QuizCard = ({ quiz }) => {
           console.log(`✅ Found in localStorage - Completed with score: ${completedQuizzes[_id].score}%`);
           setHasCompleted(true);
           setUserScore(completedQuizzes[_id].score);
+          setLoading(false);
           return;
         }
       } catch (error) {
         console.error('Error reading from localStorage:', error);
       }
 
+      // Method 3: NEW - Check backend/database (cross-device check)
+      try {
+        console.log(`🔍 Checking backend for quiz completion...`);
+        const results = await quizService.getResults({ quizId: _id });
+        
+        if (results.data && results.data.length > 0) {
+          // User has taken this quiz - find their result
+          const userResult = results.data.find(result => 
+            result.userId?._id === user.id || result.userId === user.id
+          );
+          
+          if (userResult) {
+            console.log(`✅ Found in backend - Score: ${userResult.percentage}%`);
+            setHasCompleted(true);
+            setUserScore(Math.round(userResult.percentage));
+            
+            // Also update localStorage for future reference
+            try {
+              const completedQuizzes = JSON.parse(localStorage.getItem('completedQuizzes') || '{}');
+              completedQuizzes[_id] = { 
+                score: Math.round(userResult.percentage),
+                completedAt: new Date().toISOString()
+              };
+              localStorage.setItem('completedQuizzes', JSON.stringify(completedQuizzes));
+            } catch (e) {
+              console.error('Error updating localStorage:', e);
+            }
+            
+            setLoading(false);
+            return;
+          }
+        }
+      } catch (error) {
+        console.error('Error checking backend for quiz completion:', error);
+      }
+
       console.log(`❌ Quiz not completed: ${_id}`);
       setHasCompleted(false);
+      setLoading(false);
     };
 
     // Use a small delay to ensure context is loaded
     setTimeout(checkQuizCompletion, 100);
   }, [user, _id, title, quizHistory, hasCompletedQuiz, getQuizResult]);
+
+  if (loading) {
+    return (
+      <div className="quiz-card loading">
+        <div className="quiz-card-header">
+          <div className="skeleton skeleton-title"></div>
+        </div>
+        <div className="quiz-card-body">
+          <div className="skeleton skeleton-text"></div>
+          <div className="skeleton skeleton-text"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="quiz-card">
