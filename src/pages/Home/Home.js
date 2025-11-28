@@ -29,10 +29,10 @@ const Home = () => {
   const results = resultsData?.data || [];
 
   // Calculate stats for admin dashboard - EXCLUDE ADMIN USERS
-  const activeQuizzes = featuredQuizzes.length; // FIXED: This shows active quizzes (not expired)
+  const activeQuizzes = featuredQuizzes.length;
   const regularUsers = users.filter(user => user.role === 'user');
-  const totalUsers = regularUsers.length; // Only regular users, no admin
-  const totalAttempts = results.length; // FIXED: This now shows actual total attempts (19)
+  const totalUsers = regularUsers.length;
+  const totalAttempts = results.length;
   
   // Calculate active users (only regular users, no admin)
   const activeUsers = regularUsers.filter(user => 
@@ -82,7 +82,7 @@ const Home = () => {
                   <div className="stat-icon">📊</div>
                   <div className="stat-info">
                     <span className="stat-value">{activeQuizzes}</span>
-                    <span className="stat-label">Active Quizzes</span> {/* FIXED: Changed from "Total Quizzes" to "Active Quizzes" */}
+                    <span className="stat-label">Active Quizzes</span>
                   </div>
                 </div>
                 <div className="stat-card">
@@ -178,7 +178,7 @@ const Home = () => {
     );
   }
 
-  // Regular user home page
+  // Regular user home page OR landing page
   return (
     <div className="home">
       {/* Hero Section */}
@@ -216,34 +216,66 @@ const Home = () => {
         </div>
       </section>
 
-      {/* Your Quiz Journey Section - UPDATED */}
-      <section className="features">
-        <div className="container">
-          <h2>Your Quiz Journey</h2>
-          <div className="features-grid">
-            <div className="feature-card">
-              <div className="feature-icon">🚀</div>
-              <h3>Continue Learning</h3>
-              <p>Pick up where you left off and discover new quizzes tailored to your interests.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">📊</div>
-              <h3>Track Progress</h3>
-              <p>Monitor your improvement with detailed analytics and personal performance stats.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">🏆</div>
-              <h3>Climb Rankings</h3>
-              <p>Compete with others and watch your position rise on the global leaderboard.</p>
-            </div>
-            <div className="feature-card">
-              <div className="feature-icon">💬</div>
-              <h3>Join Conversations</h3>
-              <p>Chat with fellow quiz enthusiasts and share knowledge in real-time.</p>
+      {/* Conditional Features Section */}
+      {isAuthenticated ? (
+        /* Your Quiz Journey Section - FOR LOGGED-IN USERS */
+        <section className="features">
+          <div className="container">
+            <h2>Your Quiz Journey</h2>
+            <div className="features-grid">
+              <div className="feature-card">
+                <div className="feature-icon">🚀</div>
+                <h3>Continue Learning</h3>
+                <p>Pick up where you left off and discover new quizzes tailored to your interests.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">📊</div>
+                <h3>Track Progress</h3>
+                <p>Monitor your improvement with detailed analytics and personal performance stats.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">🏆</div>
+                <h3>Climb Rankings</h3>
+                <p>Compete with others and watch your position rise on the global leaderboard.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">💬</div>
+                <h3>Join Conversations</h3>
+                <p>Chat with fellow quiz enthusiasts and share knowledge in real-time.</p>
+              </div>
             </div>
           </div>
-        </div>
-      </section>
+        </section>
+      ) : (
+        /* Why Choose Section - FOR LANDING PAGE (non-logged-in) */
+        <section className="features">
+          <div className="container">
+            <h2>Why Choose King Ice Quiz?</h2>
+            <div className="features-grid">
+              <div className="feature-card">
+                <div className="feature-icon">📚</div>
+                <h3>Diverse Categories</h3>
+                <p>From science to entertainment, we have quizzes for every interest and knowledge level.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">⚡</div>
+                <h3>Instant Feedback</h3>
+                <p>Get immediate results with detailed explanations and performance analytics.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">🏆</div>
+                <h3>Compete & Learn</h3>
+                <p>Climb the leaderboards, earn achievements, and track your learning progress.</p>
+              </div>
+              <div className="feature-card">
+                <div className="feature-icon">💬</div>
+                <h3>Real-time Chat</h3>
+                <p>Chat with other quiz enthusiasts, discuss questions, and share knowledge in real-time.</p>
+              </div>
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* Featured Quizzes */}
       <section className="featured-quizzes">
