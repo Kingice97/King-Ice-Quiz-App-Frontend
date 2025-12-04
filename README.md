@@ -23,14 +23,12 @@ A modern, full-featured quiz and social learning platform built with React. Feat
 - Profile picture upload and management
 - Achievement badges and trophies
 - Activity feed and quiz history
-- Social following/followers system
 
 ### 📊 Results & Analytics
 - Detailed quiz results with answer breakdown
 - Performance analytics and progress charts
 - Leaderboards and ranking system
 - Compare scores with other users
-- Export results as PDF/CSV
 
 ### 🛠️ Admin Features
 - Complete quiz CRUD operations
